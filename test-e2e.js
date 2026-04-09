@@ -427,6 +427,33 @@ landingHtml.includes('MCP Tools') ? PASS('landing: has tools section') : FAIL('l
 landingHtml.includes('Architecture') ? PASS('landing: has architecture') : FAIL('landing: no arch');
 landingHtml.includes('viewport') ? PASS('landing: mobile responsive meta') : FAIL('landing: no viewport');
 
+// ─── 14. OSS Attribution ─────────────────────────────────────────────
+SECTION('14. OSS Attribution');
+
+// README attribution section
+const readmeText = readFileSync(join(PLUGIN_ROOT, 'README.md'), 'utf8');
+readmeText.includes('mksglu/context-mode') ? PASS('README: credits upstream repo') : FAIL('README: no upstream credit');
+readmeText.includes('@mksglu') ? PASS('README: credits upstream author') : FAIL('README: no author credit');
+readmeText.includes('Elastic License 2.0') || readmeText.includes('ELv2') ? PASS('README: mentions upstream license') : FAIL('README: no license mention');
+
+// Landing page attribution
+landingHtml.includes('mksglu') ? PASS('landing: credits upstream') : FAIL('landing: no upstream credit');
+
+// Source file headers
+const coreModules = ['server/index.js', 'server/knowledge.js', 'server/sandbox.js', 'server/session.js', 'server/snapshot.js'];
+for (const mod of coreModules) {
+  const src = readFileSync(join(PLUGIN_ROOT, mod), 'utf8');
+  src.includes('mksglu/context-mode') ? PASS(`${mod}: attribution header`) : FAIL(`${mod}: no attribution`);
+}
+
+// CHANGELOG attribution
+const changelog = readFileSync(join(PLUGIN_ROOT, 'CHANGELOG.md'), 'utf8');
+changelog.includes('mksglu/context-mode') ? PASS('CHANGELOG: credits upstream') : FAIL('CHANGELOG: no upstream credit');
+
+// Full docs attribution
+const fullDocs = readFileSync(join(PLUGIN_ROOT, 'docs', 'README-FULL.md'), 'utf8');
+fullDocs.includes('mksglu/context-mode') ? PASS('full docs: credits upstream') : FAIL('full docs: no upstream credit');
+
 // .gitignore covers essentials
 const gitignore = readFileSync(join(PLUGIN_ROOT, '.gitignore'), 'utf8');
 gitignore.includes('node_modules') ? PASS('.gitignore: node_modules') : FAIL('.gitignore: no node_modules');
