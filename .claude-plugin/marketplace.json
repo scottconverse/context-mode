@@ -1,0 +1,20 @@
+{
+  "name": "scottconverse-context-mode",
+  "description": "Context window optimization for Claude Code in Cowork",
+  "owner": {
+    "name": "Scott Converse",
+    "email": "scott@scottconverse.com"
+  },
+  "plugins": [
+    {
+      "name": "context-mode",
+      "description": "Sandboxes tool output, indexes content into a local FTS5 knowledge base, and tracks session state to reduce context consumption by up to 98%.",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "Scott Converse"
+      },
+      "homepage": "https://scottconverse.github.io/context-mode/"
+    }
+  ]
+}

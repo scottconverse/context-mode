@@ -12,13 +12,22 @@ Long Claude Code sessions consume context rapidly. Every file read, web fetch, a
 
 ## Install
 
+In Claude Code or Cowork, run:
+
+```
+/plugin marketplace add scottconverse/context-mode
+/plugin install context-mode@scottconverse-context-mode
+```
+
+Start a new session. Verify with `/context-mode:ctx-doctor`.
+
+**Alternative (manual install):**
+
 ```bash
 git clone https://github.com/scottconverse/context-mode.git
 cd context-mode
 node install.js
 ```
-
-That's it. Start a new Claude Code session in Cowork and the plugin loads automatically. Verify with `/context-mode:ctx-doctor`.
 
 ## Quick Start
 

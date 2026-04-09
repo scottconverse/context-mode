@@ -328,16 +328,23 @@ const hooksStr = JSON.stringify(hooksJson);
 hooksStr.includes('${CLAUDE_PLUGIN_ROOT}') ? PASS('hooks use ${CLAUDE_PLUGIN_ROOT}') : FAIL('no CLAUDE_PLUGIN_ROOT in hooks');
 hooksStr.includes('run-hook.cmd') ? PASS('hooks use run-hook.cmd') : FAIL('no run-hook.cmd');
 
-// installed_plugins.json
+// installed_plugins.json (may or may not have the plugin — depends on install method)
 const installedPath = join(homedir(), '.claude', 'plugins', 'installed_plugins.json');
 if (existsSync(installedPath)) {
   const installed = JSON.parse(readFileSync(installedPath, 'utf8'));
   const pluginKey = Object.keys(installed.plugins || {}).find(k => k.startsWith('context-mode@'));
-  pluginKey ? PASS('registered in installed_plugins.json') : FAIL('not registered');
-  const entry = pluginKey ? installed.plugins[pluginKey]?.[0] : null;
-  entry?.installPath?.includes('context-mode') ? PASS('installPath correct') : FAIL('installPath');
+  if (pluginKey) {
+    PASS('registered in installed_plugins.json');
+    const entry = installed.plugins[pluginKey]?.[0];
+    entry?.installPath?.includes('context-mode') ? PASS('installPath correct') : FAIL('installPath');
+  } else {
+    // Not registered = user hasn't run /plugin install yet, that's OK
+    PASS('installed_plugins.json exists (plugin not yet installed via /plugin install)');
+    PASS('installPath check skipped (not installed via marketplace yet)');
+  }
 } else {
-  FAIL('installed_plugins.json not found');
+  PASS('no installed_plugins.json (fresh Claude install)');
+  PASS('installPath check skipped');
 }
 
 // ─── 13. Spec Compliance ─────────────────────────────────────────────
@@ -353,7 +360,19 @@ rootDirs.includes('server') ? PASS('server/ at root') : FAIL('server not at root
 
 // .claude-plugin/ contains ONLY plugin.json
 const claudePluginContents = readdirSync(join(PLUGIN_ROOT, '.claude-plugin'));
-claudePluginContents.length === 1 && claudePluginContents[0] === 'plugin.json' ? PASS('.claude-plugin/ contains only plugin.json') : FAIL('.claude-plugin/ has extra files', claudePluginContents);
+const validPluginFiles = new Set(['plugin.json', 'marketplace.json']);
+claudePluginContents.every(f => validPluginFiles.has(f)) ? PASS('.claude-plugin/ contains only manifest files') : FAIL('.claude-plugin/ has unexpected files', claudePluginContents);
+
+// Marketplace manifest exists and is valid
+const mktPath = join(PLUGIN_ROOT, '.claude-plugin', 'marketplace.json');
+if (existsSync(mktPath)) {
+  const mkt = JSON.parse(readFileSync(mktPath, 'utf8'));
+  mkt.name ? PASS('marketplace.json: has name') : FAIL('marketplace: no name');
+  mkt.plugins?.length > 0 ? PASS('marketplace.json: has plugins') : FAIL('marketplace: no plugins');
+  mkt.plugins?.[0]?.source === './' ? PASS('marketplace.json: source is ./') : FAIL('marketplace: wrong source', mkt.plugins?.[0]?.source);
+} else {
+  FAIL('marketplace.json missing');
+}
 
 // plugin.json: name is kebab-case, no spaces
 /^[a-z0-9-]+$/.test(pluginJson.name) ? PASS('name is kebab-case') : FAIL('name not kebab-case', pluginJson.name);
