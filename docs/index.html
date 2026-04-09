@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>context-mode — Context Window Optimization for Cowork</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-dim: #1f6feb;
+      --green: #3fb950;
+      --orange: #d29922;
+      --red: #f85149;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero .tagline {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    .hero .stat-row {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-bottom: 40px;
+    }
+    .hero .stat {
+      text-align: center;
+    }
+    .hero .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+    .hero .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Quick Start */
+    .quickstart {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px 32px;
+      max-width: 540px;
+      margin: 0 auto;
+      text-align: left;
+    }
+    .quickstart h3 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .quickstart code {
+      display: block;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .quickstart .step {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+
+    /* Sections */
+    section {
+      padding: 60px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    section:last-child { border-bottom: none; }
+    section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    /* Capabilities */
+    .caps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .cap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .cap h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+    .cap p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Architecture */
+    .arch-diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 32px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre;
+      color: var(--text-muted);
+    }
+
+    /* Tools Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    td code {
+      color: var(--accent);
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.85rem;
+    }
+
+    /* Links */
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .links a {
+      color: var(--accent);
+      text-decoration: none;
+      padding: 8px 20px;
+      border: 1px solid var(--accent-dim);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+    }
+    .links a:hover {
+      background: var(--accent-dim);
+      color: #fff;
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 1.75rem; }
+      .hero .stat-row { flex-direction: column; gap: 16px; }
+      .quickstart { padding: 16px 20px; }
+      .caps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="container">
+      <h1><span>context-mode</span></h1>
+      <p class="tagline">
+        Context window optimization for Claude Code in Cowork.
+        Sandbox tool output, index content locally, and survive context compaction.
+      </p>
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-value">98%</div>
+          <div class="stat-label">Context reduction</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">9</div>
+          <div class="stat-label">MCP tools</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">11</div>
+          <div class="stat-label">Languages</div>
+        </div>
+      </div>
+      <div class="quickstart">
+        <h3>Quick Start</h3>
+        <div class="step">1. Install the plugin</div>
+        <code>claude plugin install context-mode</code>
+        <div class="step">2. Dependencies install automatically on first session</div>
+        <div class="step">3. Claude prefers context-saving tools automatically</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Capabilities -->
+  <section>
+    <div class="container">
+      <h2>Three Core Capabilities</h2>
+      <div class="caps">
+        <div class="cap">
+          <h3>Sandbox Execution</h3>
+          <p>Run code in isolated subprocesses. Only stdout returns to context. Raw file contents, command output, and web pages never bloat your context window. Supports JavaScript, TypeScript, Python, Shell, Ruby, Go, Rust, PHP, Perl, R, and Elixir.</p>
+        </div>
+        <div class="cap">
+          <h3>Knowledge Base</h3>
+          <p>Index documents into a local SQLite FTS5 database with BM25 ranking, trigram matching, and Reciprocal Rank Fusion. Search returns only relevant snippets. Fuzzy correction handles typos. 24-hour TTL cache for web pages.</p>
+        </div>
+        <div class="cap">
+          <h3>Session Continuity</h3>
+          <p>Hooks capture file operations, git commands, errors, tasks, and decisions into SQLite. Before context compaction, a priority-tiered XML snapshot (under 2KB) preserves what matters. Claude resumes from exactly where it left off.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section>
+    <div class="container">
+      <h2>Architecture</h2>
+      <div class="arch-diagram">
+Cowork Session
+  |
+  |-- SessionStart hook --> routing block + session guide injection
+  |-- PostToolUse hook  --> event capture (13 categories, 4 priorities)
+  |-- PreCompact hook   --> snapshot builder (&#8804;2KB XML)
+  |
+  |-- MCP Server (stdio)
+  |     |
+  |     |-- ctx_execute / ctx_execute_file
+  |     |     \-- PolyglotExecutor (subprocess isolation)
+  |     |         |-- 11 language runtimes
+  |     |         |-- 100MB stdout hard cap
+  |     |         |-- 30s timeout, background mode
+  |     |         \-- Windows taskkill / Unix kill -PGID
+  |     |
+  |     |-- ctx_index / ctx_search / ctx_fetch_and_index
+  |     |     \-- ContentStore (SQLite FTS5)
+  |     |         |-- Porter stemmer + trigram tokenizers
+  |     |         |-- BM25 (title 5x weight) + RRF fusion (K=60)
+  |     |         |-- Proximity reranking + Levenshtein fuzzy
+  |     |         \-- Smart snippets (windowed extraction)
+  |     |
+  |     |-- ctx_batch_execute (multi-command + multi-query)
+  |     |-- ctx_stats / ctx_doctor / ctx_purge
+  |     |
+  |     \-- Session DB (SQLite)
+  |           |-- session_events (1000 max, FIFO eviction)
+  |           |-- session_meta (compact count tracking)
+  |           \-- session_resume (snapshot storage)
+  |
+  \-- Skills: /ctx-stats, /ctx-doctor, /ctx-purge
+      </div>
+    </div>
+  </section>
+
+  <!-- Tools -->
+  <section>
+    <div class="container">
+      <h2>MCP Tools</h2>
+      <table>
+        <thead>
+          <tr><th>Tool</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>ctx_execute</code></td><td>Run code in a sandboxed subprocess (11 languages)</td></tr>
+          <tr><td><code>ctx_execute_file</code></td><td>Process files through sandbox — raw content stays out of context</td></tr>
+          <tr><td><code>ctx_batch_execute</code></td><td>Multiple commands + searches in one call</td></tr>
+          <tr><td><code>ctx_index</code></td><td>Index text/markdown/JSON into the knowledge base</td></tr>
+          <tr><td><code>ctx_search</code></td><td>BM25 + trigram search with RRF fusion</td></tr>
+          <tr><td><code>ctx_fetch_and_index</code></td><td>Fetch URL, convert to markdown, index with 24h TTL cache</td></tr>
+          <tr><td><code>ctx_stats</code></td><td>Session statistics and savings report</td></tr>
+          <tr><td><code>ctx_doctor</code></td><td>Plugin environment diagnostics</td></tr>
+          <tr><td><code>ctx_purge</code></td><td>Delete all indexed content</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Technical -->
+  <section>
+    <div class="container">
+      <h2>Technical Details</h2>
+      <table>
+        <thead>
+          <tr><th>Spec</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Language</td><td>JavaScript (ES modules, Node.js &ge; 18)</td></tr>
+          <tr><td>Database</td><td>SQLite via better-sqlite3 with WAL mode</td></tr>
+          <tr><td>Search</td><td>FTS5 (Porter + trigram), BM25, RRF (K=60), proximity reranking</td></tr>
+          <tr><td>Sandbox</td><td>Subprocess isolation, 100MB cap, 30s timeout</td></tr>
+          <tr><td>Session</td><td>1000 events max, SHA-256 dedup, FIFO eviction</td></tr>
+          <tr><td>Snapshot</td><td>Priority-tiered XML, &le;2KB budget</td></tr>
+          <tr><td>Cache</td><td>24h TTL for fetched URLs</td></tr>
+          <tr><td>Throttling</td><td>Progressive: 2&rarr;1&rarr;blocked over 60s window</td></tr>
+          <tr><td>Platform</td><td>Windows + macOS (cross-platform .cmd wrapper)</td></tr>
+          <tr><td>Tests</td><td>137 E2E tests (unit + MCP protocol + discoverability + spec compliance)</td></tr>
+          <tr><td>License</td><td>Elastic License 2.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Links -->
+  <section>
+    <div class="container">
+      <h2>Resources</h2>
+      <div class="links">
+        <a href="https://github.com/scottconverse/context-mode">GitHub Repository</a>
+        <a href="https://github.com/scottconverse/context-mode/blob/main/README.md">README</a>
+        <a href="https://github.com/scottconverse/context-mode/blob/main/USER-MANUAL.md">User Manual</a>
+        <a href="https://github.com/scottconverse/context-mode/blob/main/CHANGELOG.md">Changelog</a>
+        <a href="https://github.com/scottconverse/context-mode/blob/main/CONTRIBUTING.md">Contributing</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      context-mode v1.0.0 &middot; Elastic License 2.0 &middot; Built for Claude Code in Cowork
+    </div>
+  </footer>
+
+</body>
+</html>

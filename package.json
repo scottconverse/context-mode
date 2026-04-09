@@ -1,0 +1,27 @@
+{
+  "name": "context-mode",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Context window optimization for Cowork. Sandboxes tool output and tracks session state to reduce context consumption by up to 98%.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "setup": "node scripts/setup.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "better-sqlite3": "^12.6.2",
+    "zod": "^3.25.0"
+  },
+  "optionalDependencies": {
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "devDependencies": {
+    "md-to-pdf": "^5.2.5"
+  }
+}

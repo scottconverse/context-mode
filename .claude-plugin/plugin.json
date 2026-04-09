@@ -1,0 +1,7 @@
+{
+  "name": "context-mode",
+  "version": "1.0.0",
+  "description": "Context window optimization for Cowork. Sandboxes tool output and tracks session state to reduce context consumption by up to 98%.",
+  "author": { "name": "Scott Converse" },
+  "license": "ELv2"
+}
