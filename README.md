@@ -87,6 +87,10 @@ Results from layers 1 and 2 are merged via **Reciprocal Rank Fusion** (K=60) and
 - Node.js >= 18
 - Claude Code in Cowork
 
+## Attribution
+
+This project is a Cowork plugin port of [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu), licensed under the [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license). The core algorithms, database schemas, search pipeline (BM25 + trigram + RRF fusion), sandbox executor architecture, session event system, and compaction snapshot builder are ported from that project and adapted for the Cowork plugin architecture.
+
 ## License
 
-[Elastic License 2.0](LICENSE)
+[Elastic License 2.0](LICENSE) — same license as the upstream project.

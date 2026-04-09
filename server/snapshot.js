@@ -3,6 +3,9 @@
  * for session resume after context compaction.
  *
  * Budget: ≤2KB. P1 events always preserved. P3/P4 dropped first.
+ *
+ * Ported from mksglu/context-mode (https://github.com/mksglu/context-mode)
+ * by @mksglu, licensed under Elastic License 2.0.
  */
 
 import { escapeXML } from './utils.js';

@@ -3,6 +3,9 @@
  * Runs code in isolated temp directories, captures only stdout,
  * enforces hard byte caps and timeouts.
  * Cross-platform: Windows (taskkill) and macOS/Linux (kill -PGID).
+ *
+ * Ported from mksglu/context-mode (https://github.com/mksglu/context-mode)
+ * by @mksglu, licensed under Elastic License 2.0.
  */
 
 import { spawn, execSync } from 'node:child_process';

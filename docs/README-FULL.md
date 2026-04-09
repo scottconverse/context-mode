@@ -2,6 +2,8 @@
 
 **Version 1.0.0** | Elastic License 2.0 | April 2026
 
+> Ported from [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu) (Elastic License 2.0). Core algorithms, database schemas, search pipeline, sandbox executor architecture, session event system, and compaction snapshot builder are derived from that project and adapted for the Cowork plugin architecture.
+
 ---
 
 ## Table of Contents

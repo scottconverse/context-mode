@@ -18,4 +18,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Cross-platform support for Windows and macOS (Git Bash for shell, taskkill/kill for process management)
 - 3 skills: /ctx-stats, /ctx-doctor, /ctx-purge
 - Context optimizer agent prompt
-- 65-test E2E test suite covering all modules
+- 147-test E2E test suite covering all modules, MCP protocol smoke tests, plugin discoverability, and spec compliance
+- Ported from [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu) and adapted for Cowork plugin architecture

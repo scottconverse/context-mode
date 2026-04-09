@@ -3,6 +3,9 @@
  *
  * Captures structured events from tool calls, tracks session metadata,
  * stores compaction snapshots for resume after context compaction.
+ *
+ * Ported from mksglu/context-mode (https://github.com/mksglu/context-mode)
+ * by @mksglu, licensed under Elastic License 2.0.
  */
 
 import { openDatabase, closeDB, withRetry } from './db-base.js';

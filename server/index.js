@@ -3,6 +3,9 @@
  *
  * Provides sandbox execution, knowledge base indexing/search,
  * and session continuity tools for Cowork.
+ *
+ * Ported from mksglu/context-mode (https://github.com/mksglu/context-mode)
+ * by @mksglu, licensed under Elastic License 2.0.
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';

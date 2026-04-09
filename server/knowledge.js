@@ -4,6 +4,9 @@
  * Dual-strategy search (Porter stemmer + trigram) merged via
  * Reciprocal Rank Fusion. Proximity reranking for multi-term queries.
  * Levenshtein fuzzy correction when initial results are empty.
+ *
+ * Ported from mksglu/context-mode (https://github.com/mksglu/context-mode)
+ * by @mksglu, licensed under Elastic License 2.0.
  */
 
 import { openDatabase, closeDB, withRetry } from './db-base.js';
