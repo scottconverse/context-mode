@@ -332,8 +332,9 @@ hooksStr.includes('run-hook.cmd') ? PASS('hooks use run-hook.cmd') : FAIL('no ru
 const installedPath = join(homedir(), '.claude', 'plugins', 'installed_plugins.json');
 if (existsSync(installedPath)) {
   const installed = JSON.parse(readFileSync(installedPath, 'utf8'));
-  installed.plugins?.['context-mode@local'] ? PASS('registered in installed_plugins.json') : FAIL('not registered');
-  const entry = installed.plugins?.['context-mode@local']?.[0];
+  const pluginKey = Object.keys(installed.plugins || {}).find(k => k.startsWith('context-mode@'));
+  pluginKey ? PASS('registered in installed_plugins.json') : FAIL('not registered');
+  const entry = pluginKey ? installed.plugins[pluginKey]?.[0] : null;
   entry?.installPath?.includes('context-mode') ? PASS('installPath correct') : FAIL('installPath');
 } else {
   FAIL('installed_plugins.json not found');

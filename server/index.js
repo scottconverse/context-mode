@@ -38,7 +38,30 @@ const BATCH_TIMEOUT = 60000;                // 60s batch timeout
 
 // ─── Data Directories ─────────────────────────────────────────────────────────
 
-const PLUGIN_DATA = process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, '.data');
+// Resolve CLAUDE_PLUGIN_DATA: Cowork may or may not expand ${CLAUDE_PLUGIN_DATA}
+// in .mcp.json env block. If it's unexpanded (literal string), resolve it ourselves.
+function resolvePluginData() {
+  const envVal = process.env.CLAUDE_PLUGIN_DATA;
+
+  // If Cowork expanded it properly, use it
+  if (envVal && !envVal.includes('${') && !envVal.includes('CLAUDE_PLUGIN_DATA')) {
+    return envVal;
+  }
+
+  // Resolve per spec: ~/.claude/plugins/data/<plugin-id>/
+  // Plugin ID: name@marketplace with non-alphanumeric chars replaced by -
+  const pluginName = 'context-mode';
+  const homedir = process.env.USERPROFILE || process.env.HOME || require('os').homedir();
+  const specPath = join(homedir, '.claude', 'plugins', 'data', pluginName);
+  if (existsSync(join(homedir, '.claude', 'plugins'))) {
+    return specPath;
+  }
+
+  // Fallback: .data inside plugin root
+  return join(PLUGIN_ROOT, '.data');
+}
+
+const PLUGIN_DATA = resolvePluginData();
 const CONTENT_DIR = join(PLUGIN_DATA, 'content');
 const SESSIONS_DIR = join(PLUGIN_DATA, 'sessions');
 

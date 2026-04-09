@@ -2,23 +2,38 @@
 
 /**
  * Setup script for context-mode plugin.
- * Installs dependencies into CLAUDE_PLUGIN_DATA and verifies better-sqlite3.
+ * Installs dependencies into the persistent data directory and verifies better-sqlite3.
  */
 
 import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, copyFileSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync, readFileSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { homedir } from 'node:os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const pluginRoot = join(__dirname, '..');
 
-const pluginData = process.env.CLAUDE_PLUGIN_DATA || join(pluginRoot, '.data');
+// Resolve data directory — same logic as server/index.js
+function resolvePluginData() {
+  const envVal = process.env.CLAUDE_PLUGIN_DATA;
+  if (envVal && !envVal.includes('${') && !envVal.includes('CLAUDE_PLUGIN_DATA')) {
+    return envVal;
+  }
+  const home = homedir();
+  const specPath = join(home, '.claude', 'plugins', 'data', 'context-mode');
+  if (existsSync(join(home, '.claude', 'plugins'))) {
+    return specPath;
+  }
+  return join(pluginRoot, '.data');
+}
+
+const pluginData = resolvePluginData();
 
 // Ensure data directory exists
-for (const sub of ['', 'content', 'sessions', 'node_modules']) {
+for (const sub of ['', 'content', 'sessions']) {
   const dir = join(pluginData, sub);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
@@ -37,41 +52,36 @@ if (existsSync(dstPkg)) {
 }
 
 if (needsInstall) {
-  console.log('[context-mode] Installing dependencies...');
+  console.error('[context-mode] Installing dependencies to', pluginData);
   copyFileSync(srcPkg, dstPkg);
   try {
-    execSync('npm install --production', {
+    execSync('npm install --omit=dev', {
       cwd: pluginData,
       stdio: 'inherit',
       timeout: 120_000
     });
   } catch (err) {
-    // Clean up the copied package.json so next run retries
-    try { require('fs').unlinkSync(dstPkg); } catch { /* ignore */ }
+    try { unlinkSync(dstPkg); } catch { /* ignore */ }
     console.error('[context-mode] Failed to install dependencies:', err.message);
     process.exit(1);
   }
 } else {
-  console.log('[context-mode] Dependencies up to date.');
+  console.error('[context-mode] Dependencies up to date.');
 }
 
 // Verify better-sqlite3 loads
 try {
   const { createRequire } = await import('node:module');
-  const require = createRequire(join(pluginData, 'node_modules', '.package.json'));
-  const Database = require('better-sqlite3');
+  const req = createRequire(join(pluginData, 'node_modules', '.package.json'));
+  const Database = req('better-sqlite3');
   const db = new Database(':memory:');
-  // Verify FTS5 is available
   db.exec("CREATE VIRTUAL TABLE _test_fts USING fts5(content, tokenize='porter unicode61')");
   db.exec('DROP TABLE _test_fts');
   db.close();
-  console.log('[context-mode] better-sqlite3 with FTS5 verified.');
+  console.error('[context-mode] better-sqlite3 with FTS5 verified.');
 } catch (err) {
   console.error('[context-mode] better-sqlite3 verification failed:', err.message);
-  console.error('[context-mode] Try: cd ' + pluginData + ' && npm rebuild better-sqlite3');
   process.exit(1);
 }
 
-console.log('[context-mode] Setup complete.');
-console.log('[context-mode] Plugin root:', pluginRoot);
-console.log('[context-mode] Data directory:', pluginData);
+console.error('[context-mode] Setup complete. Data:', pluginData);

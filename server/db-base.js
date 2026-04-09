@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync, unlinkSync, mkdirSync } from 'node:fs';
+import { homedir } from 'node:os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,7 +17,7 @@ let Database = null;
 
 /**
  * Lazy-load better-sqlite3.
- * Checks CLAUDE_PLUGIN_DATA/node_modules first, then local node_modules.
+ * Searches: resolved CLAUDE_PLUGIN_DATA, spec-path, plugin root, NODE_PATH.
  */
 export function loadDatabase() {
   if (Database) return Database;
@@ -25,10 +26,18 @@ export function loadDatabase() {
   const pluginRoot = join(__dirname, '..');
   const searchPaths = [];
 
-  if (pluginData) {
+  // Expanded env var
+  if (pluginData && !pluginData.includes('${')) {
     searchPaths.push(join(pluginData, 'node_modules'));
   }
+  // Spec path: ~/.claude/plugins/data/context-mode/node_modules
+  searchPaths.push(join(homedir(), '.claude', 'plugins', 'data', 'context-mode', 'node_modules'));
+  // Plugin root
   searchPaths.push(join(pluginRoot, 'node_modules'));
+  // NODE_PATH
+  if (process.env.NODE_PATH && !process.env.NODE_PATH.includes('${')) {
+    searchPaths.push(process.env.NODE_PATH);
+  }
 
   for (const searchPath of searchPaths) {
     try {

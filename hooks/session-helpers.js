@@ -89,7 +89,16 @@ export function getSessionId(input = {}) {
  */
 function getSessionDBDir() {
   const pluginData = process.env.CLAUDE_PLUGIN_DATA;
-  if (pluginData) return join(pluginData, 'sessions');
+  // Only use env var if it was actually expanded (not literal ${CLAUDE_PLUGIN_DATA})
+  if (pluginData && !pluginData.includes('${') && !pluginData.includes('CLAUDE_PLUGIN_DATA')) {
+    return join(pluginData, 'sessions');
+  }
+
+  // Resolve per spec: ~/.claude/plugins/data/context-mode/sessions/
+  const pluginDataDir = join(homedir(), '.claude', 'plugins', 'data', 'context-mode', 'sessions');
+  if (existsSync(join(homedir(), '.claude', 'plugins'))) {
+    return pluginDataDir;
+  }
 
   // Fallback to ~/.claude/context-mode/sessions/
   return join(homedir(), '.claude', 'context-mode', 'sessions');

@@ -10,11 +10,22 @@ Long Claude Code sessions consume context rapidly. Every file read, web fetch, a
 2. **Knowledge Base** — Chunks and indexes content into a local SQLite FTS5 database with BM25 + trigram dual-strategy search. Retrieves only the relevant snippets.
 3. **Session Continuity** — Captures session events via hooks and rebuilds a structured Session Guide after context compaction, so Claude resumes from exactly where it left off.
 
+## Install
+
+```bash
+git clone https://github.com/scottconverse/context-mode.git
+cd context-mode
+node install.js
+```
+
+That's it. Start a new Claude Code session in Cowork and the plugin loads automatically. Verify with `/context-mode:ctx-doctor`.
+
 ## Quick Start
 
-1. Install the plugin into your Cowork workspace
-2. The plugin auto-installs dependencies on first session start
-3. Use `ctx_execute`, `ctx_search`, `ctx_fetch_and_index` instead of raw tools
+Once installed, Claude automatically prefers context-saving tools. You can also use them directly:
+- `ctx_execute` — run code in a sandbox instead of reading files into context
+- `ctx_search` — search indexed content instead of re-reading files
+- `ctx_fetch_and_index` — fetch and index a web page instead of raw WebFetch
 
 ## MCP Tools
 
