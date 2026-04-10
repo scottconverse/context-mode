@@ -15,6 +15,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { homedir as osHomedir } from 'node:os';
 
 import { detectRuntimes, getRuntimeSummary, getAvailableLanguages, isWindows } from './runtime.js';
 import { PolyglotExecutor } from './sandbox.js';
@@ -26,7 +27,7 @@ const PLUGIN_ROOT = join(__dirname, '..');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const INTENT_SEARCH_THRESHOLD = 5000;       // Auto-index if output > 5KB
 const LARGE_OUTPUT_THRESHOLD = 102400;       // 100KB
 const SEARCH_WINDOW_MS = 60000;             // 60s throttle window
@@ -51,7 +52,7 @@ function resolvePluginData() {
   // Resolve per spec: ~/.claude/plugins/data/<plugin-id>/
   // Plugin ID: name@marketplace with non-alphanumeric chars replaced by -
   const pluginName = 'context-mode';
-  const homedir = process.env.USERPROFILE || process.env.HOME || require('os').homedir();
+  const homedir = process.env.USERPROFILE || process.env.HOME || osHomedir();
   const specPath = join(homedir, '.claude', 'plugins', 'data', pluginName);
   if (existsSync(join(homedir, '.claude', 'plugins'))) {
     return specPath;
@@ -748,7 +749,7 @@ server.tool(
 
     // Hook scripts
     output += '## Hook Scripts\n';
-    const hooks = ['post-tool-use.js', 'pre-compact.js', 'session-start.js'];
+    const hooks = ['posttooluse.js', 'precompact.js', 'sessionstart.js', 'pretooluse.js', 'userpromptsubmit.js'];
     for (const hook of hooks) {
       const hookPath = join(PLUGIN_ROOT, 'hooks', hook);
       const exists = existsSync(hookPath);

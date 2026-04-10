@@ -1,7 +1,22 @@
 {
   "name": "context-mode",
-  "version": "1.0.0",
-  "description": "Context window optimization for Cowork. Sandboxes tool output and tracks session state to reduce context consumption by up to 98%.",
+  "version": "1.1.0",
+  "description": "Context window optimization for Cowork. Sandboxed execution, FTS5 knowledge base, automatic tool routing.",
   "author": { "name": "Scott Converse" },
-  "license": "ELv2"
+  "homepage": "https://scottconverse.github.io/context-mode/",
+  "repository": "https://github.com/scottconverse/context-mode",
+  "license": "ELv2",
+  "keywords": ["mcp", "context-window", "sandbox", "fts5", "bm25"],
+  "mcpServers": {
+    "context-mode": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/start.js"],
+      "env": {
+        "CLAUDE_PLUGIN_DATA": "${CLAUDE_PLUGIN_DATA}",
+        "NODE_PATH": "${CLAUDE_PLUGIN_DATA}/node_modules"
+      }
+    }
+  },
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
 }

@@ -177,6 +177,13 @@ export class SessionDB {
       DELETE FROM session_resume
       WHERE created_at < datetime('now', '-' || ? || ' days')
     `);
+
+    this.#stmts.getLatestSessionId = db.prepare(`
+      SELECT m.session_id FROM session_meta m
+      JOIN session_events e ON m.session_id = e.session_id
+      GROUP BY m.session_id
+      ORDER BY m.started_at DESC LIMIT 1
+    `);
   }
 
   // ─── Session Management ───────────────────────────────────────────────────
@@ -240,6 +247,15 @@ export class SessionDB {
 
   getSessionStats(sessionId) {
     return this.#stmts.getSessionStats.get(sessionId, sessionId, sessionId, sessionId);
+  }
+
+  /**
+   * Return the session_id of the most recently started session that has events.
+   * Used by session-directive.js getLatestSessionEvents for resume mode.
+   */
+  getLatestSessionId() {
+    const row = this.#stmts.getLatestSessionId.get();
+    return row ? row.session_id : null;
   }
 
   // ─── Compaction Support ───────────────────────────────────────────────────
