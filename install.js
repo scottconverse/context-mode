@@ -15,6 +15,7 @@
  *   4. Enables the plugin in settings.json
  *   5. Installs dependencies (better-sqlite3, zod, MCP SDK)
  *   6. Verifies FTS5 works
+ *   7. Probes the MCP server to confirm all 9 tools respond
  *
  * After running, start a new Claude Code session. The plugin loads automatically.
  */
@@ -30,7 +31,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const PLUGIN_NAME = 'context-mode';
-const MARKETPLACE_NAME = 'local-dev';
+const MARKETPLACE_NAME = 'scottconverse-context-mode';
 const PLUGIN_ID = `${PLUGIN_NAME}@${MARKETPLACE_NAME}`;
 const VERSION = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version;
 
@@ -61,7 +62,7 @@ log(`Node.js: ${process.version}`);
 
 // ─── Step 1: Copy plugin to cache ────────────────────────────────────────────
 
-log('Step 1/6: Copying plugin to cache...');
+log('Step 1/7: Copying plugin to cache...');
 
 if (!existsSync(CACHE_DIR)) {
   mkdirSync(CACHE_DIR, { recursive: true });
@@ -84,9 +85,26 @@ try {
   process.exit(1);
 }
 
+// Ensure .mcp.json was copied (cpSync can miss dot-files on some platforms)
+const mcpJsonSrc = join(SOURCE, '.mcp.json');
+const mcpJsonDst = join(CACHE_DIR, '.mcp.json');
+if (existsSync(mcpJsonSrc) && !existsSync(mcpJsonDst)) {
+  copyFileSync(mcpJsonSrc, mcpJsonDst);
+  log('  Explicitly copied .mcp.json');
+}
+
+const pluginJsonSrc = join(SOURCE, '.claude-plugin', 'plugin.json');
+const pluginJsonDst = join(CACHE_DIR, '.claude-plugin', 'plugin.json');
+const pluginJsonDstDir = join(CACHE_DIR, '.claude-plugin');
+if (existsSync(pluginJsonSrc) && !existsSync(pluginJsonDst)) {
+  if (!existsSync(pluginJsonDstDir)) mkdirSync(pluginJsonDstDir, { recursive: true });
+  copyFileSync(pluginJsonSrc, pluginJsonDst);
+  log('  Explicitly copied .claude-plugin/plugin.json');
+}
+
 // ─── Step 2: Create local marketplace ────────────────────────────────────────
 
-log('Step 2/6: Creating local marketplace...');
+log('Step 2/7: Creating local marketplace...');
 
 const mktPluginDir = join(MARKETPLACE_DIR, '.claude-plugin');
 if (!existsSync(mktPluginDir)) mkdirSync(mktPluginDir, { recursive: true });
@@ -122,7 +140,7 @@ log('  Local marketplace configured');
 
 // ─── Step 3: Register in installed_plugins.json ──────────────────────────────
 
-log('Step 3/6: Registering plugin...');
+log('Step 3/7: Registering plugin...');
 
 let installed = { version: 2, plugins: {} };
 if (existsSync(INSTALLED_PATH)) {
@@ -142,7 +160,7 @@ log('  Registered in installed_plugins.json');
 
 // ─── Step 4: Enable in settings.json ─────────────────────────────────────────
 
-log('Step 4/6: Enabling plugin...');
+log('Step 4/7: Enabling plugin...');
 
 let settings = {};
 if (existsSync(SETTINGS_PATH)) {
@@ -177,7 +195,7 @@ writeFileSync(KNOWN_MKT_PATH, JSON.stringify(knownMkt, null, 2));
 
 // ─── Step 5: Install dependencies ────────────────────────────────────────────
 
-log('Step 5/6: Installing dependencies...');
+log('Step 5/7: Installing dependencies...');
 
 // Install to persistent data dir
 if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
@@ -208,7 +226,7 @@ try {
 
 // ─── Step 6: Verify ──────────────────────────────────────────────────────────
 
-log('Step 6/6: Verifying...');
+log('Step 6/7: Verifying...');
 
 let verified = false;
 const searchPaths = [
@@ -236,12 +254,66 @@ if (!verified) {
   process.exit(1);
 }
 
+// ─── Step 7: Server probe ────────────────────────────────────────────────────
+
+log('Step 7/7: Server probe...');
+
+let probeOk = false;
+try {
+  const { spawn } = await import('node:child_process');
+  const server = spawn('node', [join(CACHE_DIR, 'start.js')], {
+    stdio: ['pipe', 'pipe', 'pipe'],
+    timeout: 15000,
+    env: { ...process.env, CLAUDE_PROJECT_DIR: process.cwd() }
+  });
+
+  const initMsg = JSON.stringify({
+    jsonrpc: "2.0", id: 1, method: "initialize",
+    params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "probe", version: "1.0.0" } }
+  }) + "\n";
+
+  const listMsg = JSON.stringify({
+    jsonrpc: "2.0", id: 2, method: "tools/list", params: {}
+  }) + "\n";
+
+  let output = "";
+  server.stdout.on("data", (chunk) => { output += chunk.toString(); });
+
+  server.stdin.write(initMsg);
+  // Give server time to bootstrap (ensure-deps, turndown install) and respond to init
+  await new Promise(r => setTimeout(r, 4000));
+  server.stdin.write(listMsg);
+  await new Promise(r => setTimeout(r, 4000));
+
+  server.kill();
+
+  // Count tools in response
+  const toolMatches = output.match(/"name"\s*:\s*"ctx_/g);
+  const toolCount = toolMatches ? toolMatches.length : 0;
+  if (toolCount >= 9) {
+    probeOk = true;
+    log(`  ${toolCount}/9 tools responding`);
+  } else {
+    log(`  WARNING: Only ${toolCount}/9 tools found in probe response`);
+  }
+} catch (e) {
+  log(`  WARNING: Server probe failed: ${e.message}`);
+  log('  The plugin may still work — run /ctx-doctor after restart to verify');
+}
+
 // ─── Done ────────────────────────────────────────────────────────────────────
 
 console.log('');
 console.log('='.repeat(50));
 console.log('  context-mode v' + VERSION + ' installed successfully!');
 console.log('='.repeat(50));
+console.log('');
+console.log('Steps completed: 7/7');
+if (probeOk) {
+  console.log('Server probe: PASS — all 9 tools responding');
+} else {
+  console.log('Server probe: WARNING — run /ctx-doctor after restart to verify');
+}
 console.log('');
 console.log('Next steps:');
 console.log('  1. Open Claude Code (or start a new session in Cowork)');

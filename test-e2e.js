@@ -15,6 +15,11 @@
  *   11. MCP Protocol Smoke Test (live server via SDK client)
  *   12. Plugin Discoverability (manifest, hooks, mcp, structure)
  *   13. Spec Compliance (validates against Claude Code plugin reference)
+ *   14. OSS Attribution
+ *   15. Plugin Manifest Validation
+ *   16. PreToolUse Routing
+ *   17. hooks.json Validation
+ *   18. Plugin CLAUDE.md and Settings
  */
 
 import { ContentStore } from './server/knowledge.js';
@@ -25,7 +30,7 @@ import { detectRuntimes } from './server/runtime.js';
 import { PolyglotExecutor } from './server/sandbox.js';
 import { sanitizeQuery, levenshtein, findMinSpan, extractSnippet, escapeXML } from './server/utils.js';
 import { classifyNonZeroExit } from './server/exit-classify.js';
-import { getRoutingBlock } from './hooks/routing-block.js';
+import { ROUTING_BLOCK, createRoutingBlock } from './hooks/routing-block.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, unlinkSync, mkdirSync, readFileSync, readdirSync, statSync } from 'fs';
@@ -200,12 +205,16 @@ extractEvents(null).length === 0 ? PASS('null -> empty') : FAIL('null');
 // ─── 9. Routing Block ─────────────────────────────────────────────────
 SECTION('9. Routing Block');
 
-const rb = getRoutingBlock();
-rb.includes('ctx_batch_execute') ? PASS('batch_execute') : FAIL('batch');
-rb.includes('ctx_search') ? PASS('search') : FAIL('search');
-rb.includes('ctx_execute') ? PASS('execute') : FAIL('execute');
-rb.includes('ctx_fetch_and_index') ? PASS('fetch_and_index') : FAIL('fetch');
-rb.includes('ctx_index') ? PASS('index') : FAIL('index');
+ROUTING_BLOCK.includes('ctx_batch_execute') ? PASS('batch_execute') : FAIL('batch');
+ROUTING_BLOCK.includes('ctx_search') ? PASS('search') : FAIL('search');
+ROUTING_BLOCK.includes('ctx_execute') ? PASS('execute') : FAIL('execute');
+ROUTING_BLOCK.includes('ctx_fetch_and_index') ? PASS('fetch_and_index') : FAIL('fetch');
+ROUTING_BLOCK.includes('ctx_execute_file') ? PASS('execute_file') : FAIL('execute_file');
+ROUTING_BLOCK.includes('context_window_protection') ? PASS('routing block root tag') : FAIL('routing block root tag');
+
+// createRoutingBlock returns a string with custom tool names
+const customRb = createRoutingBlock(name => `[[${name}]]`);
+customRb.includes('[[ctx_batch_execute]]') ? PASS('createRoutingBlock custom namer') : FAIL('createRoutingBlock custom namer');
 
 // ─── 10. Hook .cmd Wrapper ───────────────────────────────────────────
 SECTION('10. Hook .cmd Wrapper');
@@ -216,7 +225,7 @@ existsSync(cmdPath) ? PASS('run-hook.cmd exists') : FAIL('run-hook.cmd missing')
 // Test PostToolUse via .cmd wrapper
 try {
   const hookOut = execSync(
-    `echo '{"tool_name":"Edit","tool_input":{"path":"/test.js"},"tool_output":{},"session_id":"e2e-cmd-test"}' | "${cmdPath}" post-tool-use`,
+    `echo '{"tool_name":"Edit","tool_input":{"path":"/test.js"},"tool_output":{},"session_id":"e2e-cmd-test"}' | "${cmdPath}" posttooluse`,
     { encoding: 'utf8', timeout: 15000, stdio: ['pipe', 'pipe', 'pipe'] }
   );
   PASS('PostToolUse via .cmd');
@@ -228,7 +237,7 @@ try {
 // Test SessionStart via .cmd wrapper
 try {
   const startOut = execSync(
-    `echo '{"source":"startup","session_id":"e2e-cmd-start"}' | "${cmdPath}" session-start`,
+    `echo '{"source":"startup","session_id":"e2e-cmd-start"}' | "${cmdPath}" sessionstart`,
     { encoding: 'utf8', timeout: 15000, stdio: ['pipe', 'pipe', 'pipe'] }
   );
   const parsed = JSON.parse(startOut.trim());
@@ -308,10 +317,12 @@ const mcpJsonPath = join(PLUGIN_ROOT, '.mcp.json');
 existsSync(mcpJsonPath) ? PASS('.mcp.json exists') : FAIL('.mcp.json missing');
 
 const mcpJson = JSON.parse(readFileSync(mcpJsonPath, 'utf8'));
-mcpJson.mcpServers?.['context-mode'] ? PASS('MCP server registered') : FAIL('no MCP server');
-mcpJson.mcpServers?.['context-mode']?.command === 'node' ? PASS('MCP command: node') : FAIL('MCP command');
-mcpJson.mcpServers?.['context-mode']?.args?.[0]?.includes('server/index.js') ? PASS('MCP args: server/index.js') : FAIL('MCP args');
-mcpJson.mcpServers?.['context-mode']?.env?.CLAUDE_PLUGIN_DATA === '${CLAUDE_PLUGIN_DATA}' ? PASS('MCP env: CLAUDE_PLUGIN_DATA') : FAIL('MCP env');
+// .mcp.json uses flat format: top-level key is the server name (no mcpServers wrapper)
+mcpJson['context-mode'] ? PASS('.mcp.json flat format: context-mode key') : FAIL('.mcp.json missing context-mode key');
+!mcpJson.mcpServers ? PASS('.mcp.json no mcpServers wrapper') : FAIL('.mcp.json has unexpected mcpServers wrapper');
+mcpJson['context-mode']?.command === 'node' ? PASS('MCP command: node') : FAIL('MCP command');
+(mcpJson['context-mode']?.args?.[0]?.includes('server/index.js') || mcpJson['context-mode']?.args?.[0]?.includes('start.js')) ? PASS('MCP args: entry point') : FAIL('MCP args');
+mcpJson['context-mode']?.env?.CLAUDE_PLUGIN_DATA === '${CLAUDE_PLUGIN_DATA}' ? PASS('MCP env: CLAUDE_PLUGIN_DATA') : FAIL('MCP env');
 
 // hooks.json
 const hooksJsonPath = join(PLUGIN_ROOT, 'hooks', 'hooks.json');
@@ -479,6 +490,99 @@ const gitignore = readFileSync(join(PLUGIN_ROOT, '.gitignore'), 'utf8');
 gitignore.includes('node_modules') ? PASS('.gitignore: node_modules') : FAIL('.gitignore: no node_modules');
 gitignore.includes('.data') ? PASS('.gitignore: .data') : FAIL('.gitignore: no .data');
 gitignore.includes('.env') ? PASS('.gitignore: .env') : FAIL('.gitignore: no .env');
+
+// ─── 15. Plugin Manifest Validation ──────────────────────────────────
+SECTION('15. Plugin Manifest Validation');
+
+// .mcp.json flat format validation
+const _mcpJson15 = JSON.parse(readFileSync(join(PLUGIN_ROOT, '.mcp.json'), 'utf-8'));
+_mcpJson15['context-mode'] ? PASS('.mcp.json flat format') : FAIL('.mcp.json missing context-mode key');
+!_mcpJson15.mcpServers ? PASS('.mcp.json no mcpServers wrapper') : FAIL('.mcp.json has mcpServers wrapper');
+
+// plugin.json mcpServers field and required fields
+const _pluginJson15 = JSON.parse(readFileSync(join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf-8'));
+_pluginJson15.mcpServers?.['context-mode'] ? PASS('plugin.json has mcpServers') : FAIL('plugin.json missing mcpServers');
+_pluginJson15.skills ? PASS('plugin.json has skills') : FAIL('plugin.json missing skills');
+_pluginJson15.hooks ? PASS('plugin.json has hooks') : FAIL('plugin.json missing hooks');
+
+// ─── 16. PreToolUse Routing ───────────────────────────────────────────
+SECTION('16. PreToolUse Routing');
+
+const { routePreToolUse, resetGuidanceThrottle } = await import('./hooks/core/routing.js');
+
+// Reset throttle before each test batch
+resetGuidanceThrottle();
+
+// curl → modify
+const curlResult = routePreToolUse('Bash', { command: 'curl https://example.com' });
+curlResult?.action === 'modify' ? PASS('curl → modify') : FAIL(`curl → ${curlResult?.action}`);
+
+// git status → passthrough or guidance (safe Bash command)
+resetGuidanceThrottle();
+const gitResult = routePreToolUse('Bash', { command: 'git status' });
+(gitResult === null || gitResult?.action === 'context') ? PASS('git → passthrough/guidance') : FAIL(`git → ${gitResult?.action}`);
+
+// WebFetch → deny
+const wfResult = routePreToolUse('WebFetch', { url: 'https://docs.example.com' });
+wfResult?.action === 'deny' ? PASS('WebFetch → deny') : FAIL(`WebFetch → ${wfResult?.action}`);
+
+// Agent → modify (inject routing block)
+const agentResult = routePreToolUse('Agent', { prompt: 'do something' });
+agentResult?.action === 'modify' ? PASS('Agent → modify') : FAIL(`Agent → ${agentResult?.action}`);
+agentResult?.updatedInput?.prompt?.includes('context_window_protection') ? PASS('Agent has routing block') : FAIL('Agent missing routing block');
+
+// Unknown tool → passthrough
+const unknownResult = routePreToolUse('SomeTool', {});
+unknownResult === null ? PASS('unknown → passthrough') : FAIL(`unknown → ${unknownResult?.action}`);
+
+// ─── 17. hooks.json Validation ────────────────────────────────────────
+SECTION('17. hooks.json Validation');
+
+const _hooksJson17 = JSON.parse(readFileSync(join(PLUGIN_ROOT, 'hooks', 'hooks.json'), 'utf-8'));
+const hookEvents = Object.keys(_hooksJson17.hooks || {});
+hookEvents.includes('PreToolUse') ? PASS('hook: PreToolUse') : FAIL('missing PreToolUse');
+hookEvents.includes('PostToolUse') ? PASS('hook: PostToolUse') : FAIL('missing PostToolUse');
+hookEvents.includes('PreCompact') ? PASS('hook: PreCompact') : FAIL('missing PreCompact');
+hookEvents.includes('SessionStart') ? PASS('hook: SessionStart') : FAIL('missing SessionStart');
+hookEvents.includes('UserPromptSubmit') ? PASS('hook: UserPromptSubmit') : FAIL('missing UserPromptSubmit');
+hookEvents.includes('SubagentStop') ? PASS('hook: SubagentStop') : FAIL('missing SubagentStop');
+
+const preToolMatchers = _hooksJson17.hooks.PreToolUse || [];
+preToolMatchers.length === 9 ? PASS('PreToolUse: 9 matchers') : FAIL(`PreToolUse: ${preToolMatchers.length} matchers (expected 9)`);
+
+// ─── 18. Plugin CLAUDE.md and Settings ───────────────────────────────
+SECTION('18. Plugin CLAUDE.md and Settings');
+
+const claudeMdPath = join(PLUGIN_ROOT, 'CLAUDE.md');
+existsSync(claudeMdPath) ? PASS('CLAUDE.md exists') : FAIL('CLAUDE.md missing');
+if (existsSync(claudeMdPath)) {
+  const claudeMd = readFileSync(claudeMdPath, 'utf-8');
+  claudeMd.includes('Think in Code') ? PASS('CLAUDE.md: Think in Code directive') : FAIL('CLAUDE.md: missing Think in Code');
+  claudeMd.includes('batch_execute') ? PASS('CLAUDE.md: tool selection') : FAIL('CLAUDE.md: missing tool selection');
+  claudeMd.includes('500 words') ? PASS('CLAUDE.md: output constraints') : FAIL('CLAUDE.md: missing output constraints');
+}
+
+const settingsPath = join(PLUGIN_ROOT, '.claude', 'settings.json');
+existsSync(settingsPath) ? PASS('.claude/settings.json exists') : FAIL('.claude/settings.json missing');
+if (existsSync(settingsPath)) {
+  const settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+  settings.permissions?.deny?.length > 0 ? PASS('settings: has deny rules') : FAIL('settings: no deny rules');
+  settings.permissions?.allow?.length > 0 ? PASS('settings: has allow rules') : FAIL('settings: no allow rules');
+}
+
+// Routing block upgrade/purge commands
+ROUTING_BLOCK.includes('ctx upgrade') ? PASS('routing block: ctx upgrade command') : FAIL('routing block: missing ctx upgrade');
+ROUTING_BLOCK.includes('ctx purge') ? PASS('routing block: ctx purge command') : FAIL('routing block: missing ctx purge');
+
+// Reference files use upstream naming (bare 'execute', not 'ctx_execute')
+const antiPatternsPath = join(PLUGIN_ROOT, 'skills', 'context-mode', 'references', 'anti-patterns.md');
+if (existsSync(antiPatternsPath)) {
+  const antiPatterns = readFileSync(antiPatternsPath, 'utf-8');
+  antiPatterns.includes('LLM summarization call') ? PASS('anti-patterns: LLM summarization note') : FAIL('anti-patterns: missing LLM summarization note');
+  !antiPatterns.includes('ctx_execute') ? PASS('anti-patterns: uses bare execute naming') : FAIL('anti-patterns: has ctx_ prefix (should be bare)');
+} else {
+  FAIL('anti-patterns.md missing');
+}
 
 // ─── Cleanup ──────────────────────────────────────────────────────────
 for (const db of [contentDb, sessionDb]) {
