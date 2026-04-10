@@ -1,45 +1,72 @@
 {
+  "description": "context-mode hooks — PreToolUse routing, PostToolUse session capture, PreCompact snapshot, SessionStart context injection, UserPromptSubmit session context, SubagentStop cleanup",
   "hooks": {
-    "SessionStart": [
+    "PreToolUse": [
       {
-        "matcher": "startup|clear|compact",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start",
-            "async": false
-          }
-        ]
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
+      },
+      {
+        "matcher": "Grep",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
+      },
+      {
+        "matcher": "mcp__plugin_context-mode_context-mode__ctx_execute",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
+      },
+      {
+        "matcher": "mcp__plugin_context-mode_context-mode__ctx_execute_file",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
+      },
+      {
+        "matcher": "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd pretooluse" }]
       }
     ],
     "PostToolUse": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" post-tool-use"
-          }
-        ]
+        "matcher": "",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd posttooluse" }]
       }
     ],
     "PreCompact": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" pre-compact"
-          }
-        ]
+        "matcher": "",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd precompact" }]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd sessionstart" }]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd userpromptsubmit" }]
       }
     ],
     "SubagentStop": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" subagent-stop"
-          }
-        ]
+        "matcher": "",
+        "hooks": [{ "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd subagent-stop" }]
       }
     ]
   }

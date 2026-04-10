@@ -87,7 +87,7 @@ export function getSessionId(input = {}) {
 /**
  * Get the directory for session databases.
  */
-function getSessionDBDir() {
+export function getSessionDBDir() {
   const pluginData = process.env.CLAUDE_PLUGIN_DATA;
   // Only use env var if it was actually expanded (not literal ${CLAUDE_PLUGIN_DATA})
   if (pluginData && !pluginData.includes('${') && !pluginData.includes('CLAUDE_PLUGIN_DATA')) {
@@ -122,6 +122,17 @@ export function getSessionEventsPath() {
   const hash = createHash('sha256').update(projectDir).digest('hex').slice(0, 16);
   const dir = getSessionDBDir();
   return join(dir, `${hash}-events.md`);
+}
+
+/**
+ * Get the per-project cleanup flag path.
+ * Used to detect true fresh starts vs --continue (which fires startup+resume).
+ */
+export function getCleanupFlagPath() {
+  const projectDir = getProjectDir();
+  const hash = createHash('sha256').update(projectDir).digest('hex').slice(0, 16);
+  const dir = getSessionDBDir();
+  return join(dir, `${hash}.cleanup`);
 }
 
 // ─── Worktree Detection ───────────────────────────────────────────────────────
