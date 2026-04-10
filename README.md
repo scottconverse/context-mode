@@ -165,6 +165,18 @@ node test-e2e.js
 
 216 tests across 19 sections covering: utils, exit classification, runtime detection, sandbox executor, knowledge base, session DB, snapshot builder, event extraction, routing block, hook cmd wrapper, MCP protocol smoke test, plugin discoverability, spec compliance, OSS attribution, plugin manifest validation, PreToolUse routing, hooks.json validation, plugin CLAUDE.md/settings validation, and schema migration.
 
+## Security Model
+
+context-mode provides **process isolation**, not filesystem sandboxing. Understanding this distinction is important:
+
+- **What the sandbox does:** Each `ctx_execute` call runs code in a separate subprocess with its own temp directory. stdout is captured and returned; raw output never enters the context window. The subprocess has a hard 100MB stdout cap and a configurable timeout (default 30s). `NODE_OPTIONS` and `ELECTRON_RUN_AS_NODE` are stripped from the subprocess environment.
+
+- **What the sandbox does NOT do:** The subprocess runs with the same filesystem permissions as the parent Claude Code process. `ctx_execute` with `language: 'shell'` runs arbitrary commands in the project root directory. There is no filesystem access restriction, no network restriction, and no binary execution restriction. The sandbox isolates context, not capabilities.
+
+- **Permission rules:** The shipped `.claude/settings.json` denies `sudo`, `rm -rf /`, and `.env` file reads. These are guardrails for the development environment, not a security boundary.
+
+- **Data storage:** Databases are stored in `~/.claude/plugins/data/context-mode/` with WAL mode enabled. Schema migrations back up the database before destructive changes. No data is sent to external services — all indexing and search is local via SQLite FTS5.
+
 ## Platform Support
 
 - Windows (requires Git Bash for shell execution)

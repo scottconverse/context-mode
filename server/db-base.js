@@ -54,7 +54,7 @@ export function loadDatabase() {
     return Database;
   } catch (err) {
     throw new Error(
-      `Failed to load better-sqlite3. Run: node scripts/setup.js\n` +
+      `Failed to load better-sqlite3. Run: node install.js\n` +
       `Searched: ${searchPaths.join(', ')}\n` +
       `Error: ${err.message}`
     );

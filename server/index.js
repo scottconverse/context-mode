@@ -767,6 +767,14 @@ server.tool(
     output += `## Runtimes (${Object.keys(runtimes).length} detected)\n`;
     output += getRuntimeSummary(runtimes) + '\n\n';
 
+    // Windows-specific: warn if shell (Git Bash) is missing
+    if (process.platform === 'win32' && !runtimes.shell) {
+      output += '## ⚠ Windows: Git Bash Not Found\n';
+      output += 'Shell execution requires Git Bash. ctx_execute with language "shell" will not work.\n';
+      output += 'Install Git for Windows from https://git-scm.com/download/win\n';
+      output += 'After installing, restart your Claude Code session.\n\n';
+    }
+
     // FTS5 check
     output += '## SQLite FTS5\n';
     try {

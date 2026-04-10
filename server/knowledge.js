@@ -788,7 +788,7 @@ export class ContentStore {
     const codeIndicators = [
       /^\s*(import|from|require|export|const|let|var|function|class|def |async |await )/m,
       /^\s*(if|else|for|while|return|try|catch|switch|case)\s*[({]/m,
-      /[{}\[\]();].*[{}\[\]();]/m, // Multiple brackets
+      /\{[^}]+\}|\[[^\]]+\]|\([^)]+\)/m, // Matched-pair brackets (avoids prose false positives)
       /^\s*\/\//m,                   // Comments
       /^\s*#\s*\w/m,                 // Python/shell comments
       /=>/,                          // Arrow functions
