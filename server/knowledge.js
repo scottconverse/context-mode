@@ -10,6 +10,7 @@
  */
 
 import { openDatabase, closeDB, withRetry } from './db-base.js';
+import { runMigrations, validateTables } from './migrate.js';
 import {
   sanitizeQuery, sanitizeTrigramQuery,
   levenshtein, maxEditDistance,
@@ -23,6 +24,64 @@ import {
 const MAX_CHUNK_BYTES = 4096;
 const RRF_K = 60;
 
+// ─── Migrations ──────────────────────────────────────────────────────────────
+
+const KNOWLEDGE_MIGRATIONS = [
+  {
+    version: 1,
+    up(db) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS sources (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          label TEXT NOT NULL,
+          chunk_count INTEGER,
+          code_chunk_count INTEGER,
+          indexed_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_sources_label ON sources(label);
+
+        CREATE TABLE IF NOT EXISTS vocabulary (
+          word TEXT PRIMARY KEY
+        );
+      `);
+
+      // FTS5 tables — created separately since IF NOT EXISTS isn't standard for virtual tables
+      try {
+        db.exec(`
+          CREATE VIRTUAL TABLE chunks USING fts5(
+            title,
+            content,
+            source_id UNINDEXED,
+            content_type UNINDEXED,
+            tokenize='porter unicode61'
+          );
+        `);
+      } catch (err) {
+        if (!err.message.includes('already exists')) throw err;
+      }
+
+      try {
+        db.exec(`
+          CREATE VIRTUAL TABLE chunks_trigram USING fts5(
+            title,
+            content,
+            source_id UNINDEXED,
+            content_type UNINDEXED,
+            tokenize='trigram'
+          );
+        `);
+      } catch (err) {
+        if (!err.message.includes('already exists')) throw err;
+      }
+    },
+  },
+];
+
+function validateKnowledgeSchema(db) {
+  validateTables(db, ['sources', 'vocabulary', 'chunks', 'chunks_trigram'], 'knowledge');
+}
+
 // ─── ContentStore ─────────────────────────────────────────────────────────────
 
 export class ContentStore {
@@ -33,57 +92,12 @@ export class ContentStore {
   constructor(dbPath) {
     this.#dbPath = dbPath;
     this.#db = openDatabase(dbPath);
-    this.#createSchema();
+    runMigrations(this.#db, dbPath, KNOWLEDGE_MIGRATIONS, {
+      label: 'knowledge',
+      detectTable: 'sources',
+      validate: validateKnowledgeSchema,
+    });
     this.#prepareStatements();
-  }
-
-  // ─── Schema ───────────────────────────────────────────────────────────────
-
-  #createSchema() {
-    this.#db.exec(`
-      CREATE TABLE IF NOT EXISTS sources (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        label TEXT NOT NULL,
-        chunk_count INTEGER,
-        code_chunk_count INTEGER,
-        indexed_at TEXT DEFAULT (datetime('now'))
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_sources_label ON sources(label);
-
-      CREATE TABLE IF NOT EXISTS vocabulary (
-        word TEXT PRIMARY KEY
-      );
-    `);
-
-    // FTS5 tables — created separately since IF NOT EXISTS isn't standard for virtual tables
-    try {
-      this.#db.exec(`
-        CREATE VIRTUAL TABLE chunks USING fts5(
-          title,
-          content,
-          source_id UNINDEXED,
-          content_type UNINDEXED,
-          tokenize='porter unicode61'
-        );
-      `);
-    } catch (err) {
-      if (!err.message.includes('already exists')) throw err;
-    }
-
-    try {
-      this.#db.exec(`
-        CREATE VIRTUAL TABLE chunks_trigram USING fts5(
-          title,
-          content,
-          source_id UNINDEXED,
-          content_type UNINDEXED,
-          tokenize='trigram'
-        );
-      `);
-    } catch (err) {
-      if (!err.message.includes('already exists')) throw err;
-    }
   }
 
   // ─── Prepared Statements ──────────────────────────────────────────────────

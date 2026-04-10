@@ -20,9 +20,12 @@
  *   16. PreToolUse Routing
  *   17. hooks.json Validation
  *   18. Plugin CLAUDE.md and Settings
+ *   19. Schema Migration
  */
 
 import { ContentStore } from './server/knowledge.js';
+import { runMigrations, validateTables } from './server/migrate.js';
+import { openDatabase, closeDB } from './server/db-base.js';
 import { SessionDB } from './server/session.js';
 import { buildResumeSnapshot } from './server/snapshot.js';
 import { extractEvents } from './hooks/session-extract.js';
@@ -33,9 +36,9 @@ import { classifyNonZeroExit } from './server/exit-classify.js';
 import { ROUTING_BLOCK, createRoutingBlock } from './hooks/routing-block.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { existsSync, unlinkSync, mkdirSync, readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, unlinkSync, mkdirSync, readFileSync, readdirSync, statSync, rmSync, mkdtempSync } from 'fs';
 import { execSync, spawn } from 'child_process';
-import { homedir } from 'os';
+import { homedir, tmpdir } from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -582,6 +585,161 @@ if (existsSync(antiPatternsPath)) {
   !antiPatterns.includes('ctx_execute') ? PASS('anti-patterns: uses bare execute naming') : FAIL('anti-patterns: has ctx_ prefix (should be bare)');
 } else {
   FAIL('anti-patterns.md missing');
+}
+
+// ─── 19. Schema Migration ─────────────────────────────────────────────
+console.log('\n--- 19. Schema Migration ---');
+
+{
+  const migTmpDir = mkdtempSync(join(tmpdir(), '.ctx-mig-'));
+
+  // Test 1: Fresh DB — all migrations run, user_version stamped
+  {
+    const dbPath = join(migTmpDir, 'fresh.db');
+    const db = openDatabase(dbPath);
+    const result = runMigrations(db, dbPath, [
+      { version: 1, up(d) { d.exec('CREATE TABLE test1 (id INTEGER PRIMARY KEY)'); } },
+    ], { label: 'test', detectTable: 'test1', validate: (d) => validateTables(d, ['test1'], 'test') });
+    const ver = db.pragma('user_version', { simple: true });
+    result.migrationsRun === 1 && ver === 1 ? PASS('fresh DB: migration runs, version stamped') : FAIL('fresh DB migration');
+    closeDB(db);
+  }
+
+  // Test 2: Pre-existing unversioned DB — stamps v1, data preserved
+  {
+    const dbPath = join(migTmpDir, 'preexisting.db');
+    const db = openDatabase(dbPath);
+    db.exec('CREATE TABLE mydata (id INTEGER PRIMARY KEY, val TEXT)');
+    db.prepare('INSERT INTO mydata (val) VALUES (?)').run('preserved');
+    // user_version is 0 (default), table exists
+    const result = runMigrations(db, dbPath, [
+      { version: 1, up(d) { d.exec('CREATE TABLE IF NOT EXISTS mydata (id INTEGER PRIMARY KEY, val TEXT)'); } },
+    ], { label: 'test', detectTable: 'mydata', validate: (d) => validateTables(d, ['mydata'], 'test') });
+    const ver = db.pragma('user_version', { simple: true });
+    const row = db.prepare('SELECT val FROM mydata').get();
+    result.migrationsRun === 1 && ver === 1 && row.val === 'preserved'
+      ? PASS('pre-existing DB: v1 stamped, data preserved')
+      : FAIL('pre-existing DB migration');
+    closeDB(db);
+  }
+
+  // Test 3: Already-current DB — no-op
+  {
+    const dbPath = join(migTmpDir, 'current.db');
+    const db = openDatabase(dbPath);
+    db.exec('CREATE TABLE t (id INTEGER)');
+    db.pragma('user_version = 1');
+    const result = runMigrations(db, dbPath, [
+      { version: 1, up(d) { d.exec('CREATE TABLE IF NOT EXISTS t (id INTEGER)'); } },
+    ], { label: 'test', detectTable: 't', validate: (d) => validateTables(d, ['t'], 'test') });
+    result.migrationsRun === 0 ? PASS('already-current DB: no-op') : FAIL('already-current DB ran migrations');
+    closeDB(db);
+  }
+
+  // Test 4: Multi-step v1 → v2 → v3
+  {
+    const dbPath = join(migTmpDir, 'multistep.db');
+    const db = openDatabase(dbPath);
+    const migrations = [
+      { version: 1, up(d) { d.exec('CREATE TABLE base (id INTEGER PRIMARY KEY)'); } },
+      { version: 2, up(d) { d.exec('ALTER TABLE base ADD COLUMN name TEXT DEFAULT ""'); } },
+      { version: 3, up(d) { d.exec('CREATE TABLE extra (id INTEGER PRIMARY KEY)'); } },
+    ];
+    const result = runMigrations(db, dbPath, migrations, {
+      label: 'test', detectTable: 'base',
+      validate: (d) => validateTables(d, ['base', 'extra'], 'test'),
+    });
+    const ver = db.pragma('user_version', { simple: true });
+    result.migrationsRun === 3 && ver === 3 ? PASS('multi-step v1→v2→v3') : FAIL(`multi-step: ran=${result.migrationsRun} ver=${ver}`);
+    closeDB(db);
+  }
+
+  // Test 5: Backup created before v1→v2 migration
+  {
+    const dbPath = join(migTmpDir, 'backup.db');
+    const db = openDatabase(dbPath);
+    db.exec('CREATE TABLE t (id INTEGER)');
+    db.pragma('user_version = 1');
+    db.prepare('INSERT INTO t (id) VALUES (?)').run(42);
+    runMigrations(db, dbPath, [
+      { version: 1, up(d) { d.exec('CREATE TABLE IF NOT EXISTS t (id INTEGER)'); } },
+      { version: 2, up(d) { d.exec('ALTER TABLE t ADD COLUMN name TEXT DEFAULT ""'); } },
+    ], { label: 'test', detectTable: 't', validate: (d) => validateTables(d, ['t'], 'test') });
+    const backupExists = existsSync(dbPath + '.backup-v1');
+    closeDB(db);
+    // Verify backup is valid SQLite with original data
+    if (backupExists) {
+      const backupDb = openDatabase(dbPath + '.backup-v1');
+      const row = backupDb.prepare('SELECT id FROM t').get();
+      closeDB(backupDb);
+      row && row.id === 42 ? PASS('backup created and valid') : FAIL('backup file corrupt');
+    } else {
+      FAIL('backup file not created');
+    }
+  }
+
+  // Test 6: Failed migration rolls back, version unchanged
+  {
+    const dbPath = join(migTmpDir, 'failmig.db');
+    const db = openDatabase(dbPath);
+    const migrations = [
+      { version: 1, up(d) { d.exec('CREATE TABLE t (id INTEGER)'); } },
+      { version: 2, up(d) { throw new Error('intentional failure'); } },
+    ];
+    let caught = false;
+    try {
+      runMigrations(db, dbPath, migrations, {
+        label: 'test', detectTable: 't', validate: () => {},
+      });
+    } catch (e) { caught = true; }
+    const ver = db.pragma('user_version', { simple: true });
+    caught && ver === 1 ? PASS('failed migration: rolled back to v1') : FAIL(`failed migration: caught=${caught} ver=${ver}`);
+    closeDB(db);
+  }
+
+  // Test 7: Validation catches missing tables
+  {
+    const dbPath = join(migTmpDir, 'validate.db');
+    const db = openDatabase(dbPath);
+    let threw = false;
+    try {
+      validateTables(db, ['nonexistent_table'], 'test');
+    } catch (e) {
+      threw = e.message.includes('nonexistent_table');
+    }
+    threw ? PASS('validation catches missing tables') : FAIL('validation did not catch missing table');
+    closeDB(db);
+  }
+
+  // Test 8: ContentStore reopen after migration preserves data
+  {
+    const dbPath = join(migTmpDir, 'kb-reopen.db');
+    const store1 = new ContentStore(dbPath);
+    store1.index({ content: 'migration test content about databases', source: 'mig-test' });
+    store1.close();
+    // Reopen — should detect v1, no-op migration, data preserved
+    const store2 = new ContentStore(dbPath);
+    const results = store2.search('databases');
+    results.length > 0 ? PASS('ContentStore reopen preserves indexed data') : FAIL('ContentStore reopen lost data');
+    store2.close();
+  }
+
+  // Test 9: SessionDB reopen after migration preserves events
+  {
+    const dbPath = join(migTmpDir, 'sess-reopen.db');
+    const sdb1 = new SessionDB(dbPath);
+    sdb1.ensureSession('test-mig-sess', '/test');
+    sdb1.insertEvent('test-mig-sess', { type: 'file_read', category: 'file', data: { path: '/a.js' }, priority: 1 });
+    sdb1.close();
+    // Reopen
+    const sdb2 = new SessionDB(dbPath);
+    const events = sdb2.getEvents('test-mig-sess');
+    events.length === 1 ? PASS('SessionDB reopen preserves events') : FAIL(`SessionDB reopen: ${events.length} events`);
+    sdb2.close();
+  }
+
+  // Cleanup migration test DBs
+  try { rmSync(migTmpDir, { recursive: true, force: true }); } catch {}
 }
 
 // ─── Cleanup ──────────────────────────────────────────────────────────

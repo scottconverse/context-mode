@@ -9,12 +9,62 @@
  */
 
 import { openDatabase, closeDB, withRetry } from './db-base.js';
+import { runMigrations, validateTables } from './migrate.js';
 import { createHash } from 'node:crypto';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MAX_EVENTS_PER_SESSION = 1000;
 const DEDUP_WINDOW = 5;
+
+// ─── Migrations ──────────────────────────────────────────────────────────────
+
+const SESSION_MIGRATIONS = [
+  {
+    version: 1,
+    up(db) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS session_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id TEXT NOT NULL,
+          type TEXT NOT NULL,
+          category TEXT NOT NULL,
+          priority INTEGER NOT NULL DEFAULT 2,
+          data TEXT NOT NULL,
+          source_hook TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          data_hash TEXT NOT NULL DEFAULT ''
+        );
+
+        CREATE TABLE IF NOT EXISTS session_meta (
+          session_id TEXT PRIMARY KEY,
+          project_dir TEXT NOT NULL,
+          started_at TEXT NOT NULL DEFAULT (datetime('now')),
+          last_event_at TEXT,
+          event_count INTEGER NOT NULL DEFAULT 0,
+          compact_count INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS session_resume (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id TEXT NOT NULL UNIQUE,
+          snapshot TEXT NOT NULL,
+          event_count INTEGER NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          consumed INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_session_events_session ON session_events(session_id);
+        CREATE INDEX IF NOT EXISTS idx_session_events_type ON session_events(session_id, type);
+        CREATE INDEX IF NOT EXISTS idx_session_events_priority ON session_events(session_id, priority);
+      `);
+    },
+  },
+];
+
+function validateSessionSchema(db) {
+  validateTables(db, ['session_events', 'session_meta', 'session_resume'], 'session');
+}
 
 // ─── SessionDB ────────────────────────────────────────────────────────────────
 
@@ -26,48 +76,12 @@ export class SessionDB {
   constructor(dbPath) {
     this.#dbPath = dbPath;
     this.#db = openDatabase(dbPath);
-    this.#createSchema();
+    runMigrations(this.#db, dbPath, SESSION_MIGRATIONS, {
+      label: 'session',
+      detectTable: 'session_events',
+      validate: validateSessionSchema,
+    });
     this.#prepareStatements();
-  }
-
-  // ─── Schema ───────────────────────────────────────────────────────────────
-
-  #createSchema() {
-    this.#db.exec(`
-      CREATE TABLE IF NOT EXISTS session_events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT NOT NULL,
-        type TEXT NOT NULL,
-        category TEXT NOT NULL,
-        priority INTEGER NOT NULL DEFAULT 2,
-        data TEXT NOT NULL,
-        source_hook TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        data_hash TEXT NOT NULL DEFAULT ''
-      );
-
-      CREATE TABLE IF NOT EXISTS session_meta (
-        session_id TEXT PRIMARY KEY,
-        project_dir TEXT NOT NULL,
-        started_at TEXT NOT NULL DEFAULT (datetime('now')),
-        last_event_at TEXT,
-        event_count INTEGER NOT NULL DEFAULT 0,
-        compact_count INTEGER NOT NULL DEFAULT 0
-      );
-
-      CREATE TABLE IF NOT EXISTS session_resume (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT NOT NULL UNIQUE,
-        snapshot TEXT NOT NULL,
-        event_count INTEGER NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        consumed INTEGER NOT NULL DEFAULT 0
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_session_events_session ON session_events(session_id);
-      CREATE INDEX IF NOT EXISTS idx_session_events_type ON session_events(session_id, type);
-      CREATE INDEX IF NOT EXISTS idx_session_events_priority ON session_events(session_id, priority);
-    `);
   }
 
   // ─── Prepared Statements ──────────────────────────────────────────────────

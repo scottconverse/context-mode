@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] - 2026-04-09
+
+### Added
+- Schema versioning and migration system (server/migrate.js) — uses PRAGMA user_version for zero-overhead version tracking
+- Ordered migration runner with automatic backup before destructive changes
+- Startup schema validation for both knowledge and session databases
+- 9 new E2E tests covering: fresh DB, pre-existing unversioned DB bootstrap, no-op on current, multi-step migrations, backup creation/validity, rollback on failure, validation, ContentStore/SessionDB data preservation across reopens
+
+### Changed
+- knowledge.js: schema creation refactored from #createSchema() into versioned migration v1
+- session.js: same refactoring pattern — schema is now migration v1
+- Total E2E tests: 216 (up from 207)
+
 ## [1.1.1] - 2026-04-09
 
 ### Fixed

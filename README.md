@@ -1,6 +1,6 @@
 # context-mode
 
-Context window optimization plugin for Claude Code in Cowork. Sandboxes tool output, indexes content into a local knowledge base, and tracks session state to reduce context consumption by up to 98%. Current version: **1.1.1**.
+Context window optimization plugin for Claude Code in Cowork. Sandboxes tool output, indexes content into a local knowledge base, and tracks session state to reduce context consumption by up to 98%. Current version: **1.2.0**.
 
 ## What It Does
 
