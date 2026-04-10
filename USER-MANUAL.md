@@ -171,6 +171,21 @@ From your perspective, compaction with Context Mode feels like a brief pause. Fr
 
 **What you might notice:** Occasionally, after compaction, Claude may say something like "resuming from session guide" or briefly recap what it was working on. This is normal — it's reading the snapshot and confirming context before continuing.
 
+## Updating Context Mode
+
+To update to the latest version, run the same install command again:
+
+```bash
+npx --yes --package=github:scottconverse/context-mode context-mode
+```
+
+Then start a new session. Your existing data is safe — Context Mode uses schema versioning to handle upgrades automatically:
+
+- **Your indexed content is preserved.** The knowledge base carries over between versions.
+- **Your session history is preserved.** Events, snapshots, and session metadata are untouched.
+- **If the new version changes the database structure,** Context Mode backs up your database first (saved as `.backup-vN` next to the original), then applies the changes. If anything goes wrong, the backup is there for recovery.
+- **You don't need to do anything.** The upgrade happens silently the first time the new version opens your databases.
+
 ## When Things Go Wrong
 
 ### "better-sqlite3 verification failed"

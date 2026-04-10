@@ -43,7 +43,7 @@ node test-e2e.js
 ## Running Tests
 
 ```bash
-# Full E2E test suite (207 tests across 18 sections)
+# Full E2E test suite (216 tests across 19 sections)
 node test-e2e.js
 
 # Test MCP server startup
@@ -123,5 +123,5 @@ All hooks are dispatched by `run-hook.cmd`, which passes the hook name as an arg
 
 1. Create a branch from `main`
 2. Make your changes
-3. Run `node test-e2e.js` — all 207 tests must pass
+3. Run `node test-e2e.js` — all 216 tests must pass
 4. Submit a pull request with a clear description of what changed and why

@@ -151,13 +151,19 @@ Results from layers 1 and 2 are merged via **Reciprocal Rank Fusion** (K=60) and
 | 4-8 | Reduced results (1 per query) + warning |
 | 9+ | Blocked — use `ctx_batch_execute` instead |
 
+## Schema Versioning
+
+Both the knowledge base and session databases use `PRAGMA user_version` for schema version tracking. On startup, the migration runner checks the current version, runs any pending migrations in order, and validates the final schema. If a destructive migration is needed (v2+), the database is backed up automatically before changes are applied.
+
+Existing databases from earlier versions bootstrap cleanly to v1 with no data loss — all `CREATE TABLE IF NOT EXISTS` statements are idempotent.
+
 ## Tests
 
 ```bash
 node test-e2e.js
 ```
 
-207 tests across 18 sections covering: utils, exit classification, runtime detection, sandbox executor, knowledge base, session DB, snapshot builder, event extraction, routing block, hook cmd wrapper, MCP protocol smoke test, plugin discoverability, spec compliance, OSS attribution, plugin manifest validation, PreToolUse routing, hooks.json validation, and plugin CLAUDE.md/settings validation.
+216 tests across 19 sections covering: utils, exit classification, runtime detection, sandbox executor, knowledge base, session DB, snapshot builder, event extraction, routing block, hook cmd wrapper, MCP protocol smoke test, plugin discoverability, spec compliance, OSS attribution, plugin manifest validation, PreToolUse routing, hooks.json validation, plugin CLAUDE.md/settings validation, and schema migration.
 
 ## Platform Support
 

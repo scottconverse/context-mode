@@ -270,6 +270,11 @@ try {
     params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "probe", version: "1.0.0" } }
   }) + "\n";
 
+  // MCP protocol requires initialized notification before tools/list
+  const initializedMsg = JSON.stringify({
+    jsonrpc: "2.0", method: "notifications/initialized"
+  }) + "\n";
+
   const listMsg = JSON.stringify({
     jsonrpc: "2.0", id: 2, method: "tools/list", params: {}
   }) + "\n";
@@ -280,6 +285,8 @@ try {
   server.stdin.write(initMsg);
   // Give server time to bootstrap (ensure-deps, turndown install) and respond to init
   await new Promise(r => setTimeout(r, 4000));
+  server.stdin.write(initializedMsg);
+  await new Promise(r => setTimeout(r, 500));
   server.stdin.write(listMsg);
   await new Promise(r => setTimeout(r, 4000));
 

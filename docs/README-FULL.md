@@ -55,7 +55,8 @@ css: |-
 15. [Design Decisions](#15-design-decisions)
 16. [Configuration Reference](#16-configuration-reference)
 17. [Platform Support](#17-platform-support)
-18. [Testing](#18-testing)
+18. [Schema Versioning](#18-schema-versioning)
+19. [Testing](#19-testing)
 
 ---
 
@@ -161,6 +162,7 @@ context-mode/
 │   ├── session.js            # SessionDB
 │   ├── snapshot.js           # Compaction snapshot builder
 │   ├── runtime.js            # Language runtime detection
+│   ├── migrate.js            # Schema versioning and migration runner
 │   ├── db-base.js            # SQLite utilities
 │   ├── utils.js              # Query sanitization, Levenshtein
 │   └── exit-classify.js      # Non-zero exit classification
@@ -195,7 +197,8 @@ context-mode/
 ├── agents/                   # context-optimizer agent
 ├── scripts/                  # setup.js, setup.sh
 ├── docs/                     # Landing page, full docs
-└── test-e2e.js               # 207-test E2E suite (18 sections)
+├── test-e2e.js               # 216-test E2E suite (19 sections)
+└── test-adversarial.js       # 58-test adversarial suite (10 phases)
 ```
 
 ---
@@ -628,11 +631,52 @@ Without throttling, Claude can fall into a search loop: search → not quite rig
 
 ---
 
-## 18. Testing
+## 18. Schema Versioning
+
+Both the knowledge base and session databases use SQLite's built-in `PRAGMA user_version` for schema version tracking. This provides zero-overhead versioning with no additional tables or queries.
+
+### Migration Runner (`server/migrate.js`)
+
+On every startup, each database constructor calls `runMigrations()` which:
+
+1. Reads `PRAGMA user_version` — returns 0 for new or pre-existing unversioned databases
+2. Filters pending migrations (version > current), sorts ascending
+3. **Backup** (if current > 0): checkpoints WAL, copies `.db` to `.db.backup-vN`
+4. Runs each migration in its own transaction — `up(db)` + stamp `user_version`
+5. Validates the final schema — confirms all required tables exist
+
+If a migration fails, the transaction rolls back. The database stays at the last successful version. The backup file remains for manual recovery.
+
+### v0 → v1 Bootstrap
+
+Existing databases from v1.1.x have no version stamp (`user_version = 0`). On first startup with v1.2.0:
+
+- The runner detects existing tables via `sqlite_master`
+- Runs the v1 migration which is all `CREATE TABLE IF NOT EXISTS` — no actual changes
+- Stamps `user_version = 1`
+- No backup created (no destructive changes)
+- All indexed content and session history preserved
+
+### Adding Future Migrations
+
+```javascript
+const KNOWLEDGE_MIGRATIONS = [
+  { version: 1, up(db) { /* existing schema */ } },
+  { version: 2, up(db) {
+    db.exec("ALTER TABLE sources ADD COLUMN content_hash TEXT DEFAULT ''");
+  }},
+];
+```
+
+The runner automatically backs up the v1 database, runs the ALTER TABLE in a transaction, and stamps v2.
+
+---
+
+## 19. Testing
 
 ### E2E Test Suite
 
-The project ships a single comprehensive E2E test file (`test-e2e.js`) covering 207 tests across 18 sections:
+The project ships a single comprehensive E2E test file (`test-e2e.js`) covering 216 tests across 19 sections:
 
 | Section | Coverage |
 |---------|----------|
@@ -654,6 +698,7 @@ The project ships a single comprehensive E2E test file (`test-e2e.js`) covering 
 | 16. PreToolUse Routing | curl→modify, git→passthrough, WebFetch→deny, Agent→modify |
 | 17. hooks.json Validation | 6 hook events present, 9 PreToolUse matchers |
 | 18. Plugin CLAUDE.md and Settings | Directive content, permission rules structure |
+| 19. Schema Migration | Fresh DB, unversioned bootstrap, multi-step, backup, rollback, validation |
 
 ### Running the Suite
 
