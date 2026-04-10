@@ -1,0 +1,20 @@
+[+] Building 4.2s (12/12) FINISHED                          docker:default
+ => [1/12] FROM node:20-alpine AS builder                                        CACHED
+ => [2/12] WORKDIR /app                                        CACHED
+ => [3/12] COPY package*.json ./                                        CACHED
+ => [4/12] RUN npm ci --omit=dev                                        CACHED
+ => [5/12] COPY . .
+ => [5/12] COPY . .  1.7s
+ => [6/12] RUN npm run build
+ => [6/12] RUN npm run build  1.5s
+ => [7/12] FROM node:20-alpine AS runtime                                        CACHED
+ => [8/12] WORKDIR /app                                        CACHED
+ => [9/12] COPY --from=builder /app/dist ./dist
+ => [9/12] COPY --from=builder /app/dist ./dist  2.4s
+ => [10/12] COPY --from=builder /app/node_modules ./node_modules                                        CACHED
+ => [11/12] EXPOSE 3000                                        CACHED
+ => [12/12] CMD ["node", "dist/index.js"]                                        CACHED
+ => exporting to image                                                      0.1s
+ => => exporting layers                                                     0.1s
+ => => writing image sha256:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4   0.0s
+ => => naming to docker.io/library/my-app:latest                            0.0s

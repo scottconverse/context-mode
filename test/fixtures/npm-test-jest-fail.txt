@@ -1,0 +1,60 @@
+[2K[1G[2m$ jest --verbose[22m
+
+ PASS  src/utils/__tests__/format.test.js
+  formatBytes
+    ✓ formats bytes (2 ms)
+    ✓ formats kilobytes (1 ms)
+    ✓ formats megabytes
+    ✓ handles zero
+    ✓ handles negative values (1 ms)
+
+ [1m[31mFAIL[39m[22m  src/server/__tests__/sandbox.test.js
+  PolyglotExecutor
+    ✓ executes javascript (45 ms)
+    ✓ executes python (38 ms)
+    [1m[31m✕ executes shell (12 ms)[39m[22m
+    ✓ enforces timeout (1003 ms)
+    ✓ enforces byte cap (22 ms)
+
+  [1m[31m● PolyglotExecutor › executes shell[39m[22m
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 127
+
+      14 |     const result = await executor.execute({ language: 'shell', code: 'echo hello' });
+      15 |     expect(result.stdout.trim()).toBe('hello');
+    > 16 |     expect(result.exitCode).toBe(0);
+         |                             ^
+      17 |   });
+
+      at Object.<anonymous> (src/server/__tests__/sandbox.test.js:16:29)
+
+ [1m[31mFAIL[39m[22m  src/server/__tests__/knowledge.test.js
+  ContentStore
+    ✓ indexes content (12 ms)
+    ✓ searches with BM25 (8 ms)
+    [1m[31m✕ searches with trigram fallback (15 ms)[39m[22m
+    ✓ deduplicates chunks (5 ms)
+
+  [1m[31m● ContentStore › searches with trigram fallback[39m[22m
+
+    TypeError: store.searchTrigram is not a function
+
+      22 |   it('searches with trigram fallback', () => {
+    > 23 |     const results = store.searchTrigram('test query');
+         |                          ^
+      24 |     expect(results.length).toBeGreaterThan(0);
+      25 |   });
+
+      at Object.<anonymous> (src/server/__tests__/knowledge.test.js:23:26)
+
+ PASS  src/hooks/__tests__/routing.test.js
+ PASS  src/server/__tests__/session.test.js
+
+[1m[32mTest Suites: 2 failed, 2 passed, 4 total[39m[22m
+[1m[31mTests:       2 failed, 43 passed, 45 total[39m[22m
+[1m[2mSnapshots:   0 total[39m[22m
+[1m[2mTime:        3.912 s[39m[22m
+[2mRan all test suites.[22m

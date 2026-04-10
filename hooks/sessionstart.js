@@ -87,6 +87,26 @@ try {
     // Orphaned events cleanup
     db.cleanupOrphanedEvents?.();
 
+    // Prune old compression learner data (7-day window)
+    try {
+      const { existsSync: fsExist } = await import('node:fs');
+      const { createHash: ch } = await import('node:crypto');
+      const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+      const projHash = ch('sha256').update(projectDir).digest('hex').slice(0, 16);
+      const dataDir = join(homedir(), '.claude', 'plugins', 'data', 'context-mode');
+      const learnerDbPath = join(dataDir, 'content', `${projHash}.db`);
+      if (fsExist(learnerDbPath)) {
+        const { openDatabase: openDb } = await import(join(HOOK_DIR, '..', 'server', 'db-base.js'));
+        const contentDb = openDb(learnerDbPath);
+        const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        try { contentDb.prepare('DELETE FROM compression_log WHERE timestamp < ?').run(cutoff); } catch {}
+        try { contentDb.prepare('DELETE FROM compression_stats WHERE date < ?').run(new Date(cutoff).toISOString().slice(0, 10)); } catch {}
+        contentDb.close();
+      }
+    } catch {
+      // Learner cleanup is best-effort
+    }
+
     // Proactively capture CLAUDE.md files — Claude Code loads them as system
     // context at startup, invisible to PostToolUse hooks. We read them from
     // disk so they survive compact/resume via the session events pipeline.

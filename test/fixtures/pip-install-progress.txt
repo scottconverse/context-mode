@@ -1,0 +1,59 @@
+Collecting numpy>=5.16.1
+  Downloading numpy-5.16.1-cp311-cp311-manylinux_2_17_x86_64.whl (38.5 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 38.5/38.5 MB 19.3 MB/s eta 0:00:00
+Collecting pandas>=1.14.5
+  Downloading pandas-1.14.5-cp311-cp311-manylinux_2_17_x86_64.whl (27.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 27.3/27.3 MB 27.7 MB/s eta 0:00:00
+Collecting scikit-learn>=2.7.6
+  Downloading scikit-learn-2.7.6-cp311-cp311-manylinux_2_17_x86_64.whl (9.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 13.1 MB/s eta 0:00:00
+Collecting matplotlib>=5.12.4
+  Downloading matplotlib-5.12.4-cp311-cp311-manylinux_2_17_x86_64.whl (43.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 43.2/43.2 MB 10.7 MB/s eta 0:00:00
+Collecting scipy>=1.16.8
+  Downloading scipy-1.16.8-cp311-cp311-manylinux_2_17_x86_64.whl (26.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 26.1/26.1 MB 24.6 MB/s eta 0:00:00
+Collecting requests>=1.7.7
+  Downloading requests-1.7.7-cp311-cp311-manylinux_2_17_x86_64.whl (42.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42.0/42.0 MB 8.5 MB/s eta 0:00:00
+Collecting flask>=4.7.8
+  Downloading flask-4.7.8-cp311-cp311-manylinux_2_17_x86_64.whl (33.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 33.1/33.1 MB 34.6 MB/s eta 0:00:00
+Collecting sqlalchemy>=2.13.0
+  Downloading sqlalchemy-2.13.0-cp311-cp311-manylinux_2_17_x86_64.whl (26.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 26.7/26.7 MB 24.0 MB/s eta 0:00:00
+Collecting celery>=1.14.1
+  Downloading celery-1.14.1-cp311-cp311-manylinux_2_17_x86_64.whl (4.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.2/4.2 MB 18.2 MB/s eta 0:00:00
+Collecting redis>=3.3.0
+  Downloading redis-3.3.0-cp311-cp311-manylinux_2_17_x86_64.whl (47.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 47.7/47.7 MB 28.7 MB/s eta 0:00:00
+Collecting pytest>=5.9.9
+  Downloading pytest-5.9.9-cp311-cp311-manylinux_2_17_x86_64.whl (27.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 27.2/27.2 MB 33.0 MB/s eta 0:00:00
+Collecting black>=4.11.3
+  Downloading black-4.11.3-cp311-cp311-manylinux_2_17_x86_64.whl (30.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 30.1/30.1 MB 26.7 MB/s eta 0:00:00
+Collecting mypy>=2.7.4
+  Downloading mypy-2.7.4-cp311-cp311-manylinux_2_17_x86_64.whl (49.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 49.2/49.2 MB 31.5 MB/s eta 0:00:00
+Collecting ruff>=3.6.5
+  Downloading ruff-3.6.5-cp311-cp311-manylinux_2_17_x86_64.whl (1.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 29.3 MB/s eta 0:00:00
+Collecting pydantic>=4.11.3
+  Downloading pydantic-4.11.3-cp311-cp311-manylinux_2_17_x86_64.whl (11.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.9/11.9 MB 19.8 MB/s eta 0:00:00
+Collecting httpx>=5.9.1
+  Downloading httpx-5.9.1-cp311-cp311-manylinux_2_17_x86_64.whl (19.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 19.4/19.4 MB 16.6 MB/s eta 0:00:00
+Collecting uvicorn>=1.18.4
+  Downloading uvicorn-1.18.4-cp311-cp311-manylinux_2_17_x86_64.whl (4.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 21.7 MB/s eta 0:00:00
+Collecting fastapi>=2.3.0
+  Downloading fastapi-2.3.0-cp311-cp311-manylinux_2_17_x86_64.whl (6.5 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.5/6.5 MB 15.0 MB/s eta 0:00:00
+Installing collected packages: numpy, pandas, scikit-learn, matplotlib, scipy, requests, flask, sqlalchemy, celery, redis, pytest, black, mypy, ruff, pydantic, httpx, uvicorn, fastapi
+Successfully installed numpy-5.18.0 pandas-3.19.8 scikit-learn-2.11.6 matplotlib-4.15.9 scipy-4.15.9 requests-2.2.1 flask-3.11.0 sqlalchemy-4.8.2 celery-2.3.0 redis-4.19.2 pytest-5.13.5 black-4.2.5 mypy-4.11.3 ruff-5.12.3 pydantic-1.10.9 httpx-3.7.8 uvicorn-5.13.7 fastapi-3.12.1
+
+[notice] A new release of pip is available: 23.3.1 -> 24.0
+[notice] To update, run: pip install --upgrade pip

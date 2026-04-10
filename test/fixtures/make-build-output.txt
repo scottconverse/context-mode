@@ -1,0 +1,34 @@
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_0.c -o build/module_0.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_1.c -o build/module_1.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_2.c -o build/module_2.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_3.c -o build/module_3.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_4.c -o build/module_4.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_5.c -o build/module_5.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_6.c -o build/module_6.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_7.c -o build/module_7.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_8.c -o build/module_8.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_9.c -o build/module_9.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_10.c -o build/module_10.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_11.c -o build/module_11.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_12.c -o build/module_12.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_13.c -o build/module_13.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_14.c -o build/module_14.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_15.c -o build/module_15.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_16.c -o build/module_16.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_17.c -o build/module_17.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_18.c -o build/module_18.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_19.c -o build/module_19.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_20.c -o build/module_20.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_21.c -o build/module_21.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_22.c -o build/module_22.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_23.c -o build/module_23.o
+gcc -c -O2 -Wall -Wextra -I./include -fPIC src/module_24.c -o build/module_24.o
+
+
+src/module_7.c:142:15: warning: unused parameter 'ctx' [-Wunused-parameter]
+  142 | void process(Context *ctx, int flags) {
+      |               ^~~
+
+ar rcs build/libproject.a build/module_0.o build/module_1.o build/module_2.o
+gcc -O2 -Wall -Wextra -I./include -o build/project src/main.c -L./build -lproject -lpthread -lm
+make: Leaving directory '/home/user/project'

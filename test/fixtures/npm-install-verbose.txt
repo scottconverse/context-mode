@@ -1,0 +1,96 @@
+npm warn deprecated inflight@1.0.6: This module is not supported
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-0/-/@scope/package-0-1.0.0.tgz 347ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-1/-/@scope/package-1-2.1.1.tgz 384ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-2/-/@scope/package-2-3.2.2.tgz 549ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-3/-/@scope/package-3-4.3.3.tgz 117ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-4/-/@scope/package-4-5.4.4.tgz 212ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-5/-/@scope/package-5-6.5.5.tgz 379ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-6/-/@scope/package-6-7.6.6.tgz 392ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-7/-/@scope/package-7-8.7.7.tgz 196ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-8/-/@scope/package-8-1.8.8.tgz 99ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-9/-/@scope/package-9-2.9.9.tgz 505ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-10/-/@scope/package-10-3.10.10.tgz 136ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-11/-/@scope/package-11-4.11.11.tgz 409ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-12/-/@scope/package-12-5.12.12.tgz 227ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-13/-/@scope/package-13-6.13.13.tgz 245ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-14/-/@scope/package-14-7.14.14.tgz 79ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-15/-/@scope/package-15-8.15.0.tgz 75ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-16/-/@scope/package-16-1.16.1.tgz 501ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-17/-/@scope/package-17-2.17.2.tgz 263ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-18/-/@scope/package-18-3.18.3.tgz 439ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-19/-/@scope/package-19-4.19.4.tgz 404ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-20/-/@scope/package-20-5.20.5.tgz 54ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-21/-/@scope/package-21-6.21.6.tgz 235ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-22/-/@scope/package-22-7.22.7.tgz 402ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-23/-/@scope/package-23-8.23.8.tgz 379ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-24/-/@scope/package-24-1.24.9.tgz 316ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-25/-/@scope/package-25-2.25.10.tgz 347ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-26/-/@scope/package-26-3.26.11.tgz 504ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-27/-/@scope/package-27-4.27.12.tgz 244ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-28/-/@scope/package-28-5.28.13.tgz 97ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-29/-/@scope/package-29-6.29.14.tgz 288ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-30/-/@scope/package-30-7.0.0.tgz 271ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-31/-/@scope/package-31-8.1.1.tgz 94ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-32/-/@scope/package-32-1.2.2.tgz 181ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-33/-/@scope/package-33-2.3.3.tgz 475ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-34/-/@scope/package-34-3.4.4.tgz 138ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-35/-/@scope/package-35-4.5.5.tgz 273ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-36/-/@scope/package-36-5.6.6.tgz 91ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-37/-/@scope/package-37-6.7.7.tgz 181ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-38/-/@scope/package-38-7.8.8.tgz 304ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-39/-/@scope/package-39-8.9.9.tgz 105ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-40/-/@scope/package-40-1.10.10.tgz 477ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-41/-/@scope/package-41-2.11.11.tgz 260ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-42/-/@scope/package-42-3.12.12.tgz 261ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-43/-/@scope/package-43-4.13.13.tgz 348ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-44/-/@scope/package-44-5.14.14.tgz 53ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-45/-/@scope/package-45-6.15.0.tgz 111ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-46/-/@scope/package-46-7.16.1.tgz 118ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-47/-/@scope/package-47-8.17.2.tgz 293ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-48/-/@scope/package-48-1.18.3.tgz 188ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-49/-/@scope/package-49-2.19.4.tgz 103ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-50/-/@scope/package-50-3.20.5.tgz 77ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-51/-/@scope/package-51-4.21.6.tgz 505ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-52/-/@scope/package-52-5.22.7.tgz 461ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-53/-/@scope/package-53-6.23.8.tgz 269ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-54/-/@scope/package-54-7.24.9.tgz 183ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-55/-/@scope/package-55-8.25.10.tgz 497ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-56/-/@scope/package-56-1.26.11.tgz 256ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-57/-/@scope/package-57-2.27.12.tgz 545ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-58/-/@scope/package-58-3.28.13.tgz 446ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-59/-/@scope/package-59-4.29.14.tgz 270ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-60/-/@scope/package-60-5.0.0.tgz 406ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-61/-/@scope/package-61-6.1.1.tgz 213ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-62/-/@scope/package-62-7.2.2.tgz 397ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-63/-/@scope/package-63-8.3.3.tgz 246ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-64/-/@scope/package-64-1.4.4.tgz 304ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-65/-/@scope/package-65-2.5.5.tgz 263ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-66/-/@scope/package-66-3.6.6.tgz 318ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-67/-/@scope/package-67-4.7.7.tgz 305ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-68/-/@scope/package-68-5.8.8.tgz 195ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-69/-/@scope/package-69-6.9.9.tgz 84ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-70/-/@scope/package-70-7.10.10.tgz 241ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-71/-/@scope/package-71-8.11.11.tgz 223ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-72/-/@scope/package-72-1.12.12.tgz 188ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-73/-/@scope/package-73-2.13.13.tgz 71ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-74/-/@scope/package-74-3.14.14.tgz 106ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-75/-/@scope/package-75-4.15.0.tgz 439ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-76/-/@scope/package-76-5.16.1.tgz 398ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-77/-/@scope/package-77-6.17.2.tgz 91ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-78/-/@scope/package-78-7.18.3.tgz 254ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-79/-/@scope/package-79-8.19.4.tgz 121ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-80/-/@scope/package-80-1.20.5.tgz 531ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-81/-/@scope/package-81-2.21.6.tgz 509ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-82/-/@scope/package-82-3.22.7.tgz 396ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-83/-/@scope/package-83-4.23.8.tgz 289ms
+npm http fetch GET 200 https://registry.npmjs.org/@scope/package-84/-/@scope/package-84-5.24.9.tgz 84ms
+
+added 87 packages, and audited 312 packages in 18s
+
+42 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities

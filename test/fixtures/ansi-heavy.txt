@@ -1,0 +1,47 @@
+[K[1m[36mProgress:[0m [░░░░░░░░░░░░░░░░░░░░] 0% [2m(0/1000 files)[0m[K[1m[36mProgress:[0m [█░░░░░░░░░░░░░░░░░░░] 5% [2m(50/1000 files)[0m[K[1m[36mProgress:[0m [██░░░░░░░░░░░░░░░░░░] 10% [2m(100/1000 files)[0m[K[1m[36mProgress:[0m [███░░░░░░░░░░░░░░░░░] 15% [2m(150/1000 files)[0m[K[1m[36mProgress:[0m [████░░░░░░░░░░░░░░░░] 20% [2m(200/1000 files)[0m[K[1m[36mProgress:[0m [█████░░░░░░░░░░░░░░░] 25% [2m(250/1000 files)[0m[K[1m[36mProgress:[0m [██████░░░░░░░░░░░░░░] 30% [2m(300/1000 files)[0m[K[1m[36mProgress:[0m [███████░░░░░░░░░░░░░] 35% [2m(350/1000 files)[0m[K[1m[36mProgress:[0m [████████░░░░░░░░░░░░] 40% [2m(400/1000 files)[0m[K[1m[36mProgress:[0m [█████████░░░░░░░░░░░] 45% [2m(450/1000 files)[0m[K[1m[36mProgress:[0m [██████████░░░░░░░░░░] 50% [2m(500/1000 files)[0m[K[1m[36mProgress:[0m [███████████░░░░░░░░░] 55% [2m(550/1000 files)[0m[K[1m[36mProgress:[0m [████████████░░░░░░░░] 60% [2m(600/1000 files)[0m[K[1m[36mProgress:[0m [█████████████░░░░░░░] 65% [2m(650/1000 files)[0m[K[1m[36mProgress:[0m [██████████████░░░░░░] 70% [2m(700/1000 files)[0m[K[1m[36mProgress:[0m [███████████████░░░░░] 75% [2m(750/1000 files)[0m[K[1m[36mProgress:[0m [████████████████░░░░] 80% [2m(800/1000 files)[0m[K[1m[36mProgress:[0m [█████████████████░░░] 85% [2m(850/1000 files)[0m[K[1m[36mProgress:[0m [██████████████████░░] 90% [2m(900/1000 files)[0m[K[1m[36mProgress:[0m [███████████████████░] 95% [2m(950/1000 files)[0m[K[1m[36mProgress:[0m [████████████████████] 100% [2m(1000/1000 files)[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:00:00Z[0m [32mProcessing item 1 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:01:00Z[0m [33mProcessing item 2 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:02:00Z[0m [31mProcessing item 3 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:03:00Z[0m [35mProcessing item 4 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:04:00Z[0m [32mProcessing item 5 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:05:00Z[0m [33mProcessing item 6 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:06:00Z[0m [31mProcessing item 7 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:07:00Z[0m [35mProcessing item 8 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:08:00Z[0m [32mProcessing item 9 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:09:00Z[0m [33mProcessing item 10 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:10:00Z[0m [31mProcessing item 11 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:11:00Z[0m [35mProcessing item 12 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:12:00Z[0m [32mProcessing item 13 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:13:00Z[0m [33mProcessing item 14 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:14:00Z[0m [31mProcessing item 15 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:15:00Z[0m [35mProcessing item 16 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:16:00Z[0m [32mProcessing item 17 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:17:00Z[0m [33mProcessing item 18 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:18:00Z[0m [31mProcessing item 19 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:19:00Z[0m [35mProcessing item 20 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:20:00Z[0m [32mProcessing item 21 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:21:00Z[0m [33mProcessing item 22 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:22:00Z[0m [31mProcessing item 23 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:23:00Z[0m [35mProcessing item 24 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:24:00Z[0m [32mProcessing item 25 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:25:00Z[0m [33mProcessing item 26 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:26:00Z[0m [31mProcessing item 27 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:27:00Z[0m [35mProcessing item 28 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:28:00Z[0m [32mProcessing item 29 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:29:00Z[0m [33mProcessing item 30 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:30:00Z[0m [31mProcessing item 31 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:31:00Z[0m [35mProcessing item 32 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:32:00Z[0m [32mProcessing item 33 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:33:00Z[0m [33mProcessing item 34 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:34:00Z[0m [31mProcessing item 35 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:35:00Z[0m [35mProcessing item 36 of 40[0m
+[32m[1m[INFO][0m [2m2026-04-10T10:36:00Z[0m [32mProcessing item 37 of 40[0m
+[33m[1m[WARN][0m [2m2026-04-10T10:37:00Z[0m [33mProcessing item 38 of 40[0m
+[31m[1m[ERROR][0m [2m2026-04-10T10:38:00Z[0m [31mProcessing item 39 of 40[0m
+[35m[1m[DEBUG][0m [2m2026-04-10T10:39:00Z[0m [35mProcessing item 40 of 40[0m
+[2J[H[1;1H[?25l[1;1H[1m[4mRow 1[0m: [38;5;40mcolored text with 256-color codes[0m
+[2;1H[1m[4mRow 2[0m: [38;5;80mcolored text with 256-color codes[0m
+[3;1H[1m[4mRow 3[0m: [38;5;120mcolored text with 256-color codes[0m
+[4;1H[1m[4mRow 4[0m: [38;5;160mcolored text with 256-color codes[0m
+[5;1H[1m[4mRow 5[0m: [38;5;200mcolored text with 256-color codes[0m
+[?25h

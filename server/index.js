@@ -20,6 +20,9 @@ import { homedir as osHomedir } from 'node:os';
 import { detectRuntimes, getRuntimeSummary, getAvailableLanguages, isWindows } from './runtime.js';
 import { PolyglotExecutor } from './sandbox.js';
 import { ContentStore } from './knowledge.js';
+import { openDatabase } from './db-base.js';
+import { compress } from './compressor.js';
+import { Learner } from './learner.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,7 +30,7 @@ const PLUGIN_ROOT = join(__dirname, '..');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const VERSION = '1.2.1';
+const VERSION = '1.3.0';
 const INTENT_SEARCH_THRESHOLD = 5000;       // Auto-index if output > 5KB
 const LARGE_OUTPUT_THRESHOLD = 102400;       // 100KB
 const SEARCH_WINDOW_MS = 60000;             // 60s throttle window
@@ -134,6 +137,48 @@ function getExecutor() {
   return _executor;
 }
 
+// ─── Lazy-loaded Compressor + Learner ────────────────────────────────────────
+
+let _learner = null;
+let _sessionDB = null;
+
+function getLearner() {
+  if (!_learner) {
+    const store = getStoreSync();
+    const signalDir = join(PLUGIN_DATA, 'signals');
+    _learner = new Learner(store.db, signalDir);
+  }
+  return _learner;
+}
+
+function getRecentSessionEvents(limit = 50) {
+  try {
+    if (!_sessionDB) {
+      const sessionDbPath = join(SESSIONS_DIR, `${getProjectHash()}.db`);
+      if (!existsSync(sessionDbPath)) return [];
+      _sessionDB = openDatabase(sessionDbPath);
+    }
+    const rows = _sessionDB.prepare(
+      'SELECT type, category, data FROM session_events ORDER BY timestamp DESC LIMIT ?'
+    ).all(limit);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
+// Compression stats tracked per-session (in-memory, flushed to DB periodically)
+const compressionStats = {};
+
+function trackCompression(toolPattern, originalBytes, compressedBytes) {
+  if (!compressionStats[toolPattern]) {
+    compressionStats[toolPattern] = { calls: 0, originalTokens: 0, compressedTokens: 0 };
+  }
+  compressionStats[toolPattern].calls++;
+  compressionStats[toolPattern].originalTokens += Math.round(originalBytes / 4);
+  compressionStats[toolPattern].compressedTokens += Math.round(compressedBytes / 4);
+}
+
 // ─── Utility Functions ────────────────────────────────────────────────────────
 
 function makeTextResponse(text) {
@@ -204,51 +249,68 @@ server.tool(
 
     const stdout = result.stdout || '';
 
-    // If intent provided and output is large, auto-index and search
-    if (intent && Buffer.byteLength(stdout, 'utf8') > INTENT_SEARCH_THRESHOLD) {
-      try {
-        const store = await getStoreAsync();
-        const source = `exec:${language}:${Date.now()}`;
-        store.index({ content: stdout, source });
-        sessionStats.bytesIndexed += Buffer.byteLength(stdout, 'utf8');
+    // ─── Compression pipeline ───
+    let compressed = stdout;
+    try {
+      const toolPattern = `shell:${language}`;
+      const learner = getLearner();
+      const sessionEvents = getRecentSessionEvents();
+      const weights = learner.getWeights(toolPattern);
+      const source = `exec:${language}:${Date.now()}`;
 
-        const results = store.searchWithFallback(intent, 2, source);
-        if (results.length > 0) {
-          output += `Output indexed (${formatBytes(rawBytes)} → searched by intent)\n\n`;
-          for (const r of results) {
-            output += `### ${r.title}\n${r.snippet || r.content}\n\n`;
+      // Index full output to KB before compression
+      if (Buffer.byteLength(stdout, 'utf8') > INTENT_SEARCH_THRESHOLD) {
+        try {
+          const store = await getStoreAsync();
+          store.index({ content: stdout, source });
+          sessionStats.bytesIndexed += Buffer.byteLength(stdout, 'utf8');
+        } catch {}
+      }
+
+      // Compress
+      const compResult = compress(stdout, {
+        toolName: toolPattern,
+        command: code,
+        sessionEvents,
+        learnerWeights: weights,
+        sourceLabel: source,
+      });
+      compressed = compResult.compressed;
+
+      // Record learner decisions
+      for (const decision of compResult.stats.decisions) {
+        learner.recordDecision({
+          toolPattern,
+          contentHash: decision.contentHash,
+          contentPreview: decision.contentPreview,
+          sessionContext: sessionEvents.slice(0, 3).map(e => e.data).join('; '),
+          sourceLabel: source,
+        });
+      }
+
+      // Track compression stats
+      trackCompression(toolPattern, compResult.stats.originalBytes, compResult.stats.compressedBytes);
+
+      // Intent search on compressed output (if intent provided)
+      if (intent && compResult.stats.originalBytes > INTENT_SEARCH_THRESHOLD) {
+        try {
+          const store = await getStoreAsync();
+          const results = store.searchWithFallback(intent, 2, source);
+          if (results.length > 0) {
+            output += `Output compressed + indexed (${formatBytes(rawBytes)} → ${formatBytes(compResult.stats.compressedBytes)})\n\n`;
+            for (const r of results) {
+              output += `### ${r.title}\n${r.snippet || r.content}\n\n`;
+            }
+            trackCall('ctx_execute', Buffer.byteLength(output, 'utf8'));
+            return makeTextResponse(output.trim());
           }
-          const responseBytes = Buffer.byteLength(output, 'utf8');
-          trackCall('ctx_execute', responseBytes);
-          return makeTextResponse(output.trim());
-        }
-      } catch (err) {
-        // Auto-index failed — fall through to return raw stdout
-        process.stderr.write(`[context-mode] ctx_execute auto-index failed: ${err.message}\n`);
+        } catch {}
       }
+    } catch (compErr) {
+      process.stderr.write(`[context-mode] compression pipeline error: ${compErr.message}\n`);
     }
 
-    // Large output without intent: auto-index and return pointer
-    if (Buffer.byteLength(stdout, 'utf8') > LARGE_OUTPUT_THRESHOLD) {
-      try {
-        const store = await getStoreAsync();
-        const source = `exec:${language}:${Date.now()}`;
-        store.index({ content: stdout, source });
-        sessionStats.bytesIndexed += Buffer.byteLength(stdout, 'utf8');
-        output += `Output indexed as "${source}" (${formatBytes(rawBytes)}). Use ctx_search to query it.`;
-        const responseBytes = Buffer.byteLength(output, 'utf8');
-        trackCall('ctx_execute', responseBytes);
-        return makeTextResponse(output.trim());
-      } catch {
-        // Fall through to truncated output
-        output += stdout.slice(0, 5000) + `\n\n... [truncated, ${formatBytes(rawBytes)} total]`;
-        const responseBytes = Buffer.byteLength(output, 'utf8');
-        trackCall('ctx_execute', responseBytes);
-        return makeTextResponse(output.trim());
-      }
-    }
-
-    output += stdout;
+    output += compressed;
     const responseBytes = Buffer.byteLength(output, 'utf8');
     trackCall('ctx_execute', responseBytes);
     return makeTextResponse(output.trim() || '(no output)');
@@ -657,6 +719,23 @@ server.tool(
       const rawBytes = Buffer.byteLength(result.stdout + result.stderr, 'utf8');
       sessionStats.bytesSandboxed += rawBytes;
 
+      // Compress command output
+      const cmdOutput = result.stdout || '';
+      let cmdCompressed = cmdOutput;
+      try {
+        const compResult = compress(cmdOutput, {
+          toolName: `shell:${cmd.language}`,
+          command: cmd.code,
+          sessionEvents: getRecentSessionEvents(),
+          learnerWeights: getLearner().getWeights(`shell:${cmd.language}`),
+          sourceLabel: `batch:${cmd.label}`,
+        });
+        cmdCompressed = compResult.compressed;
+        trackCompression(`shell:${cmd.language}`, compResult.stats.originalBytes, compResult.stats.compressedBytes);
+      } catch (compErr) {
+        process.stderr.write(`[context-mode] batch compression error: ${compErr.message}\n`);
+      }
+
       totalOutput += `# ${cmd.label}\n\n`;
       if (result.exitCode !== 0) {
         totalOutput += `Exit code: ${result.exitCode}\n`;
@@ -664,7 +743,7 @@ server.tool(
       if (result.stderr && result.stderr.trim()) {
         totalOutput += `stderr: ${result.stderr.trim()}\n`;
       }
-      totalOutput += `${result.stdout || '(no output)'}\n\n`;
+      totalOutput += `${cmdCompressed || '(no output)'}\n\n`;
 
       if (remaining <= 0) {
         totalOutput += `\n⏱ Batch timeout reached after ${commands.indexOf(cmd) + 1}/${commands.length} commands.\n`;
@@ -715,40 +794,90 @@ server.tool(
 
 server.tool(
   'ctx_stats',
-  'Show context savings statistics for the current session.',
+  'Show context savings and compression statistics for the current session.',
   {},
   async () => {
     const elapsed = Date.now() - sessionStats.sessionStart;
     const elapsedMin = Math.round(elapsed / 60000);
+    const hours = Math.floor(elapsedMin / 60);
+    const mins = elapsedMin % 60;
+    const elapsedStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
-    let output = `# Context Mode Stats (session: ${elapsedMin}m)\n\n`;
+    // Pricing
+    const PRICING = {
+      opus:   { input: 15.00 / 1_000_000 },
+      sonnet: { input:  3.00 / 1_000_000 },
+      haiku:  { input:  0.80 / 1_000_000 },
+    };
 
-    // Per-tool stats
-    output += '## Tool Calls\n';
-    const totalCalls = Object.values(sessionStats.calls).reduce((a, b) => a + b, 0);
-    for (const [tool, count] of Object.entries(sessionStats.calls)) {
-      const bytes = sessionStats.bytesReturned[tool] || 0;
-      output += `- ${tool}: ${count} calls, ${formatBytes(bytes)} returned\n`;
+    // Calculate totals from compression stats
+    let totalOrigTokens = 0;
+    let totalCompTokens = 0;
+    const entries = Object.entries(compressionStats);
+    for (const [, stats] of entries) {
+      totalOrigTokens += stats.originalTokens;
+      totalCompTokens += stats.compressedTokens;
     }
-    output += `\nTotal calls: ${totalCalls}\n\n`;
+    const sandboxedTokens = Math.round(sessionStats.bytesSandboxed / 4);
+    const totalSaved = (totalOrigTokens - totalCompTokens) + sandboxedTokens;
 
-    // Savings
-    output += '## Context Savings\n';
-    output += `- Bytes sandboxed (kept out of context): ${formatBytes(sessionStats.bytesSandboxed)}\n`;
-    output += `- Bytes indexed: ${formatBytes(sessionStats.bytesIndexed)}\n`;
-    const totalReturned = Object.values(sessionStats.bytesReturned).reduce((a, b) => a + b, 0);
-    output += `- Bytes returned to context: ${formatBytes(totalReturned)}\n`;
+    let output = `# Token Savings This Session (${elapsedStr})\n\n`;
 
-    if (sessionStats.bytesSandboxed > 0) {
-      const ratio = ((1 - totalReturned / sessionStats.bytesSandboxed) * 100).toFixed(1);
-      output += `- Savings ratio: ${ratio}%\n`;
+    if (totalOrigTokens > 0) {
+      const pct = ((1 - totalCompTokens / totalOrigTokens) * 100).toFixed(1);
+      output += `  Compressed:    ${totalOrigTokens.toLocaleString()} → ${totalCompTokens.toLocaleString()} tokens (${pct}% reduction)\n`;
+    }
+    output += `  Sandboxed:     ${sandboxedTokens.toLocaleString()} tokens kept out of context\n`;
+    output += `  KB retrievals: ${sessionStats.cacheHits} searches\n`;
+    output += `  ─────────────────────────────────\n`;
+    output += `  Total saved:   ${totalSaved.toLocaleString()} tokens\n`;
+
+    const opusCost = (totalSaved * PRICING.opus.input).toFixed(2);
+    const sonnetCost = (totalSaved * PRICING.sonnet.input).toFixed(2);
+    const haikuCost = (totalSaved * PRICING.haiku.input).toFixed(2);
+    output += `  Est. cost saved: $${opusCost} (Opus) / $${sonnetCost} (Sonnet) / $${haikuCost} (Haiku)\n\n`;
+
+    // Compression breakdown by tool
+    if (entries.length > 0) {
+      output += `## Top Compressed Outputs\n`;
+      const sorted = entries.sort((a, b) => (b[1].originalTokens - b[1].compressedTokens) - (a[1].originalTokens - a[1].compressedTokens));
+      for (const [pattern, stats] of sorted.slice(0, 8)) {
+        const pct = ((1 - stats.compressedTokens / stats.originalTokens) * 100).toFixed(1);
+        output += `  ${pattern} (x${stats.calls}): ${(stats.originalTokens / 1000).toFixed(1)}K → ${(stats.compressedTokens / 1000).toFixed(1)}K (${pct}%)\n`;
+      }
+      output += '\n';
     }
 
-    // Cache
-    output += '\n## Cache\n';
-    output += `- Cache hits: ${sessionStats.cacheHits}\n`;
-    output += `- Network requests saved: ${sessionStats.cacheHits}\n`;
-    output += `- Estimated bytes saved by cache: ${formatBytes(sessionStats.cacheBytesSaved)}\n`;
+    // Learner status
+    try {
+      const learner = getLearner();
+      const lifetime = learner.getLifetimeStats();
+
+      if (lifetime.totalDecisions > 0) {
+        const accuracy = ((1 - lifetime.totalMisses / lifetime.totalDecisions) * 100).toFixed(1);
+        output += `## Learner\n`;
+        output += `  Patterns tracked:  ${lifetime.totalDecisions} decisions\n`;
+        output += `  Retrieval misses:  ${lifetime.totalMisses} (${(lifetime.totalMisses / lifetime.totalDecisions * 100).toFixed(1)}%)\n`;
+        output += `  Confidence:        ${lifetime.totalMisses / lifetime.totalDecisions < 0.05 ? 'High' : 'Adjusting'}\n\n`;
+      }
+
+      if (lifetime.totalCalls > 0) {
+        const ltSaved = lifetime.totalOriginalTokens - lifetime.totalCompressedTokens;
+        const ltOpus = (ltSaved * PRICING.opus.input).toFixed(2);
+        const ltSonnet = (ltSaved * PRICING.sonnet.input).toFixed(2);
+        const ltHaiku = (ltSaved * PRICING.haiku.input).toFixed(2);
+        const ltPct = ((1 - lifetime.totalCompressedTokens / lifetime.totalOriginalTokens) * 100).toFixed(1);
+        output += `## Lifetime (since ${lifetime.firstDate}, ${lifetime.sessionDays} days)\n`;
+        output += `  Total saved:     ${(ltSaved / 1000).toFixed(1)}K tokens\n`;
+        output += `  Est. cost saved: $${ltOpus} (Opus) / $${ltSonnet} (Sonnet) / $${ltHaiku} (Haiku)\n`;
+        output += `  Avg. compression: ${ltPct}%\n`;
+        if (lifetime.totalDecisions > 0) {
+          output += `  Learner accuracy: ${((1 - lifetime.totalMisses / lifetime.totalDecisions) * 100).toFixed(1)}%\n`;
+        }
+      }
+    } catch {}
+
+    output += `\n_Estimated based on published Anthropic pricing. 1 token ≈ 4 characters._\n`;
 
     trackCall('ctx_stats', Buffer.byteLength(output, 'utf8'));
     return makeTextResponse(output.trim());
@@ -843,13 +972,32 @@ server.tool(
   }
 );
 
+// ─── Periodic Stats Flush ────────────────────────────────────────────────────
+
+const FLUSH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+const flushTimer = setInterval(() => {
+  try {
+    const learner = getLearner();
+    learner.flushStats({ compression: compressionStats });
+  } catch {}
+}, FLUSH_INTERVAL);
+
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 function shutdown() {
+  clearInterval(flushTimer);
+  try {
+    const learner = getLearner();
+    learner.flushStats({ compression: compressionStats });
+  } catch { /* ignore */ }
   try { getExecutor().cleanup(); } catch { /* ignore */ }
   try {
     if (_store && typeof _store.close === 'function') _store.close();
   } catch { /* ignore */ }
+  if (_sessionDB) {
+    try { _sessionDB.close(); } catch {}
+  }
 }
 
 process.on('SIGINT', () => { shutdown(); process.exit(0); });

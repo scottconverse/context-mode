@@ -213,10 +213,10 @@
     <div class="container">
       <h1><span>context-mode</span></h1>
       <p class="tagline">
-        Your Claude sessions degrade as context fills up. context-mode keeps raw data in a
-        sandbox so Claude stays sharp for the entire conversation — with automatic tool routing
-        that intercepts Bash, Read, Grep, and WebFetch calls before they flood your context.
-        Up to 98% less context consumed in research-heavy sessions. Run <code>/context-mode:ctx-stats</code> to see your actual ratio.
+        Your Claude sessions degrade as context fills up. context-mode sandboxes raw output,
+        compresses what comes back with a self-learning pipeline, and routes tools automatically
+        — so Claude stays sharp for the entire conversation. Up to 98% less context consumed.
+        Run <code>ctx_stats</code> to see your savings in tokens and dollars.
       </p>
       <div class="stat-row">
         <div class="stat">
@@ -232,10 +232,14 @@
           <div class="stat-label">Languages</div>
         </div>
       </div>
-      <div class="arch-diagram" style="max-width:540px;margin:0 auto 28px;padding:16px 24px;font-size:0.75rem;line-height:1.6;">
+      <div class="arch-diagram" style="max-width:600px;margin:0 auto 28px;padding:16px 24px;font-size:0.75rem;line-height:1.6;">
 User prompt ──► PreToolUse hook ──► sandbox / block / nudge
                      │
-              PostToolUse hook ──► event capture (13 categories)
+              MCP Server ──► execute ──► compress (3 stages) ──► context
+                     │              │
+                     │         Learner ◄── retrieval signals
+                     │
+              PostToolUse hook ──► event capture + signal files
                      │
               PreCompact hook  ──► &le;2KB XML snapshot ──► resume
       </div>
@@ -255,11 +259,19 @@ User prompt ──► PreToolUse hook ──► sandbox / block / nudge
   <!-- Capabilities -->
   <section>
     <div class="container">
-      <h2>Four Core Capabilities</h2>
+      <h2>Six Core Capabilities</h2>
       <div class="caps">
         <div class="cap">
           <h3>Sandbox Execution</h3>
-          <p>Run code in isolated subprocesses (process isolation, not filesystem sandboxing). Small outputs (&lt;5KB) return directly; larger outputs are auto-indexed and only matching snippets return. Supports 11 languages (TypeScript requires global tsx).</p>
+          <p>Run code in isolated subprocesses. Only stdout returns to context. Raw file contents, command output, and web pages never bloat your context window. Supports JavaScript, TypeScript, Python, Shell, Ruby, Go, Rust, PHP, Perl, R, and Elixir.</p>
+        </div>
+        <div class="cap">
+          <h3>Token Compression</h3>
+          <p>3-stage pipeline: deterministic ANSI stripping, pattern-based matchers for 10 tool formats (jest, pytest, git log, cargo build, etc.), and session-aware relevance filtering. Passing tests collapse to counts. Compile steps summarize. Errors and failures are always preserved verbatim.</p>
+        </div>
+        <div class="cap">
+          <h3>Self-Learning</h3>
+          <p>A feedback loop tracks what compressed content Claude later retrieves. High retrieval rates raise retention; low rates increase compression. Learner accuracy, lifetime token savings, and estimated cost savings (Opus/Sonnet/Haiku) are all visible in <code>ctx_stats</code>.</p>
         </div>
         <div class="cap">
           <h3>Knowledge Base</h3>
@@ -270,8 +282,8 @@ User prompt ──► PreToolUse hook ──► sandbox / block / nudge
           <p>Hooks capture file operations, git commands, errors, tasks, and decisions into SQLite. Before context compaction, a priority-tiered XML snapshot (under 2KB) preserves what matters. Claude resumes from exactly where it left off.</p>
         </div>
         <div class="cap">
-          <h3>Hook-Driven Tool Steering</h3>
-          <p>PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls with a mix of policies: WebFetch denied, curl/wget blocked, Agent/Task prompts augmented, Read/Grep get one-time advisory nudges. Behavioral steering, not transparent rerouting — the strongest enforcement is on WebFetch and curl/wget.</p>
+          <h3>Automatic Tool Routing</h3>
+          <p>PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls. 23 matchers cover git, npm, pytest, cargo, docker, make, curl/wget, and more. Large-output commands redirect through the compression pipeline automatically.</p>
         </div>
       </div>
     </div>
@@ -292,8 +304,12 @@ Cowork Session
   |
   |-- SessionStart hook     --> routing block + session guide injection
   |-- UserPromptSubmit hook --> prompt preprocessing + context injection
-  |-- PreToolUse hook       --> 9 matchers (routing-block + core/routing)
+  |-- PreToolUse hook       --> 23 matchers (routing-block + core/routing)
   |     |-- Bash matcher    --> curl/wget block; large-output → sandbox
+  |     |-- git log/diff    --> redirect unbounded through compressor
+  |     |-- npm test/jest   --> redirect test runners through compressor
+  |     |-- pytest/cargo/make/docker --> redirect build tools
+  |     |-- npm/pip install --> redirect package managers
   |     |-- Read matcher    --> large file → execute_file
   |     |-- Grep matcher    --> wide search → batch_execute
   |     |-- WebFetch matcher --> block; redirect → fetch_and_index
@@ -319,8 +335,19 @@ Cowork Session
   |     |         |-- Proximity reranking + Levenshtein fuzzy
   |     |         \-- Smart snippets (windowed extraction)
   |     |
+  |     |-- Compressor (3-stage pipeline)
+  |     |     |-- Stage 1: deterministic (ANSI, \r, BOM, blanks)
+  |     |     |-- Stage 2: pattern-based (10 tool matchers)
+  |     |     \-- Stage 3: session-aware (learner weights)
+  |     |
+  |     |-- Learner (self-improving feedback loop)
+  |     |     |-- compression_log (decisions + retrieval tracking)
+  |     |     |-- retention weights (retrievalRate × 3, 5min cache)
+  |     |     \-- signal files ← PostToolUse ctx_search detection
+  |     |
   |     |-- ctx_batch_execute (multi-command + multi-query)
-  |     |-- ctx_stats / ctx_doctor / ctx_purge
+  |     |-- ctx_stats (token savings + cost + learner dashboard)
+  |     |-- ctx_doctor / ctx_purge
   |     |
   |     \-- Session DB (SQLite)
   |           |-- session_events (1000 max, FIFO eviction)
@@ -347,7 +374,7 @@ Cowork Session
           <tr><td><code>ctx_index</code></td><td>Index text/markdown/JSON into the knowledge base</td></tr>
           <tr><td><code>ctx_search</code></td><td>BM25 + trigram search with RRF fusion</td></tr>
           <tr><td><code>ctx_fetch_and_index</code></td><td>Fetch URL, convert to markdown, index with 24h TTL cache</td></tr>
-          <tr><td><code>ctx_stats</code></td><td>Session statistics and savings report</td></tr>
+          <tr><td><code>ctx_stats</code></td><td>Token savings, compression breakdown, cost estimates (Opus/Sonnet/Haiku), and learner accuracy</td></tr>
           <tr><td><code>ctx_doctor</code></td><td>Plugin environment diagnostics</td></tr>
           <tr><td><code>ctx_purge</code></td><td>Delete all indexed content</td></tr>
         </tbody>
@@ -372,10 +399,12 @@ Cowork Session
           <tr><td>Snapshot</td><td>Priority-tiered XML, &le;2KB budget</td></tr>
           <tr><td>Cache</td><td>24h TTL for fetched URLs</td></tr>
           <tr><td>Throttling</td><td>Progressive: 2&rarr;1&rarr;blocked over 60s window</td></tr>
-          <tr><td>Hooks</td><td>6 events, 14 matchers (PreToolUse, PostToolUse, PreCompact, SessionStart, UserPromptSubmit, SubagentStop)</td></tr>
+          <tr><td>Compression</td><td>3-stage pipeline: deterministic &rarr; pattern-based (10 matchers) &rarr; session-aware (learner weights)</td></tr>
+          <tr><td>Learner</td><td>Retrieval-based feedback loop, retention weights (5min cache), 7-day decay, signal files</td></tr>
+          <tr><td>Hooks</td><td>6 events, 23 matchers (PreToolUse, PostToolUse, PreCompact, SessionStart, UserPromptSubmit, SubagentStop)</td></tr>
           <tr><td>Platform</td><td>Windows, macOS, Linux (cross-platform .cmd wrapper)</td></tr>
           <tr><td>Schema</td><td>PRAGMA user_version tracking, ordered migrations, automatic backup</td></tr>
-          <tr><td>Tests</td><td>216 E2E + 58 adversarial tests (274 total)</td></tr>
+          <tr><td>Tests</td><td>216 E2E + 58 adversarial + 76 compression/routing (350 total)</td></tr>
           <tr><td>License</td><td>Elastic License 2.0</td></tr>
         </tbody>
       </table>
@@ -399,7 +428,7 @@ Cowork Session
 
   <footer>
     <div class="container">
-      context-mode v1.2.1 &middot; Elastic License 2.0 &middot; Built for Claude Code in Cowork
+      context-mode v1.3.0 &middot; Elastic License 2.0 &middot; Built for Claude Code in Cowork
       <br>
       Ported from <a href="https://github.com/mksglu/context-mode" style="color: var(--accent);">mksglu/context-mode</a> by <a href="https://github.com/mksglu" style="color: var(--accent);">@mksglu</a>
     </div>

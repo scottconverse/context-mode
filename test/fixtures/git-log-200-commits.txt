@@ -1,0 +1,1200 @@
+commit 00000000000000000000000000000000a1b2c3d4
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 10 Apr 2026 21:32:01 -0700
+
+    feat: update handler logic in server/index.js
+
+commit 00000000000000000000000000000000b2c3d4e5
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 10 Apr 2026 20:32:01 -0700
+
+    Merge branch 'feature/branch-1' into main
+
+commit 00000000000000000000000000000000c3d4e5f6
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 10 Apr 2026 19:32:01 -0700
+
+    refactor: update README with new tool descriptions
+
+commit 00000000000000000000000000000000d4e5f707
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 10 Apr 2026 18:32:01 -0700
+
+    test: extract session helpers from index.js
+
+commit 00000000000000000000000000000000e5f70818
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 10 Apr 2026 17:32:01 -0700
+
+    docs: add sandbox timeout edge case tests
+
+commit 00000000000000000000000000000000f7081929
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 10 Apr 2026 16:32:01 -0700
+
+    chore: handle ANSI codes in server/index.js output formatting
+
+commit 0000000000000000000000000000000108192a3a
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 10 Apr 2026 15:32:01 -0700
+
+    perf: optimize BM25 scoring in knowledge store
+
+commit 00000000000000000000000000000001192a3b4b
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 10 Apr 2026 14:32:01 -0700
+
+    style: add fuzzy search to content store
+
+commit 000000000000000000000000000000012a3b4c5c
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 10 Apr 2026 13:32:01 -0700
+
+    Merge branch 'feature/branch-8' into main
+
+commit 000000000000000000000000000000013b4c5d6d
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 10 Apr 2026 12:32:01 -0700
+
+    fix: update dependencies to latest
+
+commit 000000000000000000000000000000014c5d6e7e
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 10 Apr 2026 11:32:01 -0700
+
+    refactor: add error boundary to routing
+
+commit 000000000000000000000000000000015d6e7f8f
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 10 Apr 2026 10:32:01 -0700
+
+    test: refactor tool handler signatures
+
+commit 000000000000000000000000000000016e7f90a0
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 10 Apr 2026 09:32:01 -0700
+
+    docs: improve test coverage for hooks
+
+commit 000000000000000000000000000000017f90a1b1
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 10 Apr 2026 08:32:01 -0700
+
+    chore: fix race condition in signal files
+
+commit 0000000000000000000000000000000190a1b2c2
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 10 Apr 2026 07:32:01 -0700
+
+    perf: add configurable compression levels
+
+commit 00000000000000000000000000000001a1b2c3d3
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 10 Apr 2026 06:32:01 -0700
+
+    Merge branch 'feature/branch-15' into main
+
+commit 00000000000000000000000000000001b2c3d4e4
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 10 Apr 2026 05:32:01 -0700
+
+    feat: fix typo in user manual
+
+commit 00000000000000000000000000000001c3d4e5f5
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 10 Apr 2026 04:32:01 -0700
+
+    fix: add Windows compatibility for temp dirs
+
+commit 00000000000000000000000000000001d4e5f706
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 10 Apr 2026 03:32:01 -0700
+
+    refactor: optimize FTS5 indexing batch size
+
+commit 00000000000000000000000000000001e5f70817
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 10 Apr 2026 02:32:01 -0700
+
+    test: add ctx_doctor diagnostics tool
+
+commit 00000000000000000000000000000001f7081928
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 10 Apr 2026 01:32:01 -0700
+
+    docs: update handler logic in server/index.js
+
+commit 0000000000000000000000000000000208192a39
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 10 Apr 2026 00:32:01 -0700
+
+    chore: update handler logic in server/index.js
+
+commit 00000000000000000000000000000002192a3b4a
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 09 Apr 2026 23:32:01 -0700
+
+    Merge branch 'feature/branch-22' into main
+
+commit 000000000000000000000000000000022a3b4c5b
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 09 Apr 2026 22:32:01 -0700
+
+    style: improve startup performance
+
+commit 000000000000000000000000000000023b4c5d6c
+Author: Alice Developer <alice@example.com>
+Date:   Thu, 09 Apr 2026 21:32:01 -0700
+
+    feat: fix CORS headers in MCP transport
+
+commit 000000000000000000000000000000024c5d6e7d
+Author: Bob Engineer <bob@example.com>
+Date:   Thu, 09 Apr 2026 20:32:01 -0700
+
+    fix: add session resume support
+
+commit 000000000000000000000000000000025d6e7f8e
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 09 Apr 2026 19:32:01 -0700
+
+    refactor: update contributing guidelines
+
+commit 000000000000000000000000000000026e7f909f
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 09 Apr 2026 18:32:01 -0700
+
+    test: fix path resolution on Windows
+
+commit 000000000000000000000000000000027f90a1b0
+Author: Alice Developer <alice@example.com>
+Date:   Thu, 09 Apr 2026 17:32:01 -0700
+
+    docs: add telemetry opt-out support
+
+commit 0000000000000000000000000000000290a1b2c1
+Author: Bob Engineer <bob@example.com>
+Date:   Thu, 09 Apr 2026 16:32:01 -0700
+
+    Merge branch 'feature/branch-29' into main
+
+commit 00000000000000000000000000000002a1b2c3d2
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 09 Apr 2026 15:32:01 -0700
+
+    perf: add compression pipeline to MCP server
+
+commit 00000000000000000000000000000002b2c3d4e3
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 09 Apr 2026 14:32:01 -0700
+
+    style: correct exit code handling in server/index.js
+
+commit 00000000000000000000000000000002c3d4e5f4
+Author: Alice Developer <alice@example.com>
+Date:   Thu, 09 Apr 2026 13:32:01 -0700
+
+    feat: update README with new tool descriptions
+
+commit 00000000000000000000000000000002d4e5f705
+Author: Bob Engineer <bob@example.com>
+Date:   Thu, 09 Apr 2026 12:32:01 -0700
+
+    fix: extract session helpers from index.js
+
+commit 00000000000000000000000000000002e5f70816
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 09 Apr 2026 11:32:01 -0700
+
+    refactor: add sandbox timeout edge case tests
+
+commit 00000000000000000000000000000002f7081927
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 09 Apr 2026 10:32:01 -0700
+
+    test: handle ANSI codes in server/index.js output formatting
+
+commit 0000000000000000000000000000000308192a38
+Author: Alice Developer <alice@example.com>
+Date:   Thu, 09 Apr 2026 09:32:01 -0700
+
+    Merge branch 'feature/branch-36' into main
+
+commit 00000000000000000000000000000003192a3b49
+Author: Bob Engineer <bob@example.com>
+Date:   Thu, 09 Apr 2026 08:32:01 -0700
+
+    chore: add fuzzy search to content store
+
+commit 000000000000000000000000000000032a3b4c5a
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 09 Apr 2026 07:32:01 -0700
+
+    perf: fix memory leak in session cleanup
+
+commit 000000000000000000000000000000033b4c5d6b
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 09 Apr 2026 06:32:01 -0700
+
+    style: update dependencies to latest
+
+commit 000000000000000000000000000000034c5d6e7c
+Author: Alice Developer <alice@example.com>
+Date:   Thu, 09 Apr 2026 05:32:01 -0700
+
+    feat: update handler logic in server/index.js
+
+commit 000000000000000000000000000000035d6e7f8d
+Author: Bob Engineer <bob@example.com>
+Date:   Thu, 09 Apr 2026 04:32:01 -0700
+
+    fix: update handler logic in server/index.js
+
+commit 000000000000000000000000000000036e7f909e
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 09 Apr 2026 03:32:01 -0700
+
+    refactor: improve test coverage for hooks
+
+commit 000000000000000000000000000000037f90a1af
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 09 Apr 2026 02:32:01 -0700
+
+    Merge branch 'feature/branch-43' into main
+
+commit 0000000000000000000000000000000390a1b2c0
+Author: Alice Developer <alice@example.com>
+Date:   Thu, 09 Apr 2026 01:32:01 -0700
+
+    docs: add configurable compression levels
+
+commit 00000000000000000000000000000003a1b2c3d1
+Author: Bob Engineer <bob@example.com>
+Date:   Thu, 09 Apr 2026 00:32:01 -0700
+
+    chore: update license headers
+
+commit 00000000000000000000000000000003b2c3d4e2
+Author: Carol Maintainer <carol@example.com>
+Date:   Wed, 08 Apr 2026 23:32:01 -0700
+
+    perf: fix typo in user manual
+
+commit 00000000000000000000000000000003c3d4e5f3
+Author: Dave Intern <dave@example.com>
+Date:   Wed, 08 Apr 2026 22:32:01 -0700
+
+    style: add Windows compatibility for temp dirs
+
+commit 00000000000000000000000000000003d4e5f704
+Author: Alice Developer <alice@example.com>
+Date:   Wed, 08 Apr 2026 21:32:01 -0700
+
+    feat: optimize FTS5 indexing batch size
+
+commit 00000000000000000000000000000003e5f70815
+Author: Bob Engineer <bob@example.com>
+Date:   Wed, 08 Apr 2026 20:32:01 -0700
+
+    fix: add ctx_doctor diagnostics tool
+
+commit 00000000000000000000000000000003f7081926
+Author: Carol Maintainer <carol@example.com>
+Date:   Wed, 08 Apr 2026 19:32:01 -0700
+
+    Merge branch 'feature/branch-50' into main
+
+commit 0000000000000000000000000000000408192a37
+Author: Dave Intern <dave@example.com>
+Date:   Wed, 08 Apr 2026 18:32:01 -0700
+
+    test: refactor event extraction logic
+
+commit 00000000000000000000000000000004192a3b48
+Author: Alice Developer <alice@example.com>
+Date:   Wed, 08 Apr 2026 17:32:01 -0700
+
+    docs: add retry logic for flaky tests
+
+commit 000000000000000000000000000000042a3b4c59
+Author: Bob Engineer <bob@example.com>
+Date:   Wed, 08 Apr 2026 16:32:01 -0700
+
+    chore: improve startup performance
+
+commit 000000000000000000000000000000043b4c5d6a
+Author: Carol Maintainer <carol@example.com>
+Date:   Wed, 08 Apr 2026 15:32:01 -0700
+
+    perf: fix CORS headers in MCP transport
+
+commit 000000000000000000000000000000044c5d6e7b
+Author: Dave Intern <dave@example.com>
+Date:   Wed, 08 Apr 2026 14:32:01 -0700
+
+    style: add session resume support
+
+commit 000000000000000000000000000000045d6e7f8c
+Author: Alice Developer <alice@example.com>
+Date:   Wed, 08 Apr 2026 13:32:01 -0700
+
+    feat: update contributing guidelines
+
+commit 000000000000000000000000000000046e7f909d
+Author: Bob Engineer <bob@example.com>
+Date:   Wed, 08 Apr 2026 12:32:01 -0700
+
+    Merge branch 'feature/branch-57' into main
+
+commit 000000000000000000000000000000047f90a1ae
+Author: Carol Maintainer <carol@example.com>
+Date:   Wed, 08 Apr 2026 11:32:01 -0700
+
+    refactor: add telemetry opt-out support
+
+commit 0000000000000000000000000000000490a1b2bf
+Author: Dave Intern <dave@example.com>
+Date:   Wed, 08 Apr 2026 10:32:01 -0700
+
+    test: refactor database schema migrations
+
+commit 00000000000000000000000000000004a1b2c3d0
+Author: Alice Developer <alice@example.com>
+Date:   Wed, 08 Apr 2026 09:32:01 -0700
+
+    docs: update handler logic in server/index.js
+
+commit 00000000000000000000000000000004b2c3d4e1
+Author: Bob Engineer <bob@example.com>
+Date:   Wed, 08 Apr 2026 08:32:01 -0700
+
+    chore: correct exit code handling in server/index.js
+
+commit 00000000000000000000000000000004c3d4e5f2
+Author: Carol Maintainer <carol@example.com>
+Date:   Wed, 08 Apr 2026 07:32:01 -0700
+
+    perf: update README with new tool descriptions
+
+commit 00000000000000000000000000000004d4e5f703
+Author: Dave Intern <dave@example.com>
+Date:   Wed, 08 Apr 2026 06:32:01 -0700
+
+    style: extract session helpers from index.js
+
+commit 00000000000000000000000000000004e5f70814
+Author: Alice Developer <alice@example.com>
+Date:   Wed, 08 Apr 2026 05:32:01 -0700
+
+    Merge branch 'feature/branch-64' into main
+
+commit 00000000000000000000000000000004f7081925
+Author: Bob Engineer <bob@example.com>
+Date:   Wed, 08 Apr 2026 04:32:01 -0700
+
+    fix: handle ANSI codes in server/index.js output formatting
+
+commit 0000000000000000000000000000000508192a36
+Author: Carol Maintainer <carol@example.com>
+Date:   Wed, 08 Apr 2026 03:32:01 -0700
+
+    refactor: optimize BM25 scoring in knowledge store
+
+commit 00000000000000000000000000000005192a3b47
+Author: Dave Intern <dave@example.com>
+Date:   Wed, 08 Apr 2026 02:32:01 -0700
+
+    test: add fuzzy search to content store
+
+commit 000000000000000000000000000000052a3b4c58
+Author: Alice Developer <alice@example.com>
+Date:   Wed, 08 Apr 2026 01:32:01 -0700
+
+    docs: fix memory leak in session cleanup
+
+commit 000000000000000000000000000000053b4c5d69
+Author: Bob Engineer <bob@example.com>
+Date:   Wed, 08 Apr 2026 00:32:01 -0700
+
+    chore: update dependencies to latest
+
+commit 000000000000000000000000000000054c5d6e7a
+Author: Carol Maintainer <carol@example.com>
+Date:   Tue, 07 Apr 2026 23:32:01 -0700
+
+    perf: add error boundary to routing
+
+commit 000000000000000000000000000000055d6e7f8b
+Author: Dave Intern <dave@example.com>
+Date:   Tue, 07 Apr 2026 22:32:01 -0700
+
+    Merge branch 'feature/branch-71' into main
+
+commit 000000000000000000000000000000056e7f909c
+Author: Alice Developer <alice@example.com>
+Date:   Tue, 07 Apr 2026 21:32:01 -0700
+
+    feat: improve test coverage for hooks
+
+commit 000000000000000000000000000000057f90a1ad
+Author: Bob Engineer <bob@example.com>
+Date:   Tue, 07 Apr 2026 20:32:01 -0700
+
+    fix: fix race condition in signal files
+
+commit 0000000000000000000000000000000590a1b2be
+Author: Carol Maintainer <carol@example.com>
+Date:   Tue, 07 Apr 2026 19:32:01 -0700
+
+    refactor: add configurable compression levels
+
+commit 00000000000000000000000000000005a1b2c3cf
+Author: Dave Intern <dave@example.com>
+Date:   Tue, 07 Apr 2026 18:32:01 -0700
+
+    test: update license headers
+
+commit 00000000000000000000000000000005b2c3d4e0
+Author: Alice Developer <alice@example.com>
+Date:   Tue, 07 Apr 2026 17:32:01 -0700
+
+    docs: fix typo in user manual
+
+commit 00000000000000000000000000000005c3d4e5f1
+Author: Bob Engineer <bob@example.com>
+Date:   Tue, 07 Apr 2026 16:32:01 -0700
+
+    chore: add Windows compatibility for temp dirs
+
+commit 00000000000000000000000000000005d4e5f702
+Author: Carol Maintainer <carol@example.com>
+Date:   Tue, 07 Apr 2026 15:32:01 -0700
+
+    Merge branch 'feature/branch-78' into main
+
+commit 00000000000000000000000000000005e5f70813
+Author: Dave Intern <dave@example.com>
+Date:   Tue, 07 Apr 2026 14:32:01 -0700
+
+    style: add ctx_doctor diagnostics tool
+
+commit 00000000000000000000000000000005f7081924
+Author: Alice Developer <alice@example.com>
+Date:   Tue, 07 Apr 2026 13:32:01 -0700
+
+    feat: update handler logic in server/index.js
+
+commit 0000000000000000000000000000000608192a35
+Author: Bob Engineer <bob@example.com>
+Date:   Tue, 07 Apr 2026 12:32:01 -0700
+
+    fix: update handler logic in server/index.js
+
+commit 00000000000000000000000000000006192a3b46
+Author: Carol Maintainer <carol@example.com>
+Date:   Tue, 07 Apr 2026 11:32:01 -0700
+
+    refactor: add retry logic for flaky tests
+
+commit 000000000000000000000000000000062a3b4c57
+Author: Dave Intern <dave@example.com>
+Date:   Tue, 07 Apr 2026 10:32:01 -0700
+
+    test: improve startup performance
+
+commit 000000000000000000000000000000063b4c5d68
+Author: Alice Developer <alice@example.com>
+Date:   Tue, 07 Apr 2026 09:32:01 -0700
+
+    docs: fix CORS headers in MCP transport
+
+commit 000000000000000000000000000000064c5d6e79
+Author: Bob Engineer <bob@example.com>
+Date:   Tue, 07 Apr 2026 08:32:01 -0700
+
+    Merge branch 'feature/branch-85' into main
+
+commit 000000000000000000000000000000065d6e7f8a
+Author: Carol Maintainer <carol@example.com>
+Date:   Tue, 07 Apr 2026 07:32:01 -0700
+
+    perf: update contributing guidelines
+
+commit 000000000000000000000000000000066e7f909b
+Author: Dave Intern <dave@example.com>
+Date:   Tue, 07 Apr 2026 06:32:01 -0700
+
+    style: fix path resolution on Windows
+
+commit 000000000000000000000000000000067f90a1ac
+Author: Alice Developer <alice@example.com>
+Date:   Tue, 07 Apr 2026 05:32:01 -0700
+
+    feat: add telemetry opt-out support
+
+commit 0000000000000000000000000000000690a1b2bd
+Author: Bob Engineer <bob@example.com>
+Date:   Tue, 07 Apr 2026 04:32:01 -0700
+
+    fix: refactor database schema migrations
+
+commit 00000000000000000000000000000006a1b2c3ce
+Author: Carol Maintainer <carol@example.com>
+Date:   Tue, 07 Apr 2026 03:32:01 -0700
+
+    refactor: add compression pipeline to MCP server
+
+commit 00000000000000000000000000000006b2c3d4df
+Author: Dave Intern <dave@example.com>
+Date:   Tue, 07 Apr 2026 02:32:01 -0700
+
+    test: correct exit code handling in server/index.js
+
+commit 00000000000000000000000000000006c3d4e5f0
+Author: Alice Developer <alice@example.com>
+Date:   Tue, 07 Apr 2026 01:32:01 -0700
+
+    Merge branch 'feature/branch-92' into main
+
+commit 00000000000000000000000000000006d4e5f701
+Author: Bob Engineer <bob@example.com>
+Date:   Tue, 07 Apr 2026 00:32:01 -0700
+
+    chore: extract session helpers from index.js
+
+commit 00000000000000000000000000000006e5f70812
+Author: Carol Maintainer <carol@example.com>
+Date:   Mon, 06 Apr 2026 23:32:01 -0700
+
+    perf: add sandbox timeout edge case tests
+
+commit 00000000000000000000000000000006f7081923
+Author: Dave Intern <dave@example.com>
+Date:   Mon, 06 Apr 2026 22:32:01 -0700
+
+    style: handle ANSI codes in server/index.js output formatting
+
+commit 0000000000000000000000000000000708192a34
+Author: Alice Developer <alice@example.com>
+Date:   Mon, 06 Apr 2026 21:32:01 -0700
+
+    feat: optimize BM25 scoring in knowledge store
+
+commit 00000000000000000000000000000007192a3b45
+Author: Bob Engineer <bob@example.com>
+Date:   Mon, 06 Apr 2026 20:32:01 -0700
+
+    fix: add fuzzy search to content store
+
+commit 000000000000000000000000000000072a3b4c56
+Author: Carol Maintainer <carol@example.com>
+Date:   Mon, 06 Apr 2026 19:32:01 -0700
+
+    refactor: fix memory leak in session cleanup
+
+commit 000000000000000000000000000000073b4c5d67
+Author: Dave Intern <dave@example.com>
+Date:   Mon, 06 Apr 2026 18:32:01 -0700
+
+    Merge branch 'feature/branch-99' into main
+
+commit 000000000000000000000000000000074c5d6e78
+Author: Alice Developer <alice@example.com>
+Date:   Mon, 06 Apr 2026 17:32:01 -0700
+
+    docs: update handler logic in server/index.js
+
+commit 000000000000000000000000000000075d6e7f89
+Author: Bob Engineer <bob@example.com>
+Date:   Mon, 06 Apr 2026 16:32:01 -0700
+
+    chore: update handler logic in server/index.js
+
+commit 000000000000000000000000000000076e7f909a
+Author: Carol Maintainer <carol@example.com>
+Date:   Mon, 06 Apr 2026 15:32:01 -0700
+
+    perf: improve test coverage for hooks
+
+commit 000000000000000000000000000000077f90a1ab
+Author: Dave Intern <dave@example.com>
+Date:   Mon, 06 Apr 2026 14:32:01 -0700
+
+    style: fix race condition in signal files
+
+commit 0000000000000000000000000000000790a1b2bc
+Author: Alice Developer <alice@example.com>
+Date:   Mon, 06 Apr 2026 13:32:01 -0700
+
+    feat: add configurable compression levels
+
+commit 00000000000000000000000000000007a1b2c3cd
+Author: Bob Engineer <bob@example.com>
+Date:   Mon, 06 Apr 2026 12:32:01 -0700
+
+    fix: update license headers
+
+commit 00000000000000000000000000000007b2c3d4de
+Author: Carol Maintainer <carol@example.com>
+Date:   Mon, 06 Apr 2026 11:32:01 -0700
+
+    Merge branch 'feature/branch-106' into main
+
+commit 00000000000000000000000000000007c3d4e5ef
+Author: Dave Intern <dave@example.com>
+Date:   Mon, 06 Apr 2026 10:32:01 -0700
+
+    test: add Windows compatibility for temp dirs
+
+commit 00000000000000000000000000000007d4e5f700
+Author: Alice Developer <alice@example.com>
+Date:   Mon, 06 Apr 2026 09:32:01 -0700
+
+    docs: optimize FTS5 indexing batch size
+
+commit 00000000000000000000000000000007e5f70811
+Author: Bob Engineer <bob@example.com>
+Date:   Mon, 06 Apr 2026 08:32:01 -0700
+
+    chore: add ctx_doctor diagnostics tool
+
+commit 00000000000000000000000000000007f7081922
+Author: Carol Maintainer <carol@example.com>
+Date:   Mon, 06 Apr 2026 07:32:01 -0700
+
+    perf: fix Unicode handling in content chunks
+
+commit 0000000000000000000000000000000808192a33
+Author: Dave Intern <dave@example.com>
+Date:   Mon, 06 Apr 2026 06:32:01 -0700
+
+    style: refactor event extraction logic
+
+commit 00000000000000000000000000000008192a3b44
+Author: Alice Developer <alice@example.com>
+Date:   Mon, 06 Apr 2026 05:32:01 -0700
+
+    feat: add retry logic for flaky tests
+
+commit 000000000000000000000000000000082a3b4c55
+Author: Bob Engineer <bob@example.com>
+Date:   Mon, 06 Apr 2026 04:32:01 -0700
+
+    Merge branch 'feature/branch-113' into main
+
+commit 000000000000000000000000000000083b4c5d66
+Author: Carol Maintainer <carol@example.com>
+Date:   Mon, 06 Apr 2026 03:32:01 -0700
+
+    refactor: fix CORS headers in MCP transport
+
+commit 000000000000000000000000000000084c5d6e77
+Author: Dave Intern <dave@example.com>
+Date:   Mon, 06 Apr 2026 02:32:01 -0700
+
+    test: add session resume support
+
+commit 000000000000000000000000000000085d6e7f88
+Author: Alice Developer <alice@example.com>
+Date:   Mon, 06 Apr 2026 01:32:01 -0700
+
+    docs: update contributing guidelines
+
+commit 000000000000000000000000000000086e7f9099
+Author: Bob Engineer <bob@example.com>
+Date:   Mon, 06 Apr 2026 00:32:01 -0700
+
+    chore: fix path resolution on Windows
+
+commit 000000000000000000000000000000087f90a1aa
+Author: Carol Maintainer <carol@example.com>
+Date:   Sun, 05 Apr 2026 23:32:01 -0700
+
+    perf: add telemetry opt-out support
+
+commit 0000000000000000000000000000000890a1b2bb
+Author: Dave Intern <dave@example.com>
+Date:   Sun, 05 Apr 2026 22:32:01 -0700
+
+    style: refactor database schema migrations
+
+commit 00000000000000000000000000000008a1b2c3cc
+Author: Alice Developer <alice@example.com>
+Date:   Sun, 05 Apr 2026 21:32:01 -0700
+
+    Merge branch 'feature/branch-120' into main
+
+commit 00000000000000000000000000000008b2c3d4dd
+Author: Bob Engineer <bob@example.com>
+Date:   Sun, 05 Apr 2026 20:32:01 -0700
+
+    fix: correct exit code handling in server/index.js
+
+commit 00000000000000000000000000000008c3d4e5ee
+Author: Carol Maintainer <carol@example.com>
+Date:   Sun, 05 Apr 2026 19:32:01 -0700
+
+    refactor: update README with new tool descriptions
+
+commit 00000000000000000000000000000008d4e5f6ff
+Author: Dave Intern <dave@example.com>
+Date:   Sun, 05 Apr 2026 18:32:01 -0700
+
+    test: extract session helpers from index.js
+
+commit 00000000000000000000000000000008e5f70810
+Author: Alice Developer <alice@example.com>
+Date:   Sun, 05 Apr 2026 17:32:01 -0700
+
+    docs: add sandbox timeout edge case tests
+
+commit 00000000000000000000000000000008f7081921
+Author: Bob Engineer <bob@example.com>
+Date:   Sun, 05 Apr 2026 16:32:01 -0700
+
+    chore: handle ANSI codes in server/index.js output formatting
+
+commit 0000000000000000000000000000000908192a32
+Author: Carol Maintainer <carol@example.com>
+Date:   Sun, 05 Apr 2026 15:32:01 -0700
+
+    perf: optimize BM25 scoring in knowledge store
+
+commit 00000000000000000000000000000009192a3b43
+Author: Dave Intern <dave@example.com>
+Date:   Sun, 05 Apr 2026 14:32:01 -0700
+
+    Merge branch 'feature/branch-127' into main
+
+commit 000000000000000000000000000000092a3b4c54
+Author: Alice Developer <alice@example.com>
+Date:   Sun, 05 Apr 2026 13:32:01 -0700
+
+    feat: fix memory leak in session cleanup
+
+commit 000000000000000000000000000000093b4c5d65
+Author: Bob Engineer <bob@example.com>
+Date:   Sun, 05 Apr 2026 12:32:01 -0700
+
+    fix: update dependencies to latest
+
+commit 000000000000000000000000000000094c5d6e76
+Author: Carol Maintainer <carol@example.com>
+Date:   Sun, 05 Apr 2026 11:32:01 -0700
+
+    refactor: add error boundary to routing
+
+commit 000000000000000000000000000000095d6e7f87
+Author: Dave Intern <dave@example.com>
+Date:   Sun, 05 Apr 2026 10:32:01 -0700
+
+    test: refactor tool handler signatures
+
+commit 000000000000000000000000000000096e7f9098
+Author: Alice Developer <alice@example.com>
+Date:   Sun, 05 Apr 2026 09:32:01 -0700
+
+    docs: improve test coverage for hooks
+
+commit 000000000000000000000000000000097f90a1a9
+Author: Bob Engineer <bob@example.com>
+Date:   Sun, 05 Apr 2026 08:32:01 -0700
+
+    chore: fix race condition in signal files
+
+commit 0000000000000000000000000000000990a1b2ba
+Author: Carol Maintainer <carol@example.com>
+Date:   Sun, 05 Apr 2026 07:32:01 -0700
+
+    Merge branch 'feature/branch-134' into main
+
+commit 00000000000000000000000000000009a1b2c3cb
+Author: Dave Intern <dave@example.com>
+Date:   Sun, 05 Apr 2026 06:32:01 -0700
+
+    style: update license headers
+
+commit 00000000000000000000000000000009b2c3d4dc
+Author: Alice Developer <alice@example.com>
+Date:   Sun, 05 Apr 2026 05:32:01 -0700
+
+    feat: fix typo in user manual
+
+commit 00000000000000000000000000000009c3d4e5ed
+Author: Bob Engineer <bob@example.com>
+Date:   Sun, 05 Apr 2026 04:32:01 -0700
+
+    fix: add Windows compatibility for temp dirs
+
+commit 00000000000000000000000000000009d4e5f6fe
+Author: Carol Maintainer <carol@example.com>
+Date:   Sun, 05 Apr 2026 03:32:01 -0700
+
+    refactor: optimize FTS5 indexing batch size
+
+commit 00000000000000000000000000000009e5f7080f
+Author: Dave Intern <dave@example.com>
+Date:   Sun, 05 Apr 2026 02:32:01 -0700
+
+    test: add ctx_doctor diagnostics tool
+
+commit 00000000000000000000000000000009f7081920
+Author: Alice Developer <alice@example.com>
+Date:   Sun, 05 Apr 2026 01:32:01 -0700
+
+    docs: update handler logic in server/index.js
+
+commit 0000000000000000000000000000000a08192a31
+Author: Bob Engineer <bob@example.com>
+Date:   Sun, 05 Apr 2026 00:32:01 -0700
+
+    Merge branch 'feature/branch-141' into main
+
+commit 0000000000000000000000000000000a192a3b42
+Author: Carol Maintainer <carol@example.com>
+Date:   Sat, 04 Apr 2026 23:32:01 -0700
+
+    perf: add retry logic for flaky tests
+
+commit 0000000000000000000000000000000a2a3b4c53
+Author: Dave Intern <dave@example.com>
+Date:   Sat, 04 Apr 2026 22:32:01 -0700
+
+    style: improve startup performance
+
+commit 0000000000000000000000000000000a3b4c5d64
+Author: Alice Developer <alice@example.com>
+Date:   Sat, 04 Apr 2026 21:32:01 -0700
+
+    feat: fix CORS headers in MCP transport
+
+commit 0000000000000000000000000000000a4c5d6e75
+Author: Bob Engineer <bob@example.com>
+Date:   Sat, 04 Apr 2026 20:32:01 -0700
+
+    fix: add session resume support
+
+commit 0000000000000000000000000000000a5d6e7f86
+Author: Carol Maintainer <carol@example.com>
+Date:   Sat, 04 Apr 2026 19:32:01 -0700
+
+    refactor: update contributing guidelines
+
+commit 0000000000000000000000000000000a6e7f9097
+Author: Dave Intern <dave@example.com>
+Date:   Sat, 04 Apr 2026 18:32:01 -0700
+
+    test: fix path resolution on Windows
+
+commit 0000000000000000000000000000000a7f90a1a8
+Author: Alice Developer <alice@example.com>
+Date:   Sat, 04 Apr 2026 17:32:01 -0700
+
+    Merge branch 'feature/branch-148' into main
+
+commit 0000000000000000000000000000000a90a1b2b9
+Author: Bob Engineer <bob@example.com>
+Date:   Sat, 04 Apr 2026 16:32:01 -0700
+
+    chore: refactor database schema migrations
+
+commit 0000000000000000000000000000000aa1b2c3ca
+Author: Carol Maintainer <carol@example.com>
+Date:   Sat, 04 Apr 2026 15:32:01 -0700
+
+    perf: add compression pipeline to MCP server
+
+commit 0000000000000000000000000000000ab2c3d4db
+Author: Dave Intern <dave@example.com>
+Date:   Sat, 04 Apr 2026 14:32:01 -0700
+
+    style: correct exit code handling in server/index.js
+
+commit 0000000000000000000000000000000ac3d4e5ec
+Author: Alice Developer <alice@example.com>
+Date:   Sat, 04 Apr 2026 13:32:01 -0700
+
+    feat: update README with new tool descriptions
+
+commit 0000000000000000000000000000000ad4e5f6fd
+Author: Bob Engineer <bob@example.com>
+Date:   Sat, 04 Apr 2026 12:32:01 -0700
+
+    fix: extract session helpers from index.js
+
+commit 0000000000000000000000000000000ae5f7080e
+Author: Carol Maintainer <carol@example.com>
+Date:   Sat, 04 Apr 2026 11:32:01 -0700
+
+    refactor: add sandbox timeout edge case tests
+
+commit 0000000000000000000000000000000af708191f
+Author: Dave Intern <dave@example.com>
+Date:   Sat, 04 Apr 2026 10:32:01 -0700
+
+    Merge branch 'feature/branch-155' into main
+
+commit 0000000000000000000000000000000b08192a30
+Author: Alice Developer <alice@example.com>
+Date:   Sat, 04 Apr 2026 09:32:01 -0700
+
+    docs: optimize BM25 scoring in knowledge store
+
+commit 0000000000000000000000000000000b192a3b41
+Author: Bob Engineer <bob@example.com>
+Date:   Sat, 04 Apr 2026 08:32:01 -0700
+
+    chore: add fuzzy search to content store
+
+commit 0000000000000000000000000000000b2a3b4c52
+Author: Carol Maintainer <carol@example.com>
+Date:   Sat, 04 Apr 2026 07:32:01 -0700
+
+    perf: fix memory leak in session cleanup
+
+commit 0000000000000000000000000000000b3b4c5d63
+Author: Dave Intern <dave@example.com>
+Date:   Sat, 04 Apr 2026 06:32:01 -0700
+
+    style: update dependencies to latest
+
+commit 0000000000000000000000000000000b4c5d6e74
+Author: Alice Developer <alice@example.com>
+Date:   Sat, 04 Apr 2026 05:32:01 -0700
+
+    feat: update handler logic in server/index.js
+
+commit 0000000000000000000000000000000b5d6e7f85
+Author: Bob Engineer <bob@example.com>
+Date:   Sat, 04 Apr 2026 04:32:01 -0700
+
+    fix: update handler logic in server/index.js
+
+commit 0000000000000000000000000000000b6e7f9096
+Author: Carol Maintainer <carol@example.com>
+Date:   Sat, 04 Apr 2026 03:32:01 -0700
+
+    Merge branch 'feature/branch-162' into main
+
+commit 0000000000000000000000000000000b7f90a1a7
+Author: Dave Intern <dave@example.com>
+Date:   Sat, 04 Apr 2026 02:32:01 -0700
+
+    test: fix race condition in signal files
+
+commit 0000000000000000000000000000000b90a1b2b8
+Author: Alice Developer <alice@example.com>
+Date:   Sat, 04 Apr 2026 01:32:01 -0700
+
+    docs: add configurable compression levels
+
+commit 0000000000000000000000000000000ba1b2c3c9
+Author: Bob Engineer <bob@example.com>
+Date:   Sat, 04 Apr 2026 00:32:01 -0700
+
+    chore: update license headers
+
+commit 0000000000000000000000000000000bb2c3d4da
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 03 Apr 2026 23:32:01 -0700
+
+    perf: fix typo in user manual
+
+commit 0000000000000000000000000000000bc3d4e5eb
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 03 Apr 2026 22:32:01 -0700
+
+    style: add Windows compatibility for temp dirs
+
+commit 0000000000000000000000000000000bd4e5f6fc
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 03 Apr 2026 21:32:01 -0700
+
+    feat: optimize FTS5 indexing batch size
+
+commit 0000000000000000000000000000000be5f7080d
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 03 Apr 2026 20:32:01 -0700
+
+    Merge branch 'feature/branch-169' into main
+
+commit 0000000000000000000000000000000bf708191e
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 03 Apr 2026 19:32:01 -0700
+
+    refactor: fix Unicode handling in content chunks
+
+commit 0000000000000000000000000000000c08192a2f
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 03 Apr 2026 18:32:01 -0700
+
+    test: refactor event extraction logic
+
+commit 0000000000000000000000000000000c192a3b40
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 03 Apr 2026 17:32:01 -0700
+
+    docs: add retry logic for flaky tests
+
+commit 0000000000000000000000000000000c2a3b4c51
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 03 Apr 2026 16:32:01 -0700
+
+    chore: improve startup performance
+
+commit 0000000000000000000000000000000c3b4c5d62
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 03 Apr 2026 15:32:01 -0700
+
+    perf: fix CORS headers in MCP transport
+
+commit 0000000000000000000000000000000c4c5d6e73
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 03 Apr 2026 14:32:01 -0700
+
+    style: add session resume support
+
+commit 0000000000000000000000000000000c5d6e7f84
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 03 Apr 2026 13:32:01 -0700
+
+    Merge branch 'feature/branch-176' into main
+
+commit 0000000000000000000000000000000c6e7f9095
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 03 Apr 2026 12:32:01 -0700
+
+    fix: fix path resolution on Windows
+
+commit 0000000000000000000000000000000c7f90a1a6
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 03 Apr 2026 11:32:01 -0700
+
+    refactor: add telemetry opt-out support
+
+commit 0000000000000000000000000000000c90a1b2b7
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 03 Apr 2026 10:32:01 -0700
+
+    test: refactor database schema migrations
+
+commit 0000000000000000000000000000000ca1b2c3c8
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 03 Apr 2026 09:32:01 -0700
+
+    docs: update handler logic in server/index.js
+
+commit 0000000000000000000000000000000cb2c3d4d9
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 03 Apr 2026 08:32:01 -0700
+
+    chore: correct exit code handling in server/index.js
+
+commit 0000000000000000000000000000000cc3d4e5ea
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 03 Apr 2026 07:32:01 -0700
+
+    perf: update README with new tool descriptions
+
+commit 0000000000000000000000000000000cd4e5f6fb
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 03 Apr 2026 06:32:01 -0700
+
+    Merge branch 'feature/branch-183' into main
+
+commit 0000000000000000000000000000000ce5f7080c
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 03 Apr 2026 05:32:01 -0700
+
+    feat: add sandbox timeout edge case tests
+
+commit 0000000000000000000000000000000cf708191d
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 03 Apr 2026 04:32:01 -0700
+
+    fix: handle ANSI codes in server/index.js output formatting
+
+commit 0000000000000000000000000000000d08192a2e
+Author: Carol Maintainer <carol@example.com>
+Date:   Fri, 03 Apr 2026 03:32:01 -0700
+
+    refactor: optimize BM25 scoring in knowledge store
+
+commit 0000000000000000000000000000000d192a3b3f
+Author: Dave Intern <dave@example.com>
+Date:   Fri, 03 Apr 2026 02:32:01 -0700
+
+    test: add fuzzy search to content store
+
+commit 0000000000000000000000000000000d2a3b4c50
+Author: Alice Developer <alice@example.com>
+Date:   Fri, 03 Apr 2026 01:32:01 -0700
+
+    docs: fix memory leak in session cleanup
+
+commit 0000000000000000000000000000000d3b4c5d61
+Author: Bob Engineer <bob@example.com>
+Date:   Fri, 03 Apr 2026 00:32:01 -0700
+
+    chore: update dependencies to latest
+
+commit 0000000000000000000000000000000d4c5d6e72
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 02 Apr 2026 23:32:01 -0700
+
+    Merge branch 'feature/branch-190' into main
+
+commit 0000000000000000000000000000000d5d6e7f83
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 02 Apr 2026 22:32:01 -0700
+
+    style: refactor tool handler signatures
+
+commit 0000000000000000000000000000000d6e7f9094
+Author: Alice Developer <alice@example.com>
+Date:   Thu, 02 Apr 2026 21:32:01 -0700
+
+    feat: improve test coverage for hooks
+
+commit 0000000000000000000000000000000d7f90a1a5
+Author: Bob Engineer <bob@example.com>
+Date:   Thu, 02 Apr 2026 20:32:01 -0700
+
+    fix: fix race condition in signal files
+
+commit 0000000000000000000000000000000d90a1b2b6
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 02 Apr 2026 19:32:01 -0700
+
+    refactor: add configurable compression levels
+
+commit 0000000000000000000000000000000da1b2c3c7
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 02 Apr 2026 18:32:01 -0700
+
+    test: update license headers
+
+commit 0000000000000000000000000000000db2c3d4d8
+Author: Alice Developer <alice@example.com>
+Date:   Thu, 02 Apr 2026 17:32:01 -0700
+
+    docs: fix typo in user manual
+
+commit 0000000000000000000000000000000dc3d4e5e9
+Author: Bob Engineer <bob@example.com>
+Date:   Thu, 02 Apr 2026 16:32:01 -0700
+
+    Merge branch 'feature/branch-197' into main
+
+commit 0000000000000000000000000000000dd4e5f6fa
+Author: Carol Maintainer <carol@example.com>
+Date:   Thu, 02 Apr 2026 15:32:01 -0700
+
+    perf: optimize FTS5 indexing batch size
+
+commit 0000000000000000000000000000000de5f7080b
+Author: Dave Intern <dave@example.com>
+Date:   Thu, 02 Apr 2026 14:32:01 -0700
+
+    style: add ctx_doctor diagnostics tool
+

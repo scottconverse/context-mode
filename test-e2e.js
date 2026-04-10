@@ -292,7 +292,7 @@ try {
 
   // Call ctx_stats
   const statsResult = await client.callTool({ name: 'ctx_stats', arguments: {} });
-  statsResult.content?.[0]?.text?.includes('Context Mode Stats') ? PASS('MCP: ctx_stats') : FAIL('MCP: ctx_stats');
+  statsResult.content?.[0]?.text?.includes('Token Savings This Session') ? PASS('MCP: ctx_stats') : FAIL('MCP: ctx_stats');
 
   // Call ctx_purge
   const purgeResult = await client.callTool({ name: 'ctx_purge', arguments: { confirm: true } });

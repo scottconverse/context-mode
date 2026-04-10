@@ -1,0 +1,75 @@
+[2K[1G[2m$ jest --verbose[22m
+
+ PASS  src/utils/__tests__/format.test.js
+  formatBytes
+    ✓ formats bytes (2 ms)
+    ✓ formats kilobytes (1 ms)
+    ✓ formats megabytes
+    ✓ handles zero
+    ✓ handles negative values (1 ms)
+
+ PASS  src/utils/__tests__/hash.test.js
+  createHash
+    ✓ hashes strings (3 ms)
+    ✓ hashes buffers (1 ms)
+    ✓ returns consistent results
+    ✓ handles empty input (1 ms)
+
+ PASS  src/server/__tests__/sandbox.test.js
+  PolyglotExecutor
+    ✓ executes javascript (45 ms)
+    ✓ executes python (38 ms)
+    ✓ executes shell (12 ms)
+    ✓ enforces timeout (1003 ms)
+    ✓ enforces byte cap (22 ms)
+    ✓ handles missing runtime (1 ms)
+    ✓ cleans up temp dirs (15 ms)
+    ✓ strips dangerous env vars (8 ms)
+    ✓ backgrounds long processes (2005 ms)
+    ✓ kills process tree on timeout (1008 ms)
+
+ PASS  src/server/__tests__/knowledge.test.js
+  ContentStore
+    ✓ indexes content (12 ms)
+    ✓ searches with BM25 (8 ms)
+    ✓ searches with trigram fallback (15 ms)
+    ✓ deduplicates chunks (5 ms)
+    ✓ filters by source (3 ms)
+    ✓ handles empty queries (1 ms)
+    ✓ respects max results (2 ms)
+    ✓ returns snippets with context (4 ms)
+    ✓ fuzzy matching via Levenshtein (18 ms)
+    ✓ proximity reranking (6 ms)
+
+ PASS  src/hooks/__tests__/routing.test.js
+  routePreToolUse
+    ✓ blocks curl stdout (1 ms)
+    ✓ allows curl with -o flag (1 ms)
+    ✓ blocks wget stdout
+    ✓ allows wget with -O flag
+    ✓ blocks WebFetch (1 ms)
+    ✓ redirects gradle (1 ms)
+    ✓ redirects maven
+    ✓ blocks inline fetch()
+    ✓ blocks requests.get
+    ✓ injects routing into Agent prompts (1 ms)
+    ✓ passes through unknown tools
+    ✓ shows Bash guidance once (1 ms)
+    ✓ shows Read guidance once
+    ✓ strips heredoc content before matching (1 ms)
+    ✓ strips quoted content before matching
+    ✓ allows safe curl segments in chains (1 ms)
+
+ PASS  src/server/__tests__/session.test.js
+  SessionDB
+    ✓ creates session (5 ms)
+    ✓ inserts events (2 ms)
+    ✓ retrieves events by session (3 ms)
+    ✓ cleans up old sessions (8 ms)
+    ✓ builds resume snapshot (4 ms)
+
+[1m[32mTest Suites: 6 passed, 6 total[39m[22m
+[1m[32mTests:       50 passed, 50 total[39m[22m
+[1m[2mSnapshots:   0 total[39m[22m
+[1m[2mTime:        4.821 s[39m[22m
+[2mRan all test suites.[22m

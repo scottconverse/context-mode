@@ -1,0 +1,70 @@
+   Compiling crate-a0 v1.0.0
+   Compiling crate-b1 v2.1.1
+   Compiling crate-c2 v3.2.2
+   Compiling crate-d3 v4.3.3
+   Compiling crate-e4 v5.4.4
+   Compiling crate-f5 v1.5.5
+   Compiling crate-g6 v2.6.6
+   Compiling crate-h7 v3.7.7
+   Compiling crate-i8 v4.8.8
+   Compiling crate-j9 v5.9.9
+   Compiling crate-k10 v1.10.0
+   Compiling crate-l11 v2.11.1
+   Compiling crate-m12 v3.12.2
+   Compiling crate-n13 v4.13.3
+   Compiling crate-o14 v5.14.4
+   Compiling crate-p15 v1.15.5
+   Compiling crate-q16 v2.16.6
+   Compiling crate-r17 v3.17.7
+   Compiling crate-s18 v4.18.8
+   Compiling crate-t19 v5.19.9
+   Compiling crate-u20 v1.0.0
+   Compiling crate-v21 v2.1.1
+   Compiling crate-w22 v3.2.2
+   Compiling crate-x23 v4.3.3
+   Compiling crate-y24 v5.4.4
+   Compiling crate-z25 v1.5.5
+   Compiling crate-a26 v2.6.6
+   Compiling crate-b27 v3.7.7
+   Compiling crate-c28 v4.8.8
+   Compiling crate-d29 v5.9.9
+   Compiling crate-e30 v1.10.0
+   Compiling crate-f31 v2.11.1
+   Compiling crate-g32 v3.12.2
+   Compiling crate-h33 v4.13.3
+   Compiling crate-i34 v5.14.4
+   Compiling crate-j35 v1.15.5
+   Compiling crate-k36 v2.16.6
+   Compiling crate-l37 v3.17.7
+   Compiling crate-m38 v4.18.8
+   Compiling crate-n39 v5.19.9
+   Compiling crate-o40 v1.0.0
+   Compiling crate-p41 v2.1.1
+   Compiling crate-q42 v3.2.2
+   Compiling crate-r43 v4.3.3
+   Compiling crate-s44 v5.4.4
+   Compiling crate-t45 v1.5.5
+   Compiling crate-u46 v2.6.6
+   Compiling crate-v47 v3.7.7
+   Compiling crate-w48 v4.8.8
+   Compiling crate-x49 v5.9.9
+   Compiling crate-y50 v1.10.0
+   Compiling crate-z51 v2.11.1
+   Compiling crate-a52 v3.12.2
+   Compiling crate-b53 v4.13.3
+   Compiling crate-c54 v5.14.4
+   Compiling crate-d55 v1.15.5
+   Compiling crate-e56 v2.16.6
+   Compiling crate-f57 v3.17.7
+   Compiling crate-g58 v4.18.8
+   Compiling crate-h59 v5.19.9
+warning: unused variable: `temp_buf`
+  --> src/main.rs:42:9
+   |
+42 |     let temp_buf = Vec::new();
+   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_temp_buf`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: `my-project` (bin "my-project") generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.34s

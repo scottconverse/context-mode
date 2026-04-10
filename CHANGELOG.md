@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.0] - 2026-04-10
+
+### Added
+- **Token Compression Engine** — 3-stage pipeline compresses tool output before it enters context:
+  - Stage 1 (deterministic): strips ANSI escape codes, carriage return overwrites, UTF-8 BOM, trailing whitespace, and collapses duplicate blank lines
+  - Stage 2 (pattern-based): 10 tool-specific matchers for jest/vitest, pytest, git log, git diff, npm install, pip install, cargo build, docker build, make/cmake, and directory listings — collapses passing tests, compile steps, and progress bars while preserving failures verbatim
+  - Stage 3 (session-aware): scores content blocks by relevance to current session files and learner retention weights; low-relevance blocks are summarized
+- **Self-Learning Compression** — feedback loop tracks compressed content that Claude later retrieves via `ctx_search`. Retention weights adjust per tool pattern: high retrieval rates increase retention, low rates increase compression. 7-day decay window, 5-minute weight cache.
+- **9 new PreToolUse routing matchers** — git log, git diff, npm test/jest/vitest, pytest, npm install/ci, pip install, cargo build/test, docker build, make/cmake. Each has smart pass-through conditions (e.g., `git log --oneline` and `git log -n 5` pass through; unbounded `git log` redirects through compressor).
+- **Rewritten `ctx_stats`** — now shows token savings with compression breakdown by tool pattern, estimated cost savings for Opus/Sonnet/Haiku pricing, learner accuracy metrics, and lifetime aggregate statistics.
+- **PostToolUse retrieval signals** — detects `ctx_search` calls and writes signal files consumed by the learner to detect retrieval patterns.
+- **SessionStart learner cleanup** — prunes compression_log and compression_stats older than 7 days during session startup.
+- **Periodic stats flush** — compression statistics flush to SQLite every 5 minutes and on shutdown.
+- 76 new tests: 32 compressor tests (3 stages + error invariant), 13 learner tests (schema, weights, retrieval, decay, lifetime), 31 routing tests (9 new matchers + 4 regression)
+- 13 test fixtures: real-world captured output for jest, pytest, git log, git diff, cargo, docker, make, npm install, pip install, directory listings
+
+### Changed
+- `ctx_execute` and `ctx_batch_execute` now compress output through the 3-stage pipeline before returning to context
+- PreToolUse routing expanded from 14 to 23 matchers
+- `ctx_stats` completely rewritten with token-based metrics and cost estimates (replaces byte-based report)
+- Error invariant: lines containing error/warning/fail/panic/exception/traceback keywords are never compressed, with 2-line context protection above and below
+
 ## [1.2.1] - 2026-04-10
 
 ### Fixed

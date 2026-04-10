@@ -1,0 +1,36 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.8, pytest-8.1.1, pluggy-1.4.0
+rootdir: /home/user/project
+collected 43 items
+
+tests/test_core.py ......................                                 [ 51%]
+tests/test_utils.py ..........                                           [ 74%]
+tests/test_api.py .....F.FF...                                           [100%]
+
+=================================== FAILURES ===================================
+_________________________________ test_api_timeout __________________________________
+
+tests/test_api.py:45: in test_api_timeout
+    response = client.get("/api/slow-endpoint", timeout=30)
+    assert response.status_code == 200
+E   TimeoutError: API call exceeded 30s limit
+
+_________________________________ test_api_auth_header __________________________________
+
+tests/test_api.py:78: in test_api_auth_header
+    response = client.get("/api/protected", headers={})
+    assert response.status_code == 200
+E   AssertionError: assert 401 == 200
+
+_________________________________ test_api_bulk_insert __________________________________
+
+tests/test_api.py:112: in test_api_bulk_insert
+    result = db.bulk_insert(duplicate_items)
+    assert result.inserted == len(duplicate_items)
+E   IntegrityError: UNIQUE constraint failed: items.id
+
+=========================== short test summary info ============================
+FAILED tests/test_api.py::test_api_timeout - TimeoutError: API call exceeded 30s limit
+FAILED tests/test_api.py::test_api_auth_header - AssertionError: assert 401 == 200
+FAILED tests/test_api.py::test_api_bulk_insert - IntegrityError: UNIQUE constraint failed
+========================= 3 failed, 40 passed in 8.42s =========================

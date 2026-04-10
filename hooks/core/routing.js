@@ -185,6 +185,121 @@ export function routePreToolUse(toolName, toolInput, projectDir) {
       };
     }
 
+    // ─── git log: redirect unbounded logs through compressor ───
+    if (/(?:^|\s|&&|\||\;)git\s+log\b/.test(stripped)) {
+      const hasLimit = /\s(-n\s*\d|--max-count[= ]\d|-\d+)\b/.test(stripped);
+      const hasShortFormat = /\s(--oneline|--format=|--pretty=oneline)/.test(stripped);
+      const hasPipe = /\|\s*(head|grep|wc|tail|awk|sed|sort|uniq|cut)\b/.test(command);
+      if (!hasLimit && !hasShortFormat && !hasPipe) {
+        return {
+          action: "modify",
+          updatedInput: {
+            command: `echo "context-mode: git log routed through compressor for token efficiency. Full output indexed to knowledge base. Use ctx_search(queries: [...]) to find specific content. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"git log 2>&1\\") instead."`,
+          },
+        };
+      }
+    }
+
+    // ─── git diff: redirect unbounded diffs ───
+    if (/(?:^|\s|&&|\||\;)git\s+diff\b/.test(stripped)) {
+      const hasStat = /\s--stat\b/.test(stripped);
+      const hasPipe = /\|\s*(head|grep|wc|tail|awk|sed|sort|uniq|cut)\b/.test(command);
+      const hasSingleFile = /git\s+diff\s+(?:--\w+\s+)*[\w./-]+\.(js|ts|py|rs|go|java|jsx|tsx|css|html|json|yaml|yml|toml|md|txt)\b/.test(stripped);
+      if (!hasStat && !hasPipe && !hasSingleFile) {
+        return {
+          action: "modify",
+          updatedInput: {
+            command: `echo "context-mode: git diff routed through compressor for token efficiency. Full output indexed. Use ctx_search to find specific changes. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"git diff 2>&1\\") instead."`,
+          },
+        };
+      }
+    }
+
+    // ─── npm test / jest / vitest: redirect test runners ───
+    if (/(?:^|\s|&&|\||\;)(npm\s+test|npx\s+(jest|vitest))\b/.test(stripped)) {
+      const hasPipe = /\|\s*(head|grep|wc|tail|awk|sed|sort|uniq|cut)\b/.test(command);
+      if (!hasPipe) {
+        return {
+          action: "modify",
+          updatedInput: {
+            command: `echo "context-mode: test runner routed through compressor. Failures preserved verbatim, passes summarized. Full output indexed. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"npm test 2>&1\\") instead."`,
+          },
+        };
+      }
+    }
+
+    // ─── pytest: redirect ───
+    if (/(?:^|\s|&&|\||\;)(pytest|python\s+-m\s+pytest)\b/.test(stripped)) {
+      const hasPipe = /\|\s*(head|grep|wc|tail|awk|sed|sort|uniq|cut)\b/.test(command);
+      if (!hasPipe) {
+        return {
+          action: "modify",
+          updatedInput: {
+            command: `echo "context-mode: pytest routed through compressor. Failures preserved verbatim, passes summarized. Full output indexed. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"pytest 2>&1\\") instead."`,
+          },
+        };
+      }
+    }
+
+    // ─── npm install / npm ci: redirect ───
+    if (/(?:^|\s|&&|\||\;)npm\s+(install|ci)\b/.test(stripped)) {
+      return {
+        action: "modify",
+        updatedInput: {
+          command: `echo "context-mode: npm install routed through compressor. Summary + warnings preserved, progress stripped. Full output indexed. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"npm install 2>&1\\") instead."`,
+        },
+      };
+    }
+
+    // ─── pip install: redirect ───
+    if (/(?:^|\s|&&|\||\;)pip\s+install\b/.test(stripped)) {
+      return {
+        action: "modify",
+        updatedInput: {
+          command: `echo "context-mode: pip install routed through compressor. Summary preserved, download progress stripped. Full output indexed. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"pip install 2>&1\\") instead."`,
+        },
+      };
+    }
+
+    // ─── cargo build / cargo test: redirect ───
+    if (/(?:^|\s|&&|\||\;)cargo\s+(build|test)\b/.test(stripped)) {
+      const hasPipe = /\|\s*(head|grep|wc|tail|awk|sed|sort|uniq|cut)\b/.test(command);
+      if (!hasPipe) {
+        return {
+          action: "modify",
+          updatedInput: {
+            command: `echo "context-mode: cargo routed through compressor. Errors/warnings preserved, compile steps collapsed. Full output indexed. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"cargo build 2>&1\\") instead."`,
+          },
+        };
+      }
+    }
+
+    // ─── docker build: redirect ───
+    if (/(?:^|\s|&&|\||\;)docker\s+build\b/.test(stripped)) {
+      const hasPipe = /\|\s*(head|grep|wc|tail|awk|sed|sort|uniq|cut)\b/.test(command);
+      if (!hasPipe) {
+        return {
+          action: "modify",
+          updatedInput: {
+            command: `echo "context-mode: docker build routed through compressor. Steps + errors preserved, cache lines collapsed. Full output indexed. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"docker build . 2>&1\\") instead."`,
+          },
+        };
+      }
+    }
+
+    // ─── make / cmake --build: redirect ───
+    if (/(?:^|\s|&&|\||\;)(make|cmake\s+--build)\b/.test(stripped)) {
+      const hasPipe = /\|\s*(head|grep|wc|tail|awk|sed|sort|uniq|cut)\b/.test(command);
+      if (!hasPipe) {
+        return {
+          action: "modify",
+          updatedInput: {
+            command: `echo "context-mode: build routed through compressor. Warnings/errors preserved, compile invocations collapsed. Full output indexed. Do NOT retry with Bash — use ${t("ctx_execute")}(language: \\"shell\\", code: \\"make 2>&1\\") instead."`,
+          },
+        };
+      }
+    }
+
     // allow all other Bash commands, but inject routing nudge (once per session)
     return guidanceOnce("bash", bashGuidance);
   }
