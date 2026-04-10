@@ -18,7 +18,7 @@ Long Claude Code sessions consume context rapidly. Every file read, web fetch, a
 **Quickest — one command:**
 
 ```bash
-npx github:scottconverse/context-mode
+npx --yes --package=github:scottconverse/context-mode context-mode
 ```
 
 The installer runs 7 steps automatically: copies the plugin to cache, creates a marketplace entry, registers the plugin, enables it in settings, installs native dependencies, verifies FTS5, and probes the MCP server to confirm all 9 tools respond. After it completes, start a new Claude Code session.

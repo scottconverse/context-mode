@@ -25,7 +25,7 @@ Context Mode provides three things:
 Open a terminal and run:
 
 ```bash
-npx github:scottconverse/context-mode
+npx --yes --package=github:scottconverse/context-mode context-mode
 ```
 
 That's it. The installer does everything automatically — you don't need to understand what it's doing, but here's what happens behind the scenes:

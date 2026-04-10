@@ -97,7 +97,7 @@ Without context-mode:           With context-mode:
 **One command:**
 
 ```bash
-npx github:scottconverse/context-mode
+npx --yes --package=github:scottconverse/context-mode context-mode
 ```
 
 This clones the plugin to the Cowork plugin cache, registers it, installs native dependencies, and verifies that all 9 MCP tools respond. After installation, start a new session and run `/context-mode:ctx-doctor` to confirm.
