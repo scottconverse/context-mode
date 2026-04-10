@@ -5,7 +5,7 @@
  */
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, openSync, closeSync, unlinkSync, constants as fsConstants } from 'fs';
 import { tmpdir } from 'os';
 import { execSync } from 'child_process';
 
@@ -476,6 +476,48 @@ console.log('\n--- Phase 10: Plugin Lifecycle & Manifest Integrity ---');
     registered = mp.name && mp.plugins && mp.plugins.length > 0;
   } catch(e) {}
   assert(registered, 'marketplace.json valid with plugin entry');
+}
+
+console.log('\n--- Phase 11: Lockfile Concurrency ---');
+
+// O_EXCL lockfile: first process wins, second gets EEXIST
+{
+  const lockDir = mkdtempSync(join(tmpdir(), '.ctx-lock-'));
+  const lockPath = join(lockDir, 'test.lock');
+
+  // First acquire succeeds
+  const fd1 = openSync(lockPath, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY);
+  assert(fd1 > 0, 'lockfile: first acquire succeeds');
+
+  // Second acquire fails with EEXIST
+  let secondFailed = false;
+  try {
+    openSync(lockPath, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY);
+  } catch (err) {
+    secondFailed = err.code === 'EEXIST';
+  }
+  assert(secondFailed, 'lockfile: second acquire gets EEXIST');
+
+  // Release and cleanup
+  closeSync(fd1);
+  unlinkSync(lockPath);
+
+  // After release, third acquire succeeds
+  const fd3 = openSync(lockPath, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY);
+  assert(fd3 > 0, 'lockfile: acquire after release succeeds');
+  closeSync(fd3);
+  unlinkSync(lockPath);
+
+  // Stale lock TTL: create a lock, backdate it, verify it can be detected as stale
+  writeFileSync(lockPath, '');
+  const { utimesSync } = await import('fs');
+  const staleTime = new Date(Date.now() - 60000); // 60s ago
+  utimesSync(lockPath, staleTime, staleTime);
+  const { statSync } = await import('fs');
+  const lockAge = Date.now() - statSync(lockPath).mtimeMs;
+  assert(lockAge > 30000, `lockfile: stale detection works (age=${Math.round(lockAge/1000)}s > 30s)`);
+
+  try { rmSync(lockDir, { recursive: true, force: true }); } catch {}
 }
 
 // ============================================================

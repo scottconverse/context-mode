@@ -333,9 +333,9 @@ for f in FILES:
 ${code}`;
         break;
       case 'shell':
-        // For shell, create file list as env var
+        // For shell, create file list as env var (quote-safe for paths with spaces/special chars)
         wrappedCode = `
-FILES=(${files.map(f => `"${f}"`).join(' ')})
+FILES=(${files.map(f => `"${f.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join(' ')})
 ${code}`;
         break;
       default:

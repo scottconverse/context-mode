@@ -8,7 +8,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync, readdirSync, openSync, closeSync, unlinkSync, constants as fsConstants } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, readdirSync, openSync, closeSync, unlinkSync, statSync, constants as fsConstants } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
@@ -55,13 +55,22 @@ if (cacheMatch) {
           "installed_plugins.json",
         );
         // Atomic lockfile: O_CREAT | O_EXCL — first process wins, others skip
+        // Stale lock TTL: if lockfile is older than 30s, remove it and retry
         const lockPath = ipPath + ".lock";
         let lockFd = null;
         try {
           lockFd = openSync(lockPath, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY);
         } catch {
-          // Another session holds the lock — skip self-heal (best effort)
-          lockFd = null;
+          // Lock exists — check if stale (older than 30 seconds)
+          try {
+            const lockAge = Date.now() - statSync(lockPath).mtimeMs;
+            if (lockAge > 30000) {
+              unlinkSync(lockPath);
+              lockFd = openSync(lockPath, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY);
+            }
+          } catch {
+            // Can't stat or remove stale lock — skip self-heal
+          }
         }
         if (lockFd !== null) {
           try {
