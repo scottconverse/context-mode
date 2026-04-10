@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.1] - 2026-04-10
+
+### Fixed
+- CI: `run-hook.cmd` missing execute permission — all Linux/macOS CI jobs were failing with "Permission denied"
+- start.js: `break` statement inside try/catch (not a loop) replaced with flag-based control flow for lockfile skip logic
+- ctx_fetch_and_index: replaced `__CM_CT__:` stdout marker with JSON envelope `{ct, body}` to eliminate marker collision risk with page content
+- db-base.js: better-sqlite3 error message now points to `install.js` (was `setup.js`)
+- db-base.js: replaced CPU-spinning busy-wait with `Atomics.wait()` for SQLITE_BUSY retry backoff
+- migrate.js: backup now covers pre-existing unversioned databases (user_version=0 with existing tables)
+- knowledge.js: tightened `#classifyChunk` bracket regex to matched-pair pattern, reducing false positives on prose
+- start.js: O_EXCL lockfile around `installed_plugins.json` read-modify-write to prevent concurrent-session race
+
+### Added
+- CI workflow (`.github/workflows/ci.yml`): 3×3 matrix — Node 18/20/22 × ubuntu/macos/windows
+- `npm test` script in package.json (runs E2E + adversarial suites)
+- Security Model section in README — clarifies process isolation vs. filesystem sandboxing
+- Windows `ctx_doctor` diagnostic: warns when Git Bash is missing with install link
+- db-base.js: logs which path `better-sqlite3` was resolved from on startup
+- Git tags and GitHub Releases for all 4 versions (v1.0.0–v1.2.0)
+
+### Changed
+- README: "up to 98%" claim qualified with ctx_stats reference
+- db-base.js: dependency search order documented and reordered (CLAUDE_PLUGIN_DATA first)
+
 ## [1.2.0] - 2026-04-09
 
 ### Added

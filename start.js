@@ -56,31 +56,33 @@ if (cacheMatch) {
         );
         // Atomic lockfile: O_CREAT | O_EXCL — first process wins, others skip
         const lockPath = ipPath + ".lock";
-        let lockFd;
+        let lockFd = null;
         try {
           lockFd = openSync(lockPath, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY);
         } catch {
           // Another session holds the lock — skip self-heal (best effort)
-          break;
+          lockFd = null;
         }
-        try {
-          const ip = JSON.parse(readFileSync(ipPath, "utf-8"));
-          for (const [key, entries] of Object.entries(ip.plugins || {})) {
-            if (!key.toLowerCase().includes("context-mode")) continue;
-            for (const entry of entries) {
-              entry.installPath = resolve(cacheParent, newest);
-              entry.version = newest;
-              entry.lastUpdated = new Date().toISOString();
+        if (lockFd !== null) {
+          try {
+            const ip = JSON.parse(readFileSync(ipPath, "utf-8"));
+            for (const [key, entries] of Object.entries(ip.plugins || {})) {
+              if (!key.toLowerCase().includes("context-mode")) continue;
+              for (const entry of entries) {
+                entry.installPath = resolve(cacheParent, newest);
+                entry.version = newest;
+                entry.lastUpdated = new Date().toISOString();
+              }
             }
+            writeFileSync(
+              ipPath,
+              JSON.stringify(ip, null, 2) + "\n",
+              "utf-8",
+            );
+          } finally {
+            closeSync(lockFd);
+            try { unlinkSync(lockPath); } catch { /* ignore */ }
           }
-          writeFileSync(
-            ipPath,
-            JSON.stringify(ip, null, 2) + "\n",
-            "utf-8",
-          );
-        } finally {
-          closeSync(lockFd);
-          try { unlinkSync(lockPath); } catch { /* ignore */ }
         }
       }
     }
