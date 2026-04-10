@@ -1,0 +1,23 @@
+graph LR
+    subgraph Capture["Event Capture"]
+        direction TB
+        A[Tool Call] --> B[PostToolUse Hook]
+        B --> C[(SessionDB)]
+        B --> D[ctx_execute_file]
+        D --> E[Subprocess isolation]
+        D --> F[FTS5 index if large]
+        D --> G[Compact result<br/>to context]
+    end
+
+    subgraph Resume["Compaction & Resume"]
+        direction TB
+        H[PreCompact fires] --> I[Read events]
+        I --> J[XML snapshot ≤2KB]
+        J --> K[session_resume]
+        K --> L[Context Compaction]
+        L --> M[SessionStart Hook]
+        M --> N[Load snapshot +<br/>routing block]
+        N --> O[Claude resumes]
+    end
+
+    Capture --> Resume

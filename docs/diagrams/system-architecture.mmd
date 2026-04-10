@@ -1,0 +1,29 @@
+graph LR
+    subgraph Hooks["Hook Layer"]
+        direction TB
+        PTU[PreToolUse<br/>9 matchers]
+        UPS[UserPromptSubmit]
+        SS[SessionStart]
+        PTO[PostToolUse]
+        PC[PreCompact]
+        SAS[SubagentStop]
+    end
+
+    subgraph MCP["MCP Server — stdio"]
+        direction TB
+        EX[ctx_execute]
+        EXF[ctx_execute_file]
+        BAT[ctx_batch_execute]
+        IDX[ctx_index]
+        SCH[ctx_search]
+        FI[ctx_fetch_and_index]
+        ST[ctx_stats / doctor / purge]
+    end
+
+    SDB[(SessionDB)]
+
+    Hooks --> MCP
+    PTO --> SDB
+    PC --> SDB
+    SAS --> SDB
+    SS --> MCP

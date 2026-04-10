@@ -4,7 +4,7 @@ Context window optimization plugin for Claude Code in Cowork. Sandboxes tool out
 
 ## What It Does
 
-Long Claude Code sessions consume context rapidly. Every file read, web fetch, and shell command dumps raw output into the context window. Context-mode solves this with five capabilities:
+Long Claude Code sessions consume context rapidly. Every file read, web fetch, and shell command dumps raw output into the context window. Context-mode solves this with six capabilities:
 
 1. **Automatic Tool Routing** — PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls before they execute and redirect them through the context-mode sandbox. You get the result; the raw output stays out of context. See [Automatic Tool Routing](#automatic-tool-routing) below.
 2. **Sandbox Execution** — Runs code in isolated subprocesses, capturing only stdout. Raw file contents and command output never enter context. Supports 11 languages.

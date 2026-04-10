@@ -1,0 +1,8 @@
+graph TD
+    Q{About to run a command,<br/>read a file, or call an API?}
+    Q -->|Bash whitelist?| BW[Use Bash unchanged]
+    Q -->|Output might be large?| EX[Use ctx_execute or<br/>ctx_execute_file]
+    Q -->|Fetching web docs?| FI[ctx_fetch_and_index<br/>then ctx_search]
+    Q -->|Search indexed content?| SR[ctx_search or<br/>ctx_batch_execute]
+    Q -->|Playwright / browser?| PW[Save to file then<br/>ctx_index or ctx_execute_file]
+    Q -->|Multiple commands?| BA[ctx_batch_execute<br/>one call, many ops]

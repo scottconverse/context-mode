@@ -1,0 +1,6 @@
+graph LR
+    S[start.js] --> ENV[Set env vars]
+    ENV --> VH[Version<br/>self-heal]
+    VH --> ED[ensure-deps<br/>ABI check]
+    ED --> TD[Install<br/>turndown]
+    TD --> SRV[MCP server<br/>starts]

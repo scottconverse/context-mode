@@ -1,0 +1,18 @@
+graph LR
+    subgraph Search["Dual-Strategy Search"]
+        direction TB
+        QR["Query"] --> L1["Porter FTS5<br/>bm25 title 5x"]
+        QR --> L2["Trigram FTS5<br/>bm25 title 5x"]
+        L1 --> RRF["RRF Fusion K=60"]
+        L2 --> RRF
+    end
+
+    subgraph Rank["Reranking & Output"]
+        direction TB
+        PR["Proximity Rerank<br/>minSpan boost"] --> FZ{Empty?}
+        FZ -->|Yes| LV["Levenshtein<br/>fuzzy correction"]
+        LV --> SS
+        FZ -->|No| SS["Smart Snippets<br/>300-char windows<br/>≤1500 chars"]
+    end
+
+    Search --> Rank

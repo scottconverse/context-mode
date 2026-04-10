@@ -1,3 +1,33 @@
+---
+stylesheet: []
+body_class: readme-full
+css: |-
+  .diagram-container {
+    page-break-inside: avoid;
+    text-align: center;
+    margin: 1.5em 0;
+  }
+  .diagram-container img {
+    max-width: 100%;
+    height: auto;
+  }
+  .diagram-container .caption {
+    font-style: italic;
+    font-size: 0.9em;
+    color: #555;
+    margin-top: 0.4em;
+  }
+  h2, h3 {
+    page-break-after: avoid;
+  }
+  table {
+    page-break-inside: avoid;
+  }
+  pre {
+    page-break-inside: avoid;
+  }
+---
+
 # context-mode — Full Technical Documentation
 
 **Version 1.1.0** | Elastic License 2.0 | April 2026
@@ -98,63 +128,17 @@ node install.js
 
 ### System Architecture
 
-```mermaid
-graph TB
-    subgraph Cowork Session
-        direction TB
-        PTU[PreToolUse Hook<br/>9 matchers]
-        UPS[UserPromptSubmit Hook]
-        SS[SessionStart Hook<br/>inject routing block]
-        PTO[PostToolUse Hook<br/>event capture]
-        PC[PreCompact Hook<br/>snapshot builder]
-        SAS[SubagentStop Hook]
-
-        subgraph MCP["MCP Server (stdio)"]
-            direction LR
-            EX[ctx_execute]
-            EXF[ctx_execute_file]
-            BAT[ctx_batch_execute]
-            IDX[ctx_index]
-            SCH[ctx_search]
-            FI[ctx_fetch_and_index]
-            ST[ctx_stats]
-            DOC[ctx_doctor]
-            PUR[ctx_purge]
-        end
-
-        SDB[(SessionDB<br/>events + snapshots)]
-
-        PTU --> MCP
-        UPS --> SS
-        PTO --> SDB
-        PC --> SDB
-        SS --> MCP
-        SAS --> SDB
-    end
-```
+<div class="diagram-container">
+  <img src="diagrams/system-architecture.png" alt="System Architecture" style="max-width: 100%;">
+  <div class="caption">Figure 1: System Architecture — hooks, MCP server, and session database</div>
+</div>
 
 ### Data Flow
 
-```mermaid
-graph TD
-    A[Tool Call<br/>e.g. file read] --> B[PostToolUse Hook]
-    B --> C[(SessionDB<br/>event stored)]
-    B --> D[MCP Tool<br/>ctx_execute_file]
-    D --> E[File read in subprocess<br/>raw content isolated]
-    D --> F[Output indexed in FTS5<br/>if large]
-    D --> G[Compact result<br/>returned to context]
-
-    G -->|session continues| H[PreCompact Hook fires]
-    H --> I[Read events from SessionDB]
-    I --> J[Build XML snapshot ≤2KB]
-    J --> K[Store in session_resume]
-
-    K --> L[Context Compaction]
-    L --> M[SessionStart Hook<br/>source: compact]
-    M --> N[Load snapshot]
-    M --> O[Inject routing block + session guide]
-    O --> P[Claude resumes with full awareness]
-```
+<div class="diagram-container">
+  <img src="diagrams/data-flow.png" alt="Data Flow" style="max-width: 100%;">
+  <div class="caption">Figure 2: Data Flow — tool call through event capture, compaction, and session resume</div>
+</div>
 
 ### Directory Structure
 
@@ -302,16 +286,10 @@ The `context-mode` skill (`skills/context-mode/SKILL.md`) is the in-session auth
 
 ### Decision Tree
 
-```mermaid
-graph TD
-    Q{About to run a command,<br/>read a file, or call an API?}
-    Q -->|Bash whitelist?| BW[Use Bash unchanged]
-    Q -->|Output might be large?| EX[Use ctx_execute or<br/>ctx_execute_file]
-    Q -->|Fetching web docs?| FI[ctx_fetch_and_index<br/>then ctx_search]
-    Q -->|Search indexed content?| SR[ctx_search or<br/>ctx_batch_execute]
-    Q -->|Playwright / browser?| PW[Save to file then<br/>ctx_index or ctx_execute_file]
-    Q -->|Multiple commands?| BA[ctx_batch_execute<br/>one call, many ops]
-```
+<div class="diagram-container">
+  <img src="diagrams/decision-tree.png" alt="Decision Tree" style="max-width: 100%;">
+  <div class="caption">Figure 3: Decision Tree — tool selection based on operation type</div>
+</div>
 
 ### Reference Files
 
@@ -348,14 +326,10 @@ This means the plugin survives Node.js upgrades and Cowork cache moves without u
 
 ### Startup Sequence
 
-```mermaid
-graph TD
-    S[start.js] --> ENV[Set CLAUDE_PROJECT_DIR<br/>CONTEXT_MODE_PROJECT_DIR]
-    ENV --> VH[Version self-heal check<br/>best effort, never blocks]
-    VH --> ED[ensure-deps.js<br/>ABI check, native rebuild if needed]
-    ED --> TD[Install turndown<br/>turndown-plugin-gfm if missing]
-    TD --> SRV["import('./server/index.js')<br/>MCP server starts"]
-```
+<div class="diagram-container">
+  <img src="diagrams/startup-sequence.png" alt="Startup Sequence" style="max-width: 100%;">
+  <div class="caption">Figure 4: Startup Sequence — bootstrapper initialization chain</div>
+</div>
 
 ---
 
@@ -558,18 +532,10 @@ Lower-priority sections are dropped first if budget is tight. Each section inclu
 
 ### Three-Layer Pipeline
 
-```mermaid
-graph TD
-    QR["Query: 'BM25 ranking algorithm'"] --> L1["Layer 1: Porter Stemmer FTS5<br/>bm25(chunks, 5.0, 1.0) — title 5x weight"]
-    QR --> L2["Layer 2: Trigram FTS5<br/>bm25(chunks_trigram, 5.0, 1.0)"]
-    L1 --> RRF["RRF Fusion (K=60)<br/>score = Σ 1/(60 + rank + 1)<br/>Merge by source_id::title"]
-    L2 --> RRF
-    RRF --> PR["Proximity Reranking<br/>findMinSpan(position_lists)<br/>boost = 1 / (1 + minSpan / contentLength)"]
-    PR --> FZ{Results empty?}
-    FZ -->|Yes| LV["Levenshtein Fuzzy Correction<br/>1-4 chars→dist 1, 5-12→2, 13+→3<br/>Re-run RRF with corrected terms"]
-    LV --> SS
-    FZ -->|No| SS["Smart Snippets<br/>300-char windows, merge overlapping<br/>Up to 1500 chars total"]
-```
+<div class="diagram-container">
+  <img src="diagrams/search-algorithm.png" alt="Search Algorithm" style="max-width: 100%;">
+  <div class="caption">Figure 5: Search Algorithm — BM25 + trigram dual-strategy with RRF fusion</div>
+</div>
 
 ---
 
