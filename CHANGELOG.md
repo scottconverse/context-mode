@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] - 2026-04-09
+
+### Added
+- PreToolUse routing hooks — automatically redirects Bash, Read, Grep, WebFetch, Agent through context-mode sandbox
+- Main `context-mode` skill with decision tree, patterns, and anti-patterns
+- UserPromptSubmit hook for session context injection
+- Bootstrapper (start.js) with dependency self-healing and ABI cache
+- ensure-deps.js for native dependency management
+- Session continuity modules (directive, loaders)
+- Routing block XML template for tool selection guidance
+- Server probe in install.js (confirms 9/9 tools respond)
+
+### Fixed
+- plugin.json now declares mcpServers field (root cause of tools not loading in Cowork)
+- .mcp.json uses flat format per Cowork spec
+- install.js marketplace name corrected to scottconverse-context-mode
+- require('os') replaced with ESM import in server/index.js
+
+### Changed
+- Hook file naming aligned with upstream (sessionstart.js, posttooluse.js, etc.)
+- hooks.json expanded from 4 events to 6 events with 14 matchers
+- SessionStart hook now injects routing block + session directive
+
 ## [1.0.0] - 2026-04-09
 
 ### Added

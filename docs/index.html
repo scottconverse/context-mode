@@ -213,8 +213,10 @@
     <div class="container">
       <h1><span>context-mode</span></h1>
       <p class="tagline">
-        Context window optimization for Claude Code in Cowork.
-        Sandbox tool output, index content locally, and survive context compaction.
+        Your Claude sessions degrade as context fills up. context-mode keeps raw data in a
+        sandbox so Claude stays sharp for the entire conversation — with automatic tool routing
+        that intercepts Bash, Read, Grep, and WebFetch calls before they flood your context.
+        98% less context consumed.
       </p>
       <div class="stat-row">
         <div class="stat">
@@ -230,8 +232,19 @@
           <div class="stat-label">Languages</div>
         </div>
       </div>
+      <div class="arch-diagram" style="max-width:540px;margin:0 auto 28px;padding:16px 24px;font-size:0.75rem;line-height:1.6;">
+User prompt ──► PreToolUse hook ──► sandbox / block / nudge
+                     │
+              PostToolUse hook ──► event capture (13 categories)
+                     │
+              PreCompact hook  ──► &le;2KB XML snapshot ──► resume
+      </div>
+
       <div class="quickstart">
-        <h3>Install (in Claude Code or Cowork)</h3>
+        <h3>Install</h3>
+        <div class="step" style="margin-bottom:6px;">Option 1 — npx (any machine):</div>
+        <code>npx github:scottconverse/context-mode</code>
+        <div class="step" style="margin:8px 0 6px;">Option 2 — Marketplace (Claude Code / Cowork):</div>
         <code>/plugin marketplace add scottconverse/context-mode</code>
         <code>/plugin install context-mode@scottconverse-context-mode</code>
         <div class="step">Start a new session. Done.</div>
@@ -242,7 +255,7 @@
   <!-- Capabilities -->
   <section>
     <div class="container">
-      <h2>Three Core Capabilities</h2>
+      <h2>Four Core Capabilities</h2>
       <div class="caps">
         <div class="cap">
           <h3>Sandbox Execution</h3>
@@ -256,6 +269,10 @@
           <h3>Session Continuity</h3>
           <p>Hooks capture file operations, git commands, errors, tasks, and decisions into SQLite. Before context compaction, a priority-tiered XML snapshot (under 2KB) preserves what matters. Claude resumes from exactly where it left off.</p>
         </div>
+        <div class="cap">
+          <h3>Automatic Tool Routing</h3>
+          <p>PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls. curl/wget floods are blocked. Large-output commands redirect to sandbox. Guidance nudges fire once per session. Claude uses context-mode tools automatically — no manual intervention.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -265,11 +282,26 @@
     <div class="container">
       <h2>Architecture</h2>
       <div class="arch-diagram">
+System Context (always-on)
+  |-- CLAUDE.md          --> tool rules + routing instructions
+  |-- .claude/settings.json --> hook registrations + permissions
+  |
 Cowork Session
   |
-  |-- SessionStart hook --> routing block + session guide injection
-  |-- PostToolUse hook  --> event capture (13 categories, 4 priorities)
-  |-- PreCompact hook   --> snapshot builder (&#8804;2KB XML)
+  |-- start.js bootstrapper (ensure-deps, MCP server spawn)
+  |
+  |-- SessionStart hook     --> routing block + session guide injection
+  |-- UserPromptSubmit hook --> prompt preprocessing + context injection
+  |-- PreToolUse hook       --> 9 matchers (routing-block + core/routing)
+  |     |-- Bash matcher    --> curl/wget block; large-output → sandbox
+  |     |-- Read matcher    --> large file → execute_file
+  |     |-- Grep matcher    --> wide search → batch_execute
+  |     |-- WebFetch matcher --> block; redirect → fetch_and_index
+  |     |-- Agent matcher   --> subagent guidance nudge (once/session)
+  |     \-- (4 additional matchers)
+  |-- PostToolUse hook      --> event capture (13 categories, 4 priorities)
+  |-- SubagentStop hook     --> subagent result summarization
+  |-- PreCompact hook       --> snapshot builder (&#8804;2KB XML)
   |
   |-- MCP Server (stdio)
   |     |
@@ -295,7 +327,7 @@ Cowork Session
   |           |-- session_meta (compact count tracking)
   |           \-- session_resume (snapshot storage)
   |
-  \-- Skills: /ctx-stats, /ctx-doctor, /ctx-purge
+  \-- Skills: /context-mode, /ctx-stats, /ctx-doctor, /ctx-purge
       </div>
     </div>
   </section>
@@ -340,8 +372,9 @@ Cowork Session
           <tr><td>Snapshot</td><td>Priority-tiered XML, &le;2KB budget</td></tr>
           <tr><td>Cache</td><td>24h TTL for fetched URLs</td></tr>
           <tr><td>Throttling</td><td>Progressive: 2&rarr;1&rarr;blocked over 60s window</td></tr>
-          <tr><td>Platform</td><td>Windows + macOS (cross-platform .cmd wrapper)</td></tr>
-          <tr><td>Tests</td><td>137 E2E tests (unit + MCP protocol + discoverability + spec compliance)</td></tr>
+          <tr><td>Hooks</td><td>6 events, 14 matchers (PreToolUse, PostToolUse, PreCompact, SessionStart, UserPromptSubmit, SubagentStop)</td></tr>
+          <tr><td>Platform</td><td>Windows, macOS, Linux (cross-platform .cmd wrapper)</td></tr>
+          <tr><td>Tests</td><td>207 E2E tests (unit + MCP protocol + discoverability + spec compliance)</td></tr>
           <tr><td>License</td><td>Elastic License 2.0</td></tr>
         </tbody>
       </table>
@@ -355,6 +388,7 @@ Cowork Session
       <div class="links">
         <a href="https://github.com/scottconverse/context-mode">GitHub Repository</a>
         <a href="https://github.com/scottconverse/context-mode/blob/main/README.md">README</a>
+        <a href="https://github.com/scottconverse/context-mode/blob/main/docs/README-FULL.pdf">Full Documentation (PDF)</a>
         <a href="https://github.com/scottconverse/context-mode/blob/main/USER-MANUAL.md">User Manual</a>
         <a href="https://github.com/scottconverse/context-mode/blob/main/CHANGELOG.md">Changelog</a>
         <a href="https://github.com/scottconverse/context-mode/blob/main/CONTRIBUTING.md">Contributing</a>
@@ -364,7 +398,7 @@ Cowork Session
 
   <footer>
     <div class="container">
-      context-mode v1.0.0 &middot; Elastic License 2.0 &middot; Built for Claude Code in Cowork
+      context-mode v1.1.0 &middot; Elastic License 2.0 &middot; Built for Claude Code in Cowork
       <br>
       Ported from <a href="https://github.com/mksglu/context-mode" style="color: var(--accent);">mksglu/context-mode</a> by <a href="https://github.com/mksglu" style="color: var(--accent);">@mksglu</a>
     </div>

@@ -1,6 +1,6 @@
 # context-mode — Full Technical Documentation
 
-**Version 1.0.0** | Elastic License 2.0 | April 2026
+**Version 1.1.0** | Elastic License 2.0 | April 2026
 
 > Ported from [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu) (Elastic License 2.0). Core algorithms, database schemas, search pipeline, sandbox executor architecture, session event system, and compaction snapshot builder are derived from that project and adapted for the Cowork plugin architecture.
 
@@ -8,27 +8,36 @@
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [MCP Server & Tools](#mcp-server--tools)
-4. [Knowledge Base](#knowledge-base)
-5. [Sandbox Executor](#sandbox-executor)
-6. [Session Continuity](#session-continuity)
-7. [Hook System](#hook-system)
-8. [Search Algorithm](#search-algorithm)
-9. [Design Decisions](#design-decisions)
-10. [Configuration Reference](#configuration-reference)
-11. [Platform Support](#platform-support)
+1. [Overview](#1-overview)
+2. [Install](#2-install)
+3. [Architecture](#3-architecture)
+4. [Automatic Tool Routing](#4-automatic-tool-routing)
+5. [Hook System](#5-hook-system)
+6. [Main Skill & Decision Tree](#6-main-skill--decision-tree)
+7. [Bootstrapper (start.js)](#7-bootstrapper-startjs)
+8. [CLAUDE.md System Directive](#8-claudemd-system-directive)
+9. [Permission Rules (.claude/settings.json)](#9-permission-rules-claudesettingsjson)
+10. [MCP Server & Tools](#10-mcp-server--tools)
+11. [Knowledge Base](#11-knowledge-base)
+12. [Sandbox Executor](#12-sandbox-executor)
+13. [Session Continuity](#13-session-continuity)
+14. [Search Algorithm](#14-search-algorithm)
+15. [Design Decisions](#15-design-decisions)
+16. [Configuration Reference](#16-configuration-reference)
+17. [Platform Support](#17-platform-support)
+18. [Testing](#18-testing)
 
 ---
 
 ## 1. Overview
 
-context-mode is a Cowork plugin for Claude Code that reduces context window consumption by up to 98%. It does this through three mechanisms:
+context-mode is a Cowork plugin for Claude Code that reduces context window consumption by up to 98%. It does this through five mechanisms:
 
-- **Sandbox Execution**: Runs code in isolated subprocesses, returning only stdout. Raw file contents and command output never enter context.
+- **Automatic Tool Routing**: PreToolUse hooks intercept Bash, Read, Grep, WebFetch, Agent, and Task calls before they execute and redirect them through the context-mode sandbox — without changing how Claude works.
+- **Sandbox Execution**: Runs code in isolated subprocesses, returning only stdout. Raw file contents and command output never enter context. Supports 11 languages.
 - **Knowledge Base**: Indexes content into a local SQLite FTS5 database. Retrieves only relevant snippets via BM25 + trigram dual-strategy search.
-- **Session Continuity**: Captures session events via hooks, builds priority-tiered snapshots before compaction, and restores session state afterward.
+- **Session Continuity**: Captures session events via hooks, builds priority-tiered snapshots before compaction, and restores session state afterward. A bootstrapper with dependency self-healing ensures the server starts cleanly on every session.
+- **Main Skill**: The `context-mode` skill provides an in-session decision tree, tool-selection patterns, and anti-patterns so Claude consistently picks the right tool.
 
 ### Problem Statement
 
@@ -53,41 +62,67 @@ Without context-mode:           With context-mode:
 
 ---
 
-## 2. Architecture
+## 2. Install
+
+**One command:**
+
+```bash
+npx github:scottconverse/context-mode
+```
+
+This clones the plugin to the Cowork plugin cache, registers it, installs native dependencies, and verifies that all 9 MCP tools respond. After installation, start a new session and run `/context-mode:ctx-doctor` to confirm.
+
+**Via Cowork marketplace:**
+
+```
+/plugin marketplace add scottconverse/context-mode
+/plugin install context-mode@scottconverse-context-mode
+```
+
+**Manual install:**
+
+```bash
+git clone https://github.com/scottconverse/context-mode.git
+cd context-mode
+node install.js
+```
+
+**Requirements:**
+- Node.js >= 18
+- Claude Code in Cowork
+- Git Bash (Windows only, for shell execution)
+
+---
+
+## 3. Architecture
 
 ### System Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Cowork Session                     │
-│                                                       │
-│  ┌─────────────┐  ┌──────────────┐  ┌─────────────┐ │
-│  │ SessionStart │  │ PostToolUse  │  │ PreCompact  │ │
-│  │    Hook      │  │    Hook      │  │    Hook     │ │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬──────┘ │
-│         │                 │                  │        │
-│         ▼                 ▼                  ▼        │
-│  ┌─────────────────────────────────────────────────┐ │
-│  │              MCP Server (stdio)                  │ │
-│  │                                                   │ │
-│  │  ┌──────────────┐  ┌──────────────────────────┐ │ │
-│  │  │  Sandbox      │  │   Knowledge Base         │ │ │
-│  │  │  Executor     │  │   (SQLite FTS5)          │ │ │
-│  │  │               │  │                          │ │ │
-│  │  │ ctx_execute   │  │ ctx_index                │ │ │
-│  │  │ ctx_exec_file │  │ ctx_search               │ │ │
-│  │  │ ctx_batch     │  │ ctx_fetch_and_index      │ │ │
-│  │  └──────────────┘  └──────────────────────────┘ │ │
-│  │                                                   │ │
-│  │  ┌──────────────┐  ┌──────────────────────────┐ │ │
-│  │  │  Session DB   │  │   Utilities              │ │ │
-│  │  │  (SQLite)     │  │                          │ │ │
-│  │  │               │  │ ctx_stats                │ │ │
-│  │  │ Events        │  │ ctx_doctor               │ │ │
-│  │  │ Snapshots     │  │ ctx_purge                │ │ │
-│  │  └──────────────┘  └──────────────────────────┘ │ │
-│  └─────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                       Cowork Session                       │
+│                                                             │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │ PreToolUse   │  │ PostToolUse  │  │    PreCompact    │  │
+│  │ (9 matchers) │  │    Hook      │  │      Hook        │  │
+│  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘  │
+│         │                 │                    │            │
+│  ┌──────┴───────┐         │         ┌──────────┴─────────┐  │
+│  │UserPromptSubmit│        │         │     SessionDB      │  │
+│  │  Hook         │        │         │  (events+snapshots) │  │
+│  └──────┬───────┘         │         └──────────┬─────────┘  │
+│         │                 │                    │            │
+│  ┌──────┴───────┐  ┌──────┴──────────────────────────────┐  │
+│  │ SessionStart  │  │          MCP Server (stdio)         │  │
+│  │ Hook          │  │                                     │  │
+│  │ (inject guide)│  │  ctx_execute   ctx_index            │  │
+│  └──────────────┘  │  ctx_exec_file  ctx_search           │  │
+│                    │  ctx_batch      ctx_fetch_and_index   │  │
+│  ┌──────────────┐  │  ctx_stats      ctx_doctor           │  │
+│  │ SubagentStop  │  │  ctx_purge                          │  │
+│  │ Hook          │  │                                     │  │
+│  └──────────────┘  └─────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
@@ -127,10 +162,15 @@ SessionStart Hook (source: "compact")
 ```
 context-mode/
 ├── .claude-plugin/
-│   └── plugin.json           # Cowork plugin manifest
-├── .mcp.json                 # MCP server registration
+│   └── plugin.json           # Cowork plugin manifest (mcpServers, hooks, skills)
+├── .claude/
+│   └── settings.json         # Permission rules (allow/deny)
+├── .mcp.json                 # MCP server registration (flat format)
 ├── .gitignore
 ├── package.json
+├── start.js                  # Bootstrapper: dep self-healing + ABI cache
+├── install.js                # One-command installer with server probe
+├── CLAUDE.md                 # System directive for Claude sessions
 ├── server/
 │   ├── index.js              # MCP server (9 tools, lifecycle)
 │   ├── sandbox.js            # PolyglotExecutor
@@ -142,25 +182,247 @@ context-mode/
 │   ├── utils.js              # Query sanitization, Levenshtein
 │   └── exit-classify.js      # Non-zero exit classification
 ├── hooks/
-│   ├── hooks.json            # Hook definitions
-│   ├── run-hook.cmd          # Cross-platform hook wrapper
+│   ├── hooks.json            # 6 hook events, 14 matchers (9 PreToolUse)
+│   ├── run-hook.cmd          # Cross-platform hook wrapper (CMD/bash polyglot)
+│   ├── pretooluse.js         # PreToolUse: routes Bash, Read, Grep, WebFetch, Agent, Task
+│   ├── posttooluse.js        # PostToolUse: captures session events (<20ms)
+│   ├── precompact.js         # PreCompact: builds resume snapshot
+│   ├── sessionstart.js       # SessionStart: injects routing block + session guide
+│   ├── userpromptsubmit.js   # UserPromptSubmit: injects routing block per turn
+│   ├── subagent-stop.js      # SubagentStop: captures sub-agent outcomes
+│   ├── ensure-deps.js        # Native dependency management (ABI compatibility)
+│   ├── suppress-stderr.js    # Suppresses Node.js deprecation noise
+│   ├── routing-block.js      # Context routing XML template
 │   ├── session-extract.js    # Event extraction (13 categories)
 │   ├── session-helpers.js    # Session ID, paths, stdin
-│   ├── routing-block.js      # Context routing instructions
-│   ├── post-tool-use.js      # PostToolUse hook
-│   ├── pre-compact.js        # PreCompact hook
-│   ├── session-start.js      # SessionStart hook
-│   └── subagent-stop.js      # SubagentStop hook
-├── skills/                   # /ctx-stats, /ctx-doctor, /ctx-purge
+│   ├── session-directive.js  # Session guide builder
+│   ├── session-loaders.js    # Shared SQLite loader factories
+│   └── core/
+│       ├── routing.js        # Pure routing logic (all PreToolUse decisions)
+│       ├── formatters.js     # Decision → Cowork response format
+│       ├── stdin.js          # Async stdin reader
+│       └── tool-naming.js    # Cowork tool name generator
+├── skills/
+│   ├── context-mode/         # Main context-mode skill (decision tree)
+│   │   ├── SKILL.md
+│   │   └── references/       # anti-patterns.md, patterns-*.md
+│   ├── ctx-stats/SKILL.md
+│   ├── ctx-doctor/SKILL.md
+│   └── ctx-purge/SKILL.md
 ├── agents/                   # context-optimizer agent
 ├── scripts/                  # setup.js, setup.sh
 ├── docs/                     # Landing page, full docs
-└── test-e2e.js              # 137-test E2E suite
+└── test-e2e.js               # 207-test E2E suite (18 sections)
 ```
 
 ---
 
-## 3. MCP Server & Tools
+## 4. Automatic Tool Routing
+
+Introduced in v1.1.0. PreToolUse hooks intercept five built-in Claude Code tools before they execute and redirect them through the context-mode sandbox. Routing is silent and automatic — neither Claude nor the user needs to change anything.
+
+### Intercepted Tools
+
+| Intercepted Tool | Routing Decision | Redirected To |
+|-----------------|-----------------|---------------|
+| `Bash` (curl, wget, non-whitelisted) | `modify` | `ctx_execute` (sandbox) |
+| `Bash` (git, mkdir, rm, mv, cd, ls, echo, ...) | `null` (passthrough) | Native Bash — unchanged |
+| `Read` | `modify` | `ctx_execute_file` (sandbox) |
+| `Grep` | `modify` | `ctx_execute` (sandbox search) |
+| `WebFetch` | `deny` | Redirects with guidance to `ctx_fetch_and_index` |
+| `Agent` / `Task` | `modify` | Injects routing block into prompt |
+
+### 9 PreToolUse Matchers
+
+The hooks.json registers 9 matchers for the PreToolUse event:
+
+1. `Bash` — intercepts all Bash calls; routing logic decides allow vs. modify
+2. `WebFetch` — denied; guidance directs Claude to `ctx_fetch_and_index`
+3. `Read` — redirected to `ctx_execute_file`
+4. `Grep` — redirected to `ctx_execute` with a grep command
+5. `Agent` — routing block injected into agent prompt
+6. `Task` — routing block injected into task prompt
+7. `mcp__plugin_context-mode_context-mode__ctx_execute` — adds intent context
+8. `mcp__plugin_context-mode_context-mode__ctx_execute_file` — adds intent context
+9. `mcp__plugin_context-mode_context-mode__ctx_batch_execute` — adds intent context
+
+### Bash Whitelist
+
+The following Bash calls are always passed through unchanged because they write state, navigate, or produce predictably small output:
+
+```
+git add / commit / push / checkout / branch / merge / tag / stash / rebase
+mkdir  mv  cp  rm  touch  chmod
+cd  pwd  which
+kill  pkill
+npm install / publish
+pip install
+echo  printf
+```
+
+Any Bash command not on the whitelist (curl, wget, cat, ls with many files, CLIs, etc.) is redirected to `ctx_execute`.
+
+### Guidance Throttling
+
+The first time a non-whitelisted tool is intercepted per session, Claude receives an `additionalContext` response explaining the routing decision. Subsequent intercepts of the same type are silent. This prevents guidance noise in long sessions. The throttle uses file-based atomic locking for cross-process safety (multiple Claude Code subprocesses per session).
+
+### UserPromptSubmit Hook
+
+On every user prompt turn, the `UserPromptSubmit` hook fires and injects the current routing block into Claude's context. This ensures the model always has current tool-selection guidance, even after context compaction when the earlier system prompt may have been summarized away.
+
+---
+
+## 5. Hook System
+
+### 6 Hook Events
+
+| Event | Script | Matchers | Purpose |
+|-------|--------|----------|---------|
+| `PreToolUse` | `pretooluse.js` | 9 | Intercept and route tool calls before execution |
+| `PostToolUse` | `posttooluse.js` | 1 (all tools) | Capture session events (<20ms per call) |
+| `PreCompact` | `precompact.js` | 1 | Build and store resume snapshot before compaction |
+| `SessionStart` | `sessionstart.js` | 1 | Inject routing block + session guide on startup or compact resume |
+| `UserPromptSubmit` | `userpromptsubmit.js` | 1 | Inject routing block on every prompt turn |
+| `SubagentStop` | `subagent-stop.js` | 1 | Capture sub-agent outcomes into session DB |
+
+Total: 6 hook events, 14 matchers.
+
+### Cross-Platform Hook Execution
+
+All hooks dispatch through `run-hook.cmd` — a polyglot CMD/bash wrapper:
+- **Windows**: CMD portion calls `node hooks/<script>.js`
+- **macOS/Linux**: Bash portion calls `node hooks/<script>.js`
+
+The same file works on both platforms without any branch or platform check at the OS level.
+
+---
+
+## 6. Main Skill & Decision Tree
+
+The `context-mode` skill (`skills/context-mode/SKILL.md`) is the in-session authority for tool selection. It is auto-loaded by Cowork when context-mode is active.
+
+### Decision Tree
+
+```
+About to run a command / read a file / call an API?
+│
+├── Command is on the Bash whitelist?
+│   └── Use Bash (unchanged)
+│
+├── Output MIGHT be large or you're unsure?
+│   └── Use ctx_execute or ctx_execute_file
+│
+├── Fetching web documentation or HTML page?
+│   └── Use ctx_fetch_and_index → ctx_search
+│
+├── Need to search indexed content?
+│   └── Use ctx_search (or ctx_batch_execute for multiple queries)
+│
+├── Using Playwright / browser automation?
+│   └── Save snapshot to file → ctx_index(path) or ctx_execute_file(path)
+│
+└── Running multiple commands or searches?
+    └── Use ctx_batch_execute (one call, multiple operations)
+```
+
+### Reference Files
+
+The skill ships three reference files in `skills/context-mode/references/`:
+
+- `anti-patterns.md` — what NOT to do (raw WebFetch, Read for analysis, LLM summarization calls)
+- `patterns-javascript.md` — JS/TS patterns for common analysis tasks
+- `patterns-python.md` — Python patterns for data processing
+- `patterns-shell.md` — Shell patterns for system queries
+
+---
+
+## 7. Bootstrapper (start.js)
+
+The bootstrapper (`start.js`) is the MCP server entry point. It runs before `server/index.js` and handles:
+
+### Version Self-Healing
+
+When Cowork caches a new version of the plugin, the bootstrapper detects it automatically:
+
+1. Reads its own installation path from `__dirname`
+2. Scans sibling version directories in the plugin cache
+3. If a newer semver directory exists, updates `installed_plugins.json` to point to it
+4. Next session starts on the newest version without user intervention
+
+### Dependency Self-Healing
+
+On every startup:
+1. `ensure-deps.js` checks that `better-sqlite3` native binaries match the current Node.js ABI
+2. If a mismatch is detected (e.g., after a Node.js upgrade), it rebuilds the native module automatically
+3. Pure-JS dependencies (`turndown`, `turndown-plugin-gfm`) are installed on demand if missing
+
+This means the plugin survives Node.js upgrades and Cowork cache moves without user intervention.
+
+### Startup Sequence
+
+```
+start.js
+  │
+  ├── Set CLAUDE_PROJECT_DIR and CONTEXT_MODE_PROJECT_DIR if not set
+  ├── Version self-heal check (best effort, never blocks)
+  ├── ensure-deps.js (ABI check, native rebuild if needed)
+  ├── Install turndown / turndown-plugin-gfm if missing
+  └── import('./server/index.js')  ← MCP server starts
+```
+
+---
+
+## 8. CLAUDE.md System Directive
+
+`CLAUDE.md` in the plugin root is loaded by Cowork into every session where context-mode is active. It functions as a standing system instruction, not a skill — it is always present regardless of what the user invokes.
+
+### What It Contains
+
+**Think in Code rule (mandatory):** When Claude needs to analyze, count, filter, compare, search, parse, transform, or process data — it must write code via `ctx_execute` and `console.log()` only the answer. Raw data must never be read into context for mental processing.
+
+**Tool selection hierarchy:**
+1. `ctx_batch_execute` — primary gather tool (replaces many individual calls)
+2. `ctx_search` — follow-up questions
+3. `ctx_execute` / `ctx_execute_file` — processing and API calls
+4. `ctx_fetch_and_index` + `ctx_search` — web documentation
+
+**Output constraints:**
+- Responses kept under 500 words
+- Artifacts (code, configs) written to files — never returned as inline text
+- Return only: file path + 1-line description
+
+---
+
+## 9. Permission Rules (.claude/settings.json)
+
+The `.claude/settings.json` file configures what Claude Code can and cannot do in the context-mode project itself. These rules apply when developing or testing the plugin.
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Bash(sudo *)",
+      "Bash(rm -rf /*)",
+      "Read(.env)",
+      "Read(**/.env*)"
+    ],
+    "allow": [
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)"
+    ]
+  }
+}
+```
+
+Deny rules block dangerous or credential-exposing operations. Allow rules pre-approve common development commands so Claude doesn't prompt for permission on routine tasks.
+
+---
+
+## 10. MCP Server & Tools
 
 The MCP server (`server/index.js`) runs as a Node.js process communicating via stdio. It registers 9 tools:
 
@@ -192,7 +454,7 @@ When `ctx_execute` output exceeds 5KB and an `intent` parameter is provided, the
 
 ---
 
-## 4. Knowledge Base
+## 11. Knowledge Base
 
 ### Database Schema
 
@@ -234,7 +496,7 @@ CREATE TABLE vocabulary (word TEXT PRIMARY KEY);
 
 ---
 
-## 5. Sandbox Executor
+## 12. Sandbox Executor
 
 ### Process Isolation
 
@@ -263,7 +525,7 @@ CREATE TABLE vocabulary (word TEXT PRIMARY KEY);
 
 ---
 
-## 6. Session Continuity
+## 13. Session Continuity
 
 ### Event Categories (13 types, 4 priority levels)
 
@@ -305,26 +567,7 @@ Lower-priority sections are dropped first if budget is tight. Each section inclu
 
 ---
 
-## 7. Hook System
-
-### Hook Events Used
-
-| Event | Script | Purpose |
-|-------|--------|---------|
-| SessionStart | session-start.js | Inject routing block, handle compact resume |
-| PostToolUse | post-tool-use.js | Capture session events (<20ms) |
-| PreCompact | pre-compact.js | Build and store resume snapshot |
-| SubagentStop | subagent-stop.js | Capture sub-agent outcomes |
-
-### Cross-Platform Hook Execution
-
-All hooks use `run-hook.cmd` — a polyglot CMD/bash wrapper:
-- **Windows**: CMD portion calls `node hooks/<script>.js`
-- **macOS/Linux**: Bash portion calls `node hooks/<script>.js`
-
----
-
-## 8. Search Algorithm
+## 14. Search Algorithm
 
 ### Three-Layer Pipeline
 
@@ -364,7 +607,7 @@ Smart Snippets
 
 ---
 
-## 9. Design Decisions
+## 15. Design Decisions
 
 ### Why SQLite FTS5 over vector search?
 
@@ -388,7 +631,7 @@ Without throttling, Claude can fall into a search loop: search → not quite rig
 
 ---
 
-## 10. Configuration Reference
+## 16. Configuration Reference
 
 ### Key Constants
 
@@ -418,7 +661,7 @@ Without throttling, Claude can fall into a search loop: search → not quite rig
 
 ---
 
-## 11. Platform Support
+## 17. Platform Support
 
 ### Windows
 
@@ -442,3 +685,41 @@ Without throttling, Claude can fall into a search loop: search → not quite rig
 - Dynamic imports use `pathToFileURL()` for ESM compatibility on Windows
 - better-sqlite3 ships pre-built binaries for both platforms via npm
 - No platform-specific dependencies
+
+---
+
+## 18. Testing
+
+### E2E Test Suite
+
+The project ships a single comprehensive E2E test file (`test-e2e.js`) covering 207 tests across 18 sections:
+
+| Section | Coverage |
+|---------|----------|
+| 1. Utils | sanitizeQuery, levenshtein, findMinSpan, extractSnippet, escapeXML |
+| 2. Exit Classify | Non-zero exit code interpretation (test runners, linters, signals) |
+| 3. Runtime Detection | Language runtime availability (node, python, shell, etc.) |
+| 4. Sandbox Executor | Subprocess isolation, stdout cap, timeout, language wrapping |
+| 5. Knowledge Base | FTS5 indexing, BM25 search, trigram search, RRF fusion, TTL cache |
+| 6. Session DB | Event storage, SHA-256 dedup, FIFO eviction, priority ordering |
+| 7. Snapshot Builder | Compaction snapshot within 2KB budget, section priority |
+| 8. Event Extraction | 13 event categories, category detection accuracy |
+| 9. Routing Block | XML template content, command references |
+| 10. Hook .cmd Wrapper | Cross-platform execution |
+| 11. MCP Protocol Smoke Test | Live server via SDK client, all 9 tools respond |
+| 12. Plugin Discoverability | plugin.json, hooks.json, .mcp.json, directory structure |
+| 13. Spec Compliance | Claude Code plugin reference validation |
+| 14. OSS Attribution | Upstream credit in source headers and README |
+| 15. Plugin Manifest Validation | mcpServers field, flat .mcp.json format, required fields |
+| 16. PreToolUse Routing | curl→modify, git→passthrough, WebFetch→deny, Agent→modify |
+| 17. hooks.json Validation | 6 hook events present, 9 PreToolUse matchers |
+| 18. Plugin CLAUDE.md and Settings | Directive content, permission rules structure |
+
+### Running the Suite
+
+```bash
+cd context-mode
+node test-e2e.js
+```
+
+The suite runs with no additional setup beyond `node install.js`. Output format: `PASS: <test name>` / `FAIL: <test name> - <detail>`. Exit code 0 = all pass, 1 = any failure.

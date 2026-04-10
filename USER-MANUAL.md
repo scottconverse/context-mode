@@ -18,16 +18,122 @@ Context Mode provides three things:
 2. **Knowledge Base** — Large documents get indexed into a local database. Claude searches for specific information instead of loading entire files.
 3. **Session Memory** — When the context window does get compressed, Context Mode saves what Claude was doing and restores it afterward.
 
+## Installing Context Mode
+
+### The Easiest Way — One Command
+
+Open a terminal and run:
+
+```bash
+npx github:scottconverse/context-mode
+```
+
+That's it. The installer does everything automatically — you don't need to understand what it's doing, but here's what happens behind the scenes:
+
+1. **Copies the plugin** to your Claude Code plugins folder
+2. **Registers it** in your Claude Code settings so Claude knows it exists
+3. **Enables it** so it loads automatically on every session
+4. **Installs the database library** (better-sqlite3) that powers the knowledge base
+5. **Verifies the database** can run advanced search features
+6. **Probes the server** to confirm all 9 plugin tools are responding correctly
+7. **Confirms success** and tells you what to do next
+
+When it's done, you'll see a success message. At that point, **start a new Claude Code conversation** — the plugin loads automatically at session start.
+
+### Confirming the Install Worked
+
+In your new Claude Code session, type:
+
+```
+/ctx-doctor
+```
+
+This runs a health check. If everything is working, you'll see green checkmarks. If something is wrong, it tells you specifically what to fix.
+
+### If the Install Fails
+
+- Make sure Node.js 18 or newer is installed: `node --version`
+- On Windows, make sure Git Bash is available
+- Try running `node install.js` directly from the context-mode folder
+
+---
+
 ## Using Context Mode
 
 ### You Don't Need to Do Anything Special
-Once installed, Context Mode works automatically. It registers tools that Claude can use instead of the default ones. Claude will prefer these context-saving tools when they make sense.
+Once installed, Context Mode works automatically. It intercepts tool calls before they run and quietly upgrades them to context-saving equivalents. You keep working exactly as you always have — the savings happen in the background.
+
+### Automatic Tool Routing
+
+This is Context Mode's most powerful feature. Whenever Claude would normally call one of these tools, Context Mode intercepts the call and redirects it:
+
+| What Claude tried to do | What actually happens |
+|------------------------|----------------------|
+| Read a file | File is processed in a sandbox; only the relevant output comes back |
+| Run a Bash command | Command runs in a sandbox; raw output stays out of context |
+| Run a search (Grep) | Search runs in a sandbox; matching lines returned, not the full file |
+| Fetch a web page | Page is downloaded, converted to markdown, and indexed. Future searches pull from the index instead of fetching again. |
+| Spawn an Agent | Agent is routed through Context Mode's orchestration layer |
+
+All of this happens without you doing anything. You won't see it happening — you'll just notice that Claude stays sharp much longer into a session.
+
+**The Bash safe list** — not every Bash command gets sandboxed. Commands that write to your filesystem or navigate directories need to run as normal, and Context Mode knows this. The following always pass through unchanged:
+
+- `git` — version control writes (commits, checkouts, resets)
+- `mkdir`, `rm`, `mv` — file and folder operations
+- `cd`, `ls`, `pwd` — navigation and listing
+- `echo` — writing output to files or the terminal
+
+Everything else runs through the sandbox.
+
+**Routing guidance at every turn** — at the start of each prompt, Context Mode quietly injects a short routing guide into Claude's working memory. This tells Claude which tool to pick in different situations, so it stays consistent even deep into a long session. You never see this — it's invisible infrastructure.
+
+### The "Think in Code" Directive
+
+Context Mode ships with a set of instructions for Claude called the "Think in Code" directive. This is a file (called `CLAUDE.md`) that Claude reads at the start of every session. You don't configure it — it's part of the plugin.
+
+The directive tells Claude: whenever you need to analyze data, count things, search content, or process information — write a short script to do the work, run it in the sandbox, and only bring back the answer. Don't read raw data into the conversation to process it mentally.
+
+**What this means for you:** Claude becomes significantly more efficient at research and analysis tasks. Instead of reading 10 files into the conversation to find a pattern, Claude writes a 5-line script that searches all of them and returns only the result. You get the same answer with a fraction of the context used.
+
+This happens automatically. You don't need to ask Claude to do this — the directive makes it the default behavior.
 
 ### Slash Commands
 
-- **`/ctx-stats`** — Shows how much context space has been saved in this session
-- **`/ctx-doctor`** — Checks that the plugin is working correctly
-- **`/ctx-purge`** — Clears all indexed content (if you want a fresh start)
+These four commands let you check in on what Context Mode is doing:
+
+#### `/context-mode` — Load the Main Skill
+
+The main Context Mode skill loads a decision tree, tool-selection patterns, and anti-patterns directly into Claude's working context. This is most useful at the start of a complex session or when you want Claude to be especially disciplined about tool choices.
+
+**How to use it:** Type `/context-mode` in the Claude Code input and press Enter. Claude will acknowledge the skill and apply its guidance for the rest of the session.
+
+#### `/ctx-stats` — See Your Savings
+Run this any time you want to know how much context Context Mode has saved in this session. You'll see numbers like:
+- How many tool calls were redirected
+- How many tokens were kept out of context
+- What percentage of potential context bloat was avoided
+
+You don't need to run this for Context Mode to work — it's just for your curiosity or peace of mind.
+
+**How to use it:** Type `/ctx-stats` in the Claude Code input and press Enter.
+
+#### `/ctx-doctor` — Check That Everything Is Working
+If you're not sure whether Context Mode is running correctly, this command runs a full health check and tells you exactly what's working and what isn't.
+
+Run it when:
+- Tools aren't appearing in Claude Code
+- You just installed the plugin and want to confirm it worked
+- Something feels off and you want a diagnosis
+
+**How to use it:** Type `/ctx-doctor` in the Claude Code input and press Enter. Read the output — it will tell you specifically what to fix if anything is wrong.
+
+#### `/ctx-purge` — Start Fresh
+Context Mode builds up a knowledge base of everything it has indexed during your sessions. Most of the time, this is exactly what you want — it means Claude can find things it indexed earlier without re-reading them.
+
+But sometimes you want a clean slate. Maybe you've switched projects. Maybe the indexed content is stale. `/ctx-purge` deletes everything in the knowledge base so the next session starts from scratch.
+
+**How to use it:** Type `/ctx-purge` in the Claude Code input and press Enter. You'll be asked to confirm before anything is deleted.
 
 ### What Claude Uses Internally
 
@@ -45,6 +151,26 @@ These are the tools Claude uses behind the scenes. You don't need to call them d
 | `ctx_doctor` | Checks plugin health |
 | `ctx_purge` | Clears all stored content |
 
+### What Happens When Context Gets Full (Session Compaction)
+
+Every Claude session has a context window — a limit on how much the conversation can hold. When it fills up, Claude compresses older parts of the conversation to make room. This is called compaction.
+
+Without Context Mode, compaction can cause Claude to lose track of what it was doing. It might forget earlier decisions, re-read files it already processed, or lose the thread of a complex task.
+
+**Context Mode handles compaction gracefully.** Here's what happens:
+
+1. Just before compaction, Context Mode saves a snapshot of the session — what Claude was working on, what decisions had been made, what files had been indexed, and what the current priority tasks are.
+
+2. After compaction, when the new session begins, Context Mode injects that snapshot as a structured Session Guide. Claude reads it and picks up almost exactly where it left off.
+
+3. The routing block (the invisible tool-selection guidance) is re-injected too, so Claude's tool-routing behavior is restored immediately.
+
+4. The knowledge base is unchanged — everything indexed before compaction is still searchable. Claude doesn't need to re-read anything.
+
+From your perspective, compaction with Context Mode feels like a brief pause. From Claude's perspective, it's nearly seamless.
+
+**What you might notice:** Occasionally, after compaction, Claude may say something like "resuming from session guide" or briefly recap what it was working on. This is normal — it's reading the snapshot and confirming context before continuing.
+
 ## When Things Go Wrong
 
 ### "better-sqlite3 verification failed"
@@ -53,9 +179,19 @@ The plugin needs a database library to work. This error means it didn't install 
 **Fix:** Run `node scripts/setup.js` from the context-mode directory. If that fails, try `cd .data && npm rebuild better-sqlite3`.
 
 ### Plugin tools aren't appearing
-The MCP server may not have started.
+The plugin may not have installed correctly, or the MCP server may not have started.
 
-**Fix:** Run `/ctx-doctor` to check. If it shows issues, restart your Cowork session.
+**Fix — Step 1:** Run `/ctx-doctor` in your Claude Code session. It will tell you exactly what's wrong.
+
+**Fix — Step 2:** If ctx-doctor shows the plugin isn't registered, navigate to the context-mode folder in a terminal and run:
+
+```bash
+node install.js
+```
+
+This re-runs the full 7-step installation. Once it completes successfully, **start a new Claude Code conversation** — the plugin does not hot-reload into an existing session. It only loads at session start.
+
+**Fix — Step 3:** If the problem persists, check that Node.js 18+ is installed and that you're starting a completely new conversation (not resuming an old one).
 
 ### "BLOCKED: N search calls in Xs"
 The plugin limits how many searches you can run in rapid succession to prevent context bloat.
