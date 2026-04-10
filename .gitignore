@@ -4,3 +4,26 @@ node_modules/
 *.db-wal
 *.db-shm
 .env
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.user
+*.swp
+*.swo
+*~
+
+# Build artifacts
+dist/
+build/
+*.log
+npm-debug.log*
+
+# Note: .claude/ is intentionally NOT ignored.
+# .claude/settings.json is a shipped plugin file that must be committed.
