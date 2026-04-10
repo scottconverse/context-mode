@@ -132,7 +132,10 @@ try {
           }
         }
       }
-    } catch { /* best effort — never block session start */ }
+    } catch (err) {
+      // Best effort — never block session start, but log for debugging
+      process.stderr.write(`[context-mode] session resume failed: ${err.message}\n`);
+    }
   }
   // "clear" — no reset needed; ctx_purge is the only wipe mechanism
 } catch (err) {

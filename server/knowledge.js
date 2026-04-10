@@ -312,7 +312,8 @@ export class ContentStore {
         return this.#stmts.searchPorterBySource.all(sanitized, source, limit);
       }
       return this.#stmts.searchPorter.all(sanitized, limit);
-    } catch {
+    } catch (err) {
+      process.stderr.write(`[context-mode] searchPorter failed: ${err.message}\n`);
       return [];
     }
   }
@@ -329,7 +330,8 @@ export class ContentStore {
         return this.#stmts.searchTrigramBySource.all(sanitized, source, limit);
       }
       return this.#stmts.searchTrigram.all(sanitized, limit);
-    } catch {
+    } catch (err) {
+      process.stderr.write(`[context-mode] searchTrigram failed: ${err.message}\n`);
       return [];
     }
   }
@@ -488,7 +490,8 @@ export class ContentStore {
     try {
       const row = this.#stmts.getSourceById.get(parseInt(sourceId));
       return row ? row.label : 'unknown';
-    } catch {
+    } catch (err) {
+      process.stderr.write(`[context-mode] getSourceLabel failed: ${err.message}\n`);
       return 'unknown';
     }
   }
@@ -498,7 +501,8 @@ export class ContentStore {
   getSourceMeta(label) {
     try {
       return this.#stmts.getSourceMeta.get(label) || null;
-    } catch {
+    } catch (err) {
+      process.stderr.write(`[context-mode] getSourceMeta failed: ${err.message}\n`);
       return null;
     }
   }
@@ -506,7 +510,8 @@ export class ContentStore {
   getChunksBySource(sourceLabel) {
     try {
       return this.#stmts.getChunksBySource.all(sourceLabel);
-    } catch {
+    } catch (err) {
+      process.stderr.write(`[context-mode] getChunksBySource failed: ${err.message}\n`);
       return [];
     }
   }
@@ -514,7 +519,8 @@ export class ContentStore {
   getChunkCount() {
     try {
       return this.#stmts.chunkCount.get().count;
-    } catch {
+    } catch (err) {
+      process.stderr.write(`[context-mode] getChunkCount failed: ${err.message}\n`);
       return 0;
     }
   }

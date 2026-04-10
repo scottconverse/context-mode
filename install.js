@@ -64,9 +64,7 @@ log(`Node.js: ${process.version}`);
 
 log('Step 1/7: Copying plugin to cache...');
 
-if (!existsSync(CACHE_DIR)) {
-  mkdirSync(CACHE_DIR, { recursive: true });
-}
+mkdirSync(CACHE_DIR, { recursive: true });
 
 // Copy all plugin files (except node_modules, .data, .git)
 const SOURCE = __dirname;
@@ -97,7 +95,7 @@ const pluginJsonSrc = join(SOURCE, '.claude-plugin', 'plugin.json');
 const pluginJsonDst = join(CACHE_DIR, '.claude-plugin', 'plugin.json');
 const pluginJsonDstDir = join(CACHE_DIR, '.claude-plugin');
 if (existsSync(pluginJsonSrc) && !existsSync(pluginJsonDst)) {
-  if (!existsSync(pluginJsonDstDir)) mkdirSync(pluginJsonDstDir, { recursive: true });
+  mkdirSync(pluginJsonDstDir, { recursive: true });
   copyFileSync(pluginJsonSrc, pluginJsonDst);
   log('  Explicitly copied .claude-plugin/plugin.json');
 }
@@ -107,7 +105,7 @@ if (existsSync(pluginJsonSrc) && !existsSync(pluginJsonDst)) {
 log('Step 2/7: Creating local marketplace...');
 
 const mktPluginDir = join(MARKETPLACE_DIR, '.claude-plugin');
-if (!existsSync(mktPluginDir)) mkdirSync(mktPluginDir, { recursive: true });
+mkdirSync(mktPluginDir, { recursive: true });
 
 writeFileSync(join(mktPluginDir, 'marketplace.json'), JSON.stringify({
   name: MARKETPLACE_NAME,
@@ -198,7 +196,7 @@ writeFileSync(KNOWN_MKT_PATH, JSON.stringify(knownMkt, null, 2));
 log('Step 5/7: Installing dependencies...');
 
 // Install to persistent data dir
-if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+mkdirSync(DATA_DIR, { recursive: true });
 
 copyFileSync(join(CACHE_DIR, 'package.json'), join(DATA_DIR, 'package.json'));
 try {

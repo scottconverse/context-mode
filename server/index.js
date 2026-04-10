@@ -174,7 +174,13 @@ server.tool(
   },
   async ({ language, code, timeout, background, intent }) => {
     const executor = getExecutor();
-    const result = await executor.execute({ language, code, timeout, background });
+    let result;
+    try {
+      result = await executor.execute({ language, code, timeout, background });
+    } catch (err) {
+      process.stderr.write(`[context-mode] ctx_execute spawn failed: ${err.message}\n`);
+      return makeErrorResponse(`Execution failed: ${err.message}`);
+    }
 
     const rawBytes = Buffer.byteLength(result.stdout + result.stderr, 'utf8');
     sessionStats.bytesSandboxed += rawBytes;
@@ -217,7 +223,8 @@ server.tool(
           return makeTextResponse(output.trim());
         }
       } catch (err) {
-        // Fall through to raw output if indexing fails
+        // Auto-index failed — fall through to return raw stdout
+        process.stderr.write(`[context-mode] ctx_execute auto-index failed: ${err.message}\n`);
       }
     }
 
@@ -272,7 +279,13 @@ server.tool(
       return makeErrorResponse(`Files not found: ${missing.join(', ')}`);
     }
 
-    const result = await executor.executeFile({ files, language, code, timeout });
+    let result;
+    try {
+      result = await executor.executeFile({ files, language, code, timeout });
+    } catch (err) {
+      process.stderr.write(`[context-mode] ctx_execute_file spawn failed: ${err.message}\n`);
+      return makeErrorResponse(`File execution failed: ${err.message}`);
+    }
 
     const rawBytes = Buffer.byteLength(result.stdout + result.stderr, 'utf8');
     sessionStats.bytesSandboxed += rawBytes;
@@ -521,7 +534,13 @@ try {
 }
 `;
 
-    const result = await executor.execute({ language: 'javascript', code: fetchCode, timeout: 20000 });
+    let result;
+    try {
+      result = await executor.execute({ language: 'javascript', code: fetchCode, timeout: 20000 });
+    } catch (err) {
+      process.stderr.write(`[context-mode] ctx_fetch_and_index spawn failed: ${err.message}\n`);
+      return makeErrorResponse(`Fetch failed: ${err.message}`);
+    }
 
     if (result.exitCode !== 0) {
       return makeErrorResponse(`Failed to fetch ${url}: ${result.stderr || 'unknown error'}`);
@@ -612,11 +631,18 @@ server.tool(
     // Execute commands
     for (const cmd of commands) {
       const cmdStart = Date.now();
-      const result = await executor.execute({
-        language: cmd.language,
-        code: cmd.code,
-        timeout: Math.max(remaining, 5000)
-      });
+      let result;
+      try {
+        result = await executor.execute({
+          language: cmd.language,
+          code: cmd.code,
+          timeout: Math.max(remaining, 5000)
+        });
+      } catch (err) {
+        process.stderr.write(`[context-mode] ctx_batch_execute command failed: ${err.message}\n`);
+        totalOutput += `### ${cmd.label || 'command'}\nError: ${err.message}\n\n`;
+        continue;
+      }
 
       const elapsed = Date.now() - cmdStart;
       remaining -= elapsed;
