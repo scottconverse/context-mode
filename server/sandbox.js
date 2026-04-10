@@ -286,13 +286,20 @@ export class PolyglotExecutor {
       }
 
       const [cmd, args] = cmdArgs;
-      return await this.#spawnCollect(cmd, args, { cwd, env, timeout, background });
+      const result = await this.#spawnCollect(cmd, args, { cwd, env, timeout, background });
 
-    } finally {
-      // Clean up temp dir unless process was backgrounded
-      try {
-        rmSync(tmpDir, { recursive: true, force: true });
-      } catch { /* ignore cleanup errors */ }
+      // Clean up temp dir only if process is NOT backgrounded
+      if (!result.backgrounded) {
+        try {
+          rmSync(tmpDir, { recursive: true, force: true });
+        } catch { /* ignore cleanup errors */ }
+      }
+
+      return result;
+    } catch (err) {
+      // Clean up temp dir on error
+      try { rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+      throw err;
     }
   }
 

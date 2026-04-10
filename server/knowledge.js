@@ -457,9 +457,14 @@ export class ContentStore {
    * Unified search with fallback: RRF → fuzzy correction → empty.
    */
   searchWithFallback(query, limit = 2, source = null, contentType = null) {
+    // Fetch extra results to allow for contentType filtering
+    const fetchLimit = contentType ? limit * 3 : limit;
+
     // Layer 1: RRF search with proximity reranking
-    let results = this.#rrfSearch(query, limit, source);
+    let results = this.#rrfSearch(query, fetchLimit, source);
     results = this.#applyProximityReranking(results, query);
+    if (contentType) results = results.filter(r => r.content_type === contentType);
+    results = results.slice(0, limit);
 
     if (results.length > 0) {
       return this.#formatResults(results, query, 'rrf');
@@ -468,8 +473,10 @@ export class ContentStore {
     // Layer 2: Fuzzy correction
     const corrected = this.#fuzzyCorrect(query);
     if (corrected) {
-      results = this.#rrfSearch(corrected, limit, source);
+      results = this.#rrfSearch(corrected, fetchLimit, source);
       results = this.#applyProximityReranking(results, corrected);
+      if (contentType) results = results.filter(r => r.content_type === contentType);
+      results = results.slice(0, limit);
 
       if (results.length > 0) {
         return this.#formatResults(results, corrected, 'rrf-fuzzy');

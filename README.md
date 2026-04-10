@@ -10,8 +10,8 @@ Context window optimization plugin for Claude Code in Cowork. Sandboxes tool out
 
 Long Claude Code sessions consume context rapidly. Every file read, web fetch, and shell command dumps raw output into the context window. Context-mode solves this with six capabilities:
 
-1. **Automatic Tool Routing** — PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls before they execute and redirect them through the context-mode sandbox. You get the result; the raw output stays out of context. See [Automatic Tool Routing](#automatic-tool-routing) below.
-2. **Sandbox Execution** — Runs code in isolated subprocesses, capturing only stdout. Raw file contents and command output never enter context. Supports 11 languages.
+1. **Hook-Driven Tool Steering** — PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls with a mix of policies: WebFetch is denied and redirected; curl/wget are blocked; Agent/Task prompts are augmented with routing guidance; Read and Grep receive one-time advisory nudges; whitelisted Bash commands pass through unchanged. The net effect is that most data-heavy operations get steered toward context-saving alternatives. See [Tool Steering](#tool-steering) below.
+2. **Sandbox Execution** — Runs code in isolated subprocesses (process isolation, not filesystem sandboxing), capturing only stdout. For outputs below 5KB, stdout returns directly to context. Above 5KB with an intent parameter, output is auto-indexed and only matching snippets return. Above 100KB, output is always indexed. Supports 11 languages (TypeScript requires global `tsx`).
 3. **Knowledge Base** — Chunks and indexes content into a local SQLite FTS5 database with BM25 + trigram dual-strategy search. Retrieves only the relevant snippets.
 4. **Session Continuity** — Captures session events via hooks and rebuilds a structured Session Guide after context compaction, so Claude resumes from exactly where it left off. The `start.js` bootstrapper handles version self-healing, ABI dependency checks, and pure-JS package installation before starting the server on every session.
 5. **Main Skill** — The `context-mode` skill provides an in-session decision tree, tool-selection patterns, and anti-patterns so Claude consistently picks the right tool.
@@ -51,23 +51,23 @@ Once installed, Claude automatically prefers context-saving tools. You can also 
 - `ctx_search` — search indexed content instead of re-reading files
 - `ctx_fetch_and_index` — fetch and index a web page instead of raw WebFetch
 
-## Automatic Tool Routing
+## Tool Steering
 
-Context-mode registers PreToolUse hooks that intercept five built-in Claude Code tools before they execute:
+Context-mode registers PreToolUse hooks that intercept five built-in Claude Code tools with different policies:
 
-| Intercepted Tool | Redirected To |
-|-----------------|---------------|
-| `Bash` | `ctx_execute` (sandbox) |
-| `Read` | `ctx_execute_file` (sandbox) |
-| `Grep` | `ctx_execute` (sandbox search) |
-| `WebFetch` | `ctx_fetch_and_index` (indexed, cached) |
-| `Agent` | Routed through context-mode orchestration |
+| Intercepted Tool | Policy | What Happens |
+|-----------------|--------|--------------|
+| `Bash` (curl/wget) | **Block** | Denied; error message redirects to `ctx_execute` or `ctx_fetch_and_index` |
+| `Bash` (whitelisted) | **Pass through** | `git`, `mkdir`, `rm`, `mv`, `cd`, `ls`, `echo` — unchanged |
+| `Bash` (other) | **Advisory** | One-time guidance nudge suggesting sandbox; command proceeds |
+| `WebFetch` | **Deny** | Blocked; guidance redirects to `ctx_fetch_and_index` |
+| `Read` | **Advisory** | One-time nudge toward `ctx_execute_file`; Read proceeds |
+| `Grep` | **Advisory** | One-time nudge toward `ctx_execute`; Grep proceeds |
+| `Agent` / `Task` | **Augment** | Routing block injected into the sub-agent's prompt |
 
-**Bash whitelist** — some Bash calls are intentionally allowed through without sandboxing, because they write state or navigate rather than produce large output: `git` commands, `mkdir`, `rm`, `mv`, directory navigation (`cd`, `ls`, `pwd`), and `echo`. These pass through to the native tool unchanged.
+This is behavioral steering, not transparent execution-layer rerouting. Hooks guide Claude toward context-saving tools but do not forcibly rewrite all tool calls. The strongest enforcement is on `WebFetch` (fully denied) and `curl`/`wget` (blocked). Everything else uses advisory nudges that fire once per session to avoid noise.
 
-**Why this matters** — routing happens automatically. You don't change how you work; Claude doesn't change how it calls tools. The hooks silently upgrade every eligible call to a context-saving equivalent.
-
-**Session injection** — a UserPromptSubmit hook fires at the start of each prompt turn and injects a routing block into Claude's context. This routing block lists the decision tree Claude should follow when choosing between tools, so the model always has current guidance even in long sessions.
+**Session injection** — a UserPromptSubmit hook fires at the start of each prompt turn and injects a routing block into Claude's context with the tool-selection decision tree, so the model has current guidance even in long sessions.
 
 ## Hook Events
 
@@ -89,7 +89,7 @@ All hooks are dispatched by `hooks/run-hook.cmd` using the `hooks/hooks.json` ma
 | Tool | Purpose |
 |------|---------|
 | `ctx_execute` | Run code in a sandboxed subprocess (11 languages) |
-| `ctx_execute_file` | Process files through a sandbox — raw content stays out of context |
+| `ctx_execute_file` | Process files through a sandbox — full content injection for JS/TS/Python; path list for Shell; path comments for others |
 | `ctx_batch_execute` | Multiple commands + searches in one call |
 | `ctx_index` | Index text/markdown/JSON into the knowledge base |
 | `ctx_search` | BM25 + trigram search with RRF fusion and proximity reranking |
@@ -100,7 +100,11 @@ All hooks are dispatched by `hooks/run-hook.cmd` using the `hooks/hooks.json` ma
 
 ## Supported Languages
 
-JavaScript, TypeScript, Python, Shell (Bash), Ruby, Go, Rust, PHP, Perl, R, Elixir
+JavaScript, TypeScript*, Python, Shell (Bash), Ruby, Go, Rust, PHP, Perl, R, Elixir
+
+\* TypeScript requires `tsx` installed globally or in PATH. It is not bundled with the plugin.
+
+**`ctx_execute` vs `ctx_execute_file` language support:** All 11 languages work equally in `ctx_execute` (general code execution). `ctx_execute_file` has asymmetric support: JavaScript, TypeScript, and Python get full file content injected as a runtime variable (`FILE_CONTENTS`). Shell gets a `FILES` array of paths. All other languages receive file paths as code comments only — the code must read files itself.
 
 ## Architecture
 
