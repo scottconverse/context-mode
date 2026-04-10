@@ -227,8 +227,8 @@ Introduced in v1.1.0. PreToolUse hooks intercept five built-in Claude Code tools
 |-----------------|-----------------|---------------|
 | `Bash` (curl, wget, non-whitelisted) | `modify` | `ctx_execute` (sandbox) |
 | `Bash` (git, mkdir, rm, mv, cd, ls, echo, ...) | `null` (passthrough) | Native Bash — unchanged |
-| `Read` | `modify` | `ctx_execute_file` (sandbox) |
-| `Grep` | `modify` | `ctx_execute` (sandbox search) |
+| `Read` | `context` (one-time guidance) | Nudges toward `ctx_execute_file`; allows Read for files being edited |
+| `Grep` | `context` (one-time guidance) | Nudges toward `ctx_execute` for sandbox search |
 | `WebFetch` | `deny` | Redirects with guidance to `ctx_fetch_and_index` |
 | `Agent` / `Task` | `modify` | Injects routing block into prompt |
 
@@ -260,7 +260,7 @@ pip install
 echo  printf
 ```
 
-Any Bash command not on the whitelist (curl, wget, cat, ls with many files, CLIs, etc.) is redirected to `ctx_execute`.
+Bash commands with curl, wget, inline HTTP, or build tools (gradle, maven) are forcibly redirected to `ctx_execute`. All other non-whitelisted Bash commands receive a one-time guidance nudge suggesting sandbox use, but are allowed to proceed.
 
 ### Guidance Throttling
 
@@ -327,7 +327,7 @@ About to run a command / read a file / call an API?
 
 ### Reference Files
 
-The skill ships three reference files in `skills/context-mode/references/`:
+The skill ships four reference files in `skills/context-mode/references/`:
 
 - `anti-patterns.md` — what NOT to do (raw WebFetch, Read for analysis, LLM summarization calls)
 - `patterns-javascript.md` — JS/TS patterns for common analysis tasks
@@ -676,6 +676,14 @@ Without throttling, Claude can fall into a search loop: search → not quite rig
 - Shell execution via `/bin/bash` or `/bin/zsh`
 - Process group kill via `kill(-pid, SIGKILL)`
 - Temp directory: `getconf DARWIN_USER_TEMP_DIR`
+- Runtime detection: `command -v`
+- Hook execution: `run-hook.cmd` (bash polyglot)
+
+### Linux
+
+- Shell execution via `/bin/bash` or `/bin/sh`
+- Process group kill via `kill(-pid, SIGKILL)`
+- Temp directory: `$TMPDIR` or `/tmp`
 - Runtime detection: `command -v`
 - Hook execution: `run-hook.cmd` (bash polyglot)
 
