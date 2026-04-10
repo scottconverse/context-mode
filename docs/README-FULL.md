@@ -98,63 +98,62 @@ node install.js
 
 ### System Architecture
 
-```
-┌───────────────────────────────────────────────────────────┐
-│                       Cowork Session                       │
-│                                                             │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │ PreToolUse   │  │ PostToolUse  │  │    PreCompact    │  │
-│  │ (9 matchers) │  │    Hook      │  │      Hook        │  │
-│  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘  │
-│         │                 │                    │            │
-│  ┌──────┴───────┐         │         ┌──────────┴─────────┐  │
-│  │UserPromptSubmit│        │         │     SessionDB      │  │
-│  │  Hook         │        │         │  (events+snapshots) │  │
-│  └──────┬───────┘         │         └──────────┬─────────┘  │
-│         │                 │                    │            │
-│  ┌──────┴───────┐  ┌──────┴──────────────────────────────┐  │
-│  │ SessionStart  │  │          MCP Server (stdio)         │  │
-│  │ Hook          │  │                                     │  │
-│  │ (inject guide)│  │  ctx_execute   ctx_index            │  │
-│  └──────────────┘  │  ctx_exec_file  ctx_search           │  │
-│                    │  ctx_batch      ctx_fetch_and_index   │  │
-│  ┌──────────────┐  │  ctx_stats      ctx_doctor           │  │
-│  │ SubagentStop  │  │  ctx_purge                          │  │
-│  │ Hook          │  │                                     │  │
-│  └──────────────┘  └─────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Cowork Session
+        direction TB
+        PTU[PreToolUse Hook<br/>9 matchers]
+        UPS[UserPromptSubmit Hook]
+        SS[SessionStart Hook<br/>inject routing block]
+        PTO[PostToolUse Hook<br/>event capture]
+        PC[PreCompact Hook<br/>snapshot builder]
+        SAS[SubagentStop Hook]
+
+        subgraph MCP["MCP Server (stdio)"]
+            direction LR
+            EX[ctx_execute]
+            EXF[ctx_execute_file]
+            BAT[ctx_batch_execute]
+            IDX[ctx_index]
+            SCH[ctx_search]
+            FI[ctx_fetch_and_index]
+            ST[ctx_stats]
+            DOC[ctx_doctor]
+            PUR[ctx_purge]
+        end
+
+        SDB[(SessionDB<br/>events + snapshots)]
+
+        PTU --> MCP
+        UPS --> SS
+        PTO --> SDB
+        PC --> SDB
+        SS --> MCP
+        SAS --> SDB
+    end
 ```
 
 ### Data Flow
 
-```
-Tool Call (e.g., file read)
-    │
-    ▼
-PostToolUse Hook ──► SessionDB (event stored)
-    │
-    ▼
-MCP Tool (ctx_execute_file)
-    │
-    ├── File read in subprocess (raw content isolated)
-    ├── Output indexed in FTS5 (if large)
-    └── Compact result returned to context
-    
-    ...session continues...
+```mermaid
+graph TD
+    A[Tool Call<br/>e.g. file read] --> B[PostToolUse Hook]
+    B --> C[(SessionDB<br/>event stored)]
+    B --> D[MCP Tool<br/>ctx_execute_file]
+    D --> E[File read in subprocess<br/>raw content isolated]
+    D --> F[Output indexed in FTS5<br/>if large]
+    D --> G[Compact result<br/>returned to context]
 
-PreCompact Hook fires
-    │
-    ├── Read all events from SessionDB
-    ├── Build priority-tiered XML snapshot (≤2KB)
-    └── Store in session_resume table
+    G -->|session continues| H[PreCompact Hook fires]
+    H --> I[Read events from SessionDB]
+    I --> J[Build XML snapshot ≤2KB]
+    J --> K[Store in session_resume]
 
-Context Compaction occurs
-
-SessionStart Hook (source: "compact")
-    │
-    ├── Load snapshot from session_resume
-    ├── Inject routing block + session guide
-    └── Claude resumes with full awareness
+    K --> L[Context Compaction]
+    L --> M[SessionStart Hook<br/>source: compact]
+    M --> N[Load snapshot]
+    M --> O[Inject routing block + session guide]
+    O --> P[Claude resumes with full awareness]
 ```
 
 ### Directory Structure
@@ -303,26 +302,15 @@ The `context-mode` skill (`skills/context-mode/SKILL.md`) is the in-session auth
 
 ### Decision Tree
 
-```
-About to run a command / read a file / call an API?
-│
-├── Command is on the Bash whitelist?
-│   └── Use Bash (unchanged)
-│
-├── Output MIGHT be large or you're unsure?
-│   └── Use ctx_execute or ctx_execute_file
-│
-├── Fetching web documentation or HTML page?
-│   └── Use ctx_fetch_and_index → ctx_search
-│
-├── Need to search indexed content?
-│   └── Use ctx_search (or ctx_batch_execute for multiple queries)
-│
-├── Using Playwright / browser automation?
-│   └── Save snapshot to file → ctx_index(path) or ctx_execute_file(path)
-│
-└── Running multiple commands or searches?
-    └── Use ctx_batch_execute (one call, multiple operations)
+```mermaid
+graph TD
+    Q{About to run a command,<br/>read a file, or call an API?}
+    Q -->|Bash whitelist?| BW[Use Bash unchanged]
+    Q -->|Output might be large?| EX[Use ctx_execute or<br/>ctx_execute_file]
+    Q -->|Fetching web docs?| FI[ctx_fetch_and_index<br/>then ctx_search]
+    Q -->|Search indexed content?| SR[ctx_search or<br/>ctx_batch_execute]
+    Q -->|Playwright / browser?| PW[Save to file then<br/>ctx_index or ctx_execute_file]
+    Q -->|Multiple commands?| BA[ctx_batch_execute<br/>one call, many ops]
 ```
 
 ### Reference Files
@@ -360,14 +348,13 @@ This means the plugin survives Node.js upgrades and Cowork cache moves without u
 
 ### Startup Sequence
 
-```
-start.js
-  │
-  ├── Set CLAUDE_PROJECT_DIR and CONTEXT_MODE_PROJECT_DIR if not set
-  ├── Version self-heal check (best effort, never blocks)
-  ├── ensure-deps.js (ABI check, native rebuild if needed)
-  ├── Install turndown / turndown-plugin-gfm if missing
-  └── import('./server/index.js')  ← MCP server starts
+```mermaid
+graph TD
+    S[start.js] --> ENV[Set CLAUDE_PROJECT_DIR<br/>CONTEXT_MODE_PROJECT_DIR]
+    ENV --> VH[Version self-heal check<br/>best effort, never blocks]
+    VH --> ED[ensure-deps.js<br/>ABI check, native rebuild if needed]
+    ED --> TD[Install turndown<br/>turndown-plugin-gfm if missing]
+    TD --> SRV["import('./server/index.js')<br/>MCP server starts"]
 ```
 
 ---
@@ -571,38 +558,17 @@ Lower-priority sections are dropped first if budget is tight. Each section inclu
 
 ### Three-Layer Pipeline
 
-```
-Query: "BM25 ranking algorithm"
-    │
-    ▼
-Layer 1: Porter Stemmer FTS5
-    bm25(chunks, 5.0, 1.0)  ← title weighted 5x
-    Results: [{title, content, rank, highlighted}, ...]
-    │
-    ▼
-Layer 2: Trigram FTS5
-    bm25(chunks_trigram, 5.0, 1.0)
-    Results: [{title, content, rank, highlighted}, ...]
-    │
-    ▼
-RRF Fusion (K=60)
-    score = Σ 1/(60 + rank + 1) across both layers
-    Merge by source_id::title key
-    │
-    ▼
-Proximity Reranking (multi-term queries)
-    findMinSpan(position_lists)
-    boost = 1 / (1 + minSpan / contentLength)
-    │
-    ▼
-If empty → Levenshtein Fuzzy Correction
-    Edit distance thresholds: 1-4 chars → 1, 5-12 → 2, 13+ → 3
-    Re-run RRF with corrected terms
-    │
-    ▼
-Smart Snippets
-    300-char windows around matches, merge overlapping
-    Up to 1500 chars total
+```mermaid
+graph TD
+    QR["Query: 'BM25 ranking algorithm'"] --> L1["Layer 1: Porter Stemmer FTS5<br/>bm25(chunks, 5.0, 1.0) — title 5x weight"]
+    QR --> L2["Layer 2: Trigram FTS5<br/>bm25(chunks_trigram, 5.0, 1.0)"]
+    L1 --> RRF["RRF Fusion (K=60)<br/>score = Σ 1/(60 + rank + 1)<br/>Merge by source_id::title"]
+    L2 --> RRF
+    RRF --> PR["Proximity Reranking<br/>findMinSpan(position_lists)<br/>boost = 1 / (1 + minSpan / contentLength)"]
+    PR --> FZ{Results empty?}
+    FZ -->|Yes| LV["Levenshtein Fuzzy Correction<br/>1-4 chars→dist 1, 5-12→2, 13+→3<br/>Re-run RRF with corrected terms"]
+    LV --> SS
+    FZ -->|No| SS["Smart Snippets<br/>300-char windows, merge overlapping<br/>Up to 1500 chars total"]
 ```
 
 ---
