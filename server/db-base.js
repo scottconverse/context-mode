@@ -17,7 +17,12 @@ let Database = null;
 
 /**
  * Lazy-load better-sqlite3.
- * Searches: resolved CLAUDE_PLUGIN_DATA, spec-path, plugin root, NODE_PATH.
+ * Search order (first match wins):
+ *   1. CLAUDE_PLUGIN_DATA (canonical — where install.js puts deps)
+ *   2. Spec path: ~/.claude/plugins/data/context-mode/node_modules
+ *   3. Plugin root node_modules (dev/local installs)
+ *   4. NODE_PATH (if set)
+ *   5. Global require (last resort)
  */
 export function loadDatabase() {
   if (Database) return Database;
@@ -26,15 +31,15 @@ export function loadDatabase() {
   const pluginRoot = join(__dirname, '..');
   const searchPaths = [];
 
-  // Expanded env var
+  // 1. Canonical: CLAUDE_PLUGIN_DATA (where install.js installs deps)
   if (pluginData && !pluginData.includes('${')) {
     searchPaths.push(join(pluginData, 'node_modules'));
   }
-  // Spec path: ~/.claude/plugins/data/context-mode/node_modules
+  // 2. Spec path: ~/.claude/plugins/data/context-mode/node_modules
   searchPaths.push(join(homedir(), '.claude', 'plugins', 'data', 'context-mode', 'node_modules'));
-  // Plugin root
+  // 3. Plugin root (dev installs, npm ci)
   searchPaths.push(join(pluginRoot, 'node_modules'));
-  // NODE_PATH
+  // 4. NODE_PATH
   if (process.env.NODE_PATH && !process.env.NODE_PATH.includes('${')) {
     searchPaths.push(process.env.NODE_PATH);
   }
@@ -43,14 +48,16 @@ export function loadDatabase() {
     try {
       const require = createRequire(join(searchPath, '.package.json'));
       Database = require('better-sqlite3');
+      process.stderr.write(`[context-mode] better-sqlite3 loaded from: ${searchPath}\n`);
       return Database;
     } catch { /* try next */ }
   }
 
-  // Last resort: global require
+  // 5. Last resort: global require
   try {
     const require = createRequire(import.meta.url);
     Database = require('better-sqlite3');
+    process.stderr.write('[context-mode] better-sqlite3 loaded from: global require\n');
     return Database;
   } catch (err) {
     throw new Error(

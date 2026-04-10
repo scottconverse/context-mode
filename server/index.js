@@ -525,9 +525,9 @@ try {
     signal: AbortSignal.timeout(15000)
   });
   const ct = res.headers.get('content-type') || '';
-  const text = await res.text();
-  console.log('__CM_CT__:' + ct);
-  console.log(text);
+  const body = await res.text();
+  // JSON envelope — avoids marker collision with page content
+  console.log(JSON.stringify({ ct, body }));
 } catch (err) {
   console.error('Fetch error: ' + err.message);
   process.exit(1);
@@ -550,10 +550,17 @@ try {
     const rawBytes = Buffer.byteLength(stdout, 'utf8');
     sessionStats.bytesSandboxed += rawBytes;
 
-    // Parse content type marker
-    const ctMatch = stdout.match(/^__CM_CT__:(.+)$/m);
-    const contentType = ctMatch ? ctMatch[1].trim() : 'text/html';
-    const content = stdout.replace(/^__CM_CT__:.+\n/, '');
+    // Parse JSON envelope from sandbox
+    let contentType = 'text/html';
+    let content = stdout;
+    try {
+      const envelope = JSON.parse(stdout);
+      contentType = envelope.ct || 'text/html';
+      content = envelope.body || '';
+    } catch {
+      // Fallback: treat entire stdout as content (legacy or malformed)
+      process.stderr.write('[context-mode] ctx_fetch_and_index: JSON envelope parse failed, using raw stdout\n');
+    }
 
     // Convert HTML to markdown if needed
     let indexContent = content;
