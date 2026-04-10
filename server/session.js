@@ -111,6 +111,20 @@ export class SessionDB {
       )
     `);
 
+    this.#stmts.actualEventCount = db.prepare(
+      'SELECT COUNT(*) AS cnt FROM session_events WHERE session_id = ?'
+    );
+
+    this.#stmts.evictBatch = db.prepare(`
+      DELETE FROM session_events
+      WHERE id IN (
+        SELECT id FROM session_events
+        WHERE session_id = ?
+        ORDER BY priority ASC, id ASC
+        LIMIT ?
+      )
+    `);
+
     this.#stmts.getEvents = db.prepare(
       'SELECT * FROM session_events WHERE session_id = ? ORDER BY id ASC'
     );
@@ -212,10 +226,11 @@ export class SessionDB {
       }
     }
 
-    // FIFO eviction if at capacity
-    const meta = this.#stmts.getEventCount.get(sessionId);
-    if (meta && meta.event_count >= MAX_EVENTS_PER_SESSION) {
-      withRetry(() => this.#stmts.evictLowest.run(sessionId));
+    // FIFO eviction if at capacity — use actual row count, not meta counter
+    const actual = this.#stmts.actualEventCount.get(sessionId);
+    if (actual && actual.cnt >= MAX_EVENTS_PER_SESSION) {
+      const excess = actual.cnt - MAX_EVENTS_PER_SESSION + 1; // +1 to make room for new event
+      withRetry(() => this.#stmts.evictBatch.run(sessionId, excess));
     }
 
     // Insert event

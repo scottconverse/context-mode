@@ -27,7 +27,7 @@ const PLUGIN_ROOT = join(__dirname, '..');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const VERSION = '1.1.0';
+const VERSION = '1.1.1';
 const INTENT_SEARCH_THRESHOLD = 5000;       // Auto-index if output > 5KB
 const LARGE_OUTPUT_THRESHOLD = 102400;       // 100KB
 const SEARCH_WINDOW_MS = 60000;             // 60s throttle window
@@ -306,7 +306,10 @@ server.tool(
           trackCall('ctx_execute_file', responseBytes);
           return makeTextResponse(output.trim());
         }
-      } catch { /* fall through */ }
+      } catch (err) {
+      // Auto-index failed — fall through to return raw stdout
+      process.stderr.write(`[context-mode] ctx_execute_file auto-index failed: ${err.message}\n`);
+    }
     }
 
     output += stdout;

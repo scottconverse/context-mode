@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.1] - 2026-04-09
+
+### Fixed
+- PreToolUse hook (pretooluse.js) crashes on malformed stdin JSON — now wraps in try/catch and fails open
+- ctx_execute_file auto-index errors silently swallowed — now logs to stderr before falling through to raw stdout
+- Session DB FIFO eviction counter drift — event_count in session_meta only incremented, never decremented on eviction. Replaced with actual row count query and batch eviction to enforce the 1000-event cap correctly
+
 ## [1.1.0] - 2026-04-09
 
 ### Added
