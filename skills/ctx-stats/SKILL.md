@@ -1,19 +1,26 @@
 ---
 name: ctx-stats
-description: Show context savings statistics for the current session
+description: |
+  Show how much context window context-mode saved this session.
+  Displays token consumption, context savings ratio, and per-tool breakdown.
+  Read-only — shows stats only, no reset capability.
+  To wipe the knowledge base entirely, use ctx_purge instead.
+  Trigger: /context-mode:ctx-stats
 user-invocable: true
 ---
 
-# /ctx-stats
+# Context Mode Stats
 
-Display a formatted report of context window savings for the current Cowork session.
+Show context savings for the current session.
 
-## What to do
+## Instructions
 
-Call the `ctx_stats` MCP tool and display the results to the user. The report includes:
+1. Call the `ctx_stats` MCP tool (no parameters needed).
+2. **CRITICAL**: You MUST copy-paste the ENTIRE tool output as markdown text directly into your response message. Do NOT summarize, do NOT collapse, do NOT paraphrase. The user must see the full tables without pressing ctrl+o. Copy every line exactly as returned by the tool.
+3. After the full output, add ONE sentence highlighting the key savings metric, e.g.:
+   - "context-mode saved **12.4x** — 92% of data stayed in sandbox."
+   - If no data yet: "No context-mode calls yet this session."
 
-- Per-tool call counts and bytes returned
-- Total bytes kept out of context (sandboxed)
-- Total bytes indexed in the knowledge base
-- Context savings ratio (percentage)
-- Cache performance (hits, network requests saved)
+## Purge
+
+- **`ctx_purge(confirm: true)`** — Permanently deletes all indexed content from the knowledge base. Use `/context-mode:ctx-purge` for this.
