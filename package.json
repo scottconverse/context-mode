@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "node server/index.js",
+    "test": "node test-e2e.js && node test-adversarial.js",
     "setup": "node scripts/setup.js"
   },
   "dependencies": {

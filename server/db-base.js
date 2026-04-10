@@ -123,10 +123,9 @@ export function withRetry(fn, maxRetries = 3) {
     } catch (err) {
       lastError = err;
       if (err.code === 'SQLITE_BUSY' && i < maxRetries) {
-        // Exponential backoff: 10ms, 20ms, 40ms
+        // Exponential backoff: 10ms, 20ms, 40ms — non-blocking sleep
         const delay = 10 * Math.pow(2, i);
-        const start = Date.now();
-        while (Date.now() - start < delay) { /* busy wait */ }
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);
         continue;
       }
       throw err;

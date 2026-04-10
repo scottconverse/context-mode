@@ -39,8 +39,16 @@ export function runMigrations(db, dbPath, migrations, opts) {
     return { previousVersion: currentVersion, currentVersion, migrationsRun: 0 };
   }
 
-  // Backup before destructive migrations (skip for v0 → v1 bootstrap)
-  if (currentVersion > 0) {
+  // Backup before migrations if database has existing data.
+  // For v0 databases: check if detectTable exists (pre-existing unversioned DB with real data).
+  // For v1+ databases: always backup before running new migrations.
+  const hasExistingData = currentVersion > 0 || (
+    detectTable && db.prepare(
+      "SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name = ?"
+    ).get(detectTable)
+  );
+
+  if (hasExistingData) {
     try {
       // Flush WAL to main DB file before backup
       db.pragma('wal_checkpoint(TRUNCATE)');
