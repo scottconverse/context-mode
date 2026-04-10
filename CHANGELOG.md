@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - migrate.js: backup now covers pre-existing unversioned databases (user_version=0 with existing tables)
 - knowledge.js: tightened `#classifyChunk` bracket regex to matched-pair pattern, reducing false positives on prose
 - start.js: O_EXCL lockfile around `installed_plugins.json` read-modify-write to prevent concurrent-session race
+- start.js: stale lockfile TTL — locks older than 30s are reclaimed via stat/unlink/retry
+- sandbox.js: shell `executeFile` path quoting — escape backslashes and double quotes in FILES array construction
 
 ### Added
 - CI workflow (`.github/workflows/ci.yml`): 3×3 matrix — Node 18/20/22 × ubuntu/macos/windows
@@ -22,11 +24,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Security Model section in README — clarifies process isolation vs. filesystem sandboxing
 - Windows `ctx_doctor` diagnostic: warns when Git Bash is missing with install link
 - db-base.js: logs which path `better-sqlite3` was resolved from on startup
-- Git tags and GitHub Releases for all 4 versions (v1.0.0–v1.2.0)
+- Git tags and GitHub Releases for all 5 versions (v1.0.0–v1.2.1)
+- CI/license/Node badges in README
+- Dependabot configured for weekly npm dependency updates
+- Adversarial test Phase 11: Lockfile Concurrency (4 tests — acquire/reject/release/stale TTL)
+- Total tests: 278 (216 E2E + 62 adversarial)
 
 ### Changed
 - README: "up to 98%" claim qualified with ctx_stats reference
 - db-base.js: dependency search order documented and reordered (CLAUDE_PLUGIN_DATA first)
+- CI: `actions/setup-node` upgraded v4 → v5 (eliminates Node 20 deprecation warnings)
 
 ## [1.2.0] - 2026-04-09
 
