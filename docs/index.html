@@ -259,7 +259,7 @@ User prompt ──► PreToolUse hook ──► sandbox / block / nudge
       <div class="caps">
         <div class="cap">
           <h3>Sandbox Execution</h3>
-          <p>Run code in isolated subprocesses. Only stdout returns to context. Raw file contents, command output, and web pages never bloat your context window. Supports JavaScript, TypeScript, Python, Shell, Ruby, Go, Rust, PHP, Perl, R, and Elixir.</p>
+          <p>Run code in isolated subprocesses (process isolation, not filesystem sandboxing). Small outputs (&lt;5KB) return directly; larger outputs are auto-indexed and only matching snippets return. Supports 11 languages (TypeScript requires global tsx).</p>
         </div>
         <div class="cap">
           <h3>Knowledge Base</h3>
@@ -270,8 +270,8 @@ User prompt ──► PreToolUse hook ──► sandbox / block / nudge
           <p>Hooks capture file operations, git commands, errors, tasks, and decisions into SQLite. Before context compaction, a priority-tiered XML snapshot (under 2KB) preserves what matters. Claude resumes from exactly where it left off.</p>
         </div>
         <div class="cap">
-          <h3>Automatic Tool Routing</h3>
-          <p>PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls. curl/wget floods are blocked. Large-output commands redirect to sandbox. Guidance nudges fire once per session. Claude uses context-mode tools automatically — no manual intervention.</p>
+          <h3>Hook-Driven Tool Steering</h3>
+          <p>PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls with a mix of policies: WebFetch denied, curl/wget blocked, Agent/Task prompts augmented, Read/Grep get one-time advisory nudges. Behavioral steering, not transparent rerouting — the strongest enforcement is on WebFetch and curl/wget.</p>
         </div>
       </div>
     </div>

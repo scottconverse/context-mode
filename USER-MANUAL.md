@@ -61,21 +61,23 @@ This runs a health check. If everything is working, you'll see green checkmarks.
 ## Using Context Mode
 
 ### You Don't Need to Do Anything Special
-Once installed, Context Mode works automatically. It intercepts tool calls before they run and quietly upgrades them to context-saving equivalents. You keep working exactly as you always have — the savings happen in the background.
+Once installed, Context Mode steers Claude toward context-saving tools through hook-driven behavioral guidance. You keep working exactly as you always have — the steering happens in the background.
 
-### Automatic Tool Routing
+### Tool Steering
 
-This is Context Mode's most powerful feature. Whenever Claude would normally call one of these tools, Context Mode intercepts the call and redirects it:
+Context Mode's hooks intercept tool calls and apply different policies depending on the tool:
 
-| What Claude tried to do | What actually happens |
+| What Claude tried to do | What Context Mode does |
 |------------------------|----------------------|
-| Read a file | File is processed in a sandbox; only the relevant output comes back |
-| Run a Bash command | Command runs in a sandbox; raw output stays out of context |
-| Run a search (Grep) | Search runs in a sandbox; matching lines returned, not the full file |
-| Fetch a web page | Page is downloaded, converted to markdown, and indexed. Future searches pull from the index instead of fetching again. |
-| Spawn an Agent | Agent is routed through Context Mode's orchestration layer |
+| Read a file | One-time advisory nudge suggesting `ctx_execute_file`; Read still proceeds |
+| Run a Bash command (curl/wget) | **Blocked** — error message redirects to sandbox or fetch-and-index |
+| Run a Bash command (git, ls, etc.) | Passes through unchanged — these are whitelisted |
+| Run a Bash command (other) | One-time advisory nudge suggesting sandbox; command still proceeds |
+| Run a search (Grep) | One-time advisory nudge suggesting sandbox; Grep still proceeds |
+| Fetch a web page (WebFetch) | **Denied** — guidance redirects to `ctx_fetch_and_index` |
+| Spawn an Agent | Routing guidance injected into the agent's prompt |
 
-All of this happens without you doing anything. You won't see it happening — you'll just notice that Claude stays sharp much longer into a session.
+The strongest enforcement is on WebFetch (fully denied) and curl/wget (blocked). For Read, Grep, and general Bash, Context Mode nudges Claude once per session and then stays quiet. This is behavioral steering — not forced rerouting of every call.
 
 **The Bash safe list** — not every Bash command gets sandboxed. Commands that write to your filesystem or navigate directories need to run as normal, and Context Mode knows this. The following always pass through unchanged:
 

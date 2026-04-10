@@ -41,7 +41,7 @@ css: |-
 1. [Overview](#1-overview)
 2. [Install](#2-install)
 3. [Architecture](#3-architecture)
-4. [Automatic Tool Routing](#4-automatic-tool-routing)
+4. [Tool Steering](#4-tool-steering)
 5. [Hook System](#5-hook-system)
 6. [Main Skill & Decision Tree](#6-main-skill--decision-tree)
 7. [Bootstrapper (start.js)](#7-bootstrapper-startjs)
@@ -64,8 +64,8 @@ css: |-
 
 context-mode is a Cowork plugin for Claude Code that reduces context window consumption by up to 98%. It does this through five mechanisms:
 
-- **Automatic Tool Routing**: PreToolUse hooks intercept Bash, Read, Grep, WebFetch, Agent, and Task calls before they execute and redirect them through the context-mode sandbox — without changing how Claude works.
-- **Sandbox Execution**: Runs code in isolated subprocesses, returning only stdout. Raw file contents and command output never enter context. Supports 11 languages.
+- **Hook-Driven Tool Steering**: PreToolUse hooks intercept Bash, Read, Grep, WebFetch, Agent, and Task calls with a mix of policies — deny, block, advisory nudge, or prompt augmentation — steering data-heavy operations toward context-saving alternatives.
+- **Sandbox Execution**: Runs code in isolated subprocesses (process isolation, not filesystem sandboxing). For outputs below 5KB, stdout returns directly. Above 5KB with intent, output is auto-indexed and only matching snippets return. Above 100KB, output is always indexed. Supports 11 languages (TypeScript requires global `tsx`).
 - **Knowledge Base**: Indexes content into a local SQLite FTS5 database. Retrieves only relevant snippets via BM25 + trigram dual-strategy search.
 - **Session Continuity**: Captures session events via hooks, builds priority-tiered snapshots before compaction, and restores session state afterward. A bootstrapper with dependency self-healing ensures the server starts cleanly on every session.
 - **Main Skill**: The `context-mode` skill provides an in-session decision tree, tool-selection patterns, and anti-patterns so Claude consistently picks the right tool.
@@ -203,20 +203,21 @@ context-mode/
 
 ---
 
-## 4. Automatic Tool Routing
+## 4. Tool Steering
 
-Introduced in v1.1.0. PreToolUse hooks intercept five built-in Claude Code tools before they execute and redirect them through the context-mode sandbox. Routing is silent and automatic — neither Claude nor the user needs to change anything.
+Introduced in v1.1.0. PreToolUse hooks intercept five built-in Claude Code tools with a mix of policies — this is behavioral steering, not transparent execution-layer rerouting.
 
 ### Intercepted Tools
 
-| Intercepted Tool | Routing Decision | Redirected To |
-|-----------------|-----------------|---------------|
-| `Bash` (curl, wget, non-whitelisted) | `modify` | `ctx_execute` (sandbox) |
-| `Bash` (git, mkdir, rm, mv, cd, ls, echo, ...) | `null` (passthrough) | Native Bash — unchanged |
-| `Read` | `context` (one-time guidance) | Nudges toward `ctx_execute_file`; allows Read for files being edited |
-| `Grep` | `context` (one-time guidance) | Nudges toward `ctx_execute` for sandbox search |
-| `WebFetch` | `deny` | Redirects with guidance to `ctx_fetch_and_index` |
-| `Agent` / `Task` | `modify` | Injects routing block into prompt |
+| Intercepted Tool | Policy | What Happens |
+|-----------------|--------|--------------|
+| `Bash` (curl, wget) | **Block** | Denied; error message redirects to `ctx_execute` or `ctx_fetch_and_index` |
+| `Bash` (git, mkdir, rm, mv, cd, ls, echo, ...) | **Pass through** | Unchanged — whitelisted commands proceed normally |
+| `Bash` (other) | **Advisory** | One-time guidance nudge suggesting sandbox; command proceeds |
+| `Read` | **Advisory** | One-time nudge toward `ctx_execute_file`; Read proceeds |
+| `Grep` | **Advisory** | One-time nudge toward `ctx_execute`; Grep proceeds |
+| `WebFetch` | **Deny** | Blocked; guidance redirects to `ctx_fetch_and_index` |
+| `Agent` / `Task` | **Augment** | Routing block injected into the sub-agent's prompt |
 
 ### 9 PreToolUse Matchers
 
