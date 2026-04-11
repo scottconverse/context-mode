@@ -60,9 +60,26 @@ try {
         const signalDir = pjoin(hd(), '.claude', 'plugins', 'data', 'context-mode', 'signals');
         if (!fsExists(signalDir)) mkdirSync(signalDir, { recursive: true });
 
-        const signal = JSON.stringify({ queries: queryList, timestamp: Date.now() });
-        const signalPath = pjoin(signalDir, `retrieval-${Date.now()}-${process.pid}.json`);
-        writeFileSync(signalPath, signal, 'utf8');
+        // Check if search returned results
+        const resultText = input.tool_result?.content?.[0]?.text || '';
+        const hasResults = resultText.length > 50 && !resultText.includes('No results found');
+
+        if (hasResults) {
+          // Retrieval signal — search found something
+          const signal = JSON.stringify({ queries: queryList, timestamp: Date.now() });
+          const signalPath = pjoin(signalDir, `retrieval-${Date.now()}-${process.pid}.json`);
+          writeFileSync(signalPath, signal, 'utf8');
+        } else {
+          // Miss signal — search returned nothing
+          const signal = JSON.stringify({
+            type: 'miss',
+            queries: queryList,
+            timestamp: Date.now(),
+            resultCount: 0,
+          });
+          const signalPath = pjoin(signalDir, `miss-${Date.now()}-${process.pid}.json`);
+          writeFileSync(signalPath, signal, 'utf8');
+        }
       }
     } catch {
       // Signal writing is best-effort — never block PostToolUse
