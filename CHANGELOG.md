@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.0] - 2026-04-10
+
+### Added
+- **Learner miss-detection** — when `ctx_search` returns no results, a miss signal is written and matched against recent compression decisions. Misses increase retention weights alongside hits, creating a symmetric feedback loop for self-correcting compression aggressiveness.
+- **ctx_execute rate limiting** — sliding window throttle (5 warn / 10 block per 60s) prevents tight execution loops. Duplicate command detection returns immediately when identical code is re-submitted within the throttle window.
+- `was_missed` column in `compression_log` schema (auto-migrated from v1.3.x databases)
+- Miss rate and signal rate displayed in `ctx_stats` Learner section
+- 2 new E2E tests (execute throttle: normal + duplicate detection)
+- 6 new vitest tests (miss detection, miss weight calculation, lifetime stats)
+
+### Changed
+- Learner weight calculation now uses `(retrievalRate + missRate) * RETENTION_MULTIPLIER` instead of `retrievalRate * RETENTION_MULTIPLIER`
+- PostToolUse hook writes miss signals (`miss-*.json`) when `ctx_search` returns empty results, in addition to existing retrieval signals
+- `ctx_stats` Learner section now shows miss rate and combined signal rate
+- `getLifetimeStats()` returns `totalMisses` alongside `totalRetrievals`
+
 ## [1.3.1] - 2026-04-10
 
 ### Fixed

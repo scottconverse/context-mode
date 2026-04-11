@@ -4,7 +4,7 @@
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org)
 
-Context window optimization plugin for Claude Code in Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by up to 98% in research-heavy sessions (run `/context-mode:ctx-stats` to see your actual savings in tokens and dollars). Current version: **1.3.0**.
+Context window optimization plugin for Claude Code in Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by up to 98% in research-heavy sessions (run `/context-mode:ctx-stats` to see your actual savings in tokens and dollars). Current version: **1.4.0**.
 
 ## What It Does
 
