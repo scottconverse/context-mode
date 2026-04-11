@@ -39,6 +39,9 @@ const SEARCH_BLOCK_AFTER = 8;               // After 8 calls: blocked
 const MAX_TOTAL_SEARCH = 40 * 1024;         // 40KB max search output
 const TTL_MS = 24 * 60 * 60 * 1000;         // 24h fetch cache TTL
 const BATCH_TIMEOUT = 60000;                // 60s batch timeout
+const EXECUTE_WINDOW_MS = 60000;            // 60s execute throttle window
+const EXECUTE_WARN_AFTER = 5;               // After 5 calls: warning
+const EXECUTE_BLOCK_AFTER = 10;             // After 10 calls: blocked
 
 // ─── Data Directories ─────────────────────────────────────────────────────────
 
@@ -94,6 +97,12 @@ function trackCall(toolName, responseBytes) {
 
 let searchCallCount = 0;
 let searchWindowStart = Date.now();
+
+// ─── Execute Throttle State ──────────────────────────────────────────────────
+
+let executeCallCount = 0;
+let executeWindowStart = Date.now();
+const recentExecuteHashes = []; // { hash, timestamp }
 
 // ─── Lazy-loaded Modules ──────────────────────────────────────────────────────
 
@@ -218,6 +227,40 @@ server.tool(
     intent: z.string().optional().describe('If provided and output is large, auto-indexes output and returns only relevant snippets matching this intent')
   },
   async ({ language, code, timeout, background, intent }) => {
+    // ─── Execute throttle ───
+    const execNow = Date.now();
+    if (execNow - executeWindowStart > EXECUTE_WINDOW_MS) {
+      executeCallCount = 0;
+      executeWindowStart = execNow;
+      recentExecuteHashes.length = 0;
+    }
+    executeCallCount++;
+
+    // Duplicate detection
+    const codeHash = createHash('sha256').update(`${language}:${code}`).digest('hex').slice(0, 16);
+    const duplicate = recentExecuteHashes.find(
+      e => e.hash === codeHash && execNow - e.timestamp < EXECUTE_WINDOW_MS
+    );
+    if (duplicate) {
+      const ago = Math.round((execNow - duplicate.timestamp) / 1000);
+      return makeErrorResponse(
+        `Duplicate execution detected — identical code was just run ${ago}s ago. ` +
+        'Use ctx_search to find the previous result, or modify the code before re-running.'
+      );
+    }
+
+    // Block after threshold
+    if (executeCallCount > EXECUTE_BLOCK_AFTER) {
+      return makeErrorResponse(
+        `BLOCKED: ${executeCallCount} ctx_execute calls in ${Math.round((execNow - executeWindowStart) / 1000)}s. ` +
+        'Use ctx_batch_execute to combine operations, or wait for the throttle window to reset.'
+      );
+    }
+
+    // Track this execution
+    recentExecuteHashes.push({ hash: codeHash, timestamp: execNow });
+    if (recentExecuteHashes.length > 20) recentExecuteHashes.shift();
+
     const executor = getExecutor();
     let result;
     try {
@@ -311,6 +354,12 @@ server.tool(
     }
 
     output += compressed;
+
+    // Warning if approaching throttle limit
+    if (executeCallCount > EXECUTE_WARN_AFTER && executeCallCount <= EXECUTE_BLOCK_AFTER) {
+      output += `\n[context-mode] High execution rate (${executeCallCount} calls in 60s). Consider batching with ctx_batch_execute.`;
+    }
+
     const responseBytes = Buffer.byteLength(output, 'utf8');
     trackCall('ctx_execute', responseBytes);
     return makeTextResponse(output.trim() || '(no output)');
