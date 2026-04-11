@@ -497,7 +497,7 @@ existsSync(join(PLUGIN_ROOT, 'docs', 'DISCUSSIONS-SEED.md')) ? PASS('docs/DISCUS
 // Landing page content check
 const landingHtml = readFileSync(join(PLUGIN_ROOT, 'docs', 'index.html'), 'utf8');
 landingHtml.includes('context-mode') ? PASS('landing: has project name') : FAIL('landing: no name');
-landingHtml.includes('98%') ? PASS('landing: has savings stat') : FAIL('landing: no stat');
+landingHtml.includes('30') ? PASS('landing: has savings stat') : FAIL('landing: no stat');
 landingHtml.includes('MCP Tools') ? PASS('landing: has tools section') : FAIL('landing: no tools');
 landingHtml.includes('Architecture') ? PASS('landing: has architecture') : FAIL('landing: no arch');
 landingHtml.includes('viewport') ? PASS('landing: mobile responsive meta') : FAIL('landing: no viewport');

@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "context-mode",
-      "description": "Sandboxes tool output, indexes content into a local FTS5 knowledge base, and tracks session state to reduce context consumption by up to 98%.",
+      "description": "Sandboxes tool output, indexes content into a local FTS5 knowledge base, and tracks session state to reduce context consumption by 30–60% in typical sessions, more in research-heavy ones.",
       "version": "1.0.0",
       "source": "./",
       "author": {

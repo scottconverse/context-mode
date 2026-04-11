@@ -2,7 +2,7 @@
   "name": "context-mode",
   "version": "1.6.0",
   "type": "module",
-  "description": "Context window optimization for Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, and tracks session state — reducing context consumption by up to 98% while preserving errors and session-relevant content verbatim.",
+  "description": "Context window optimization for Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, and tracks session state — reducing context consumption by 30–60% in typical sessions, more in research-heavy ones, while preserving errors and session-relevant content verbatim.",
   "main": "server/index.js",
   "bin": {
     "context-mode": "install.js"

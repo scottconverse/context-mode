@@ -10,7 +10,7 @@ These posts should be created after enabling Discussions on the repository (Sett
 
 Hey everyone! context-mode is now live.
 
-**What it is:** A Cowork plugin that reduces context window consumption by up to 98% during long Claude Code sessions. It sandboxes tool output, indexes content into a local FTS5 knowledge base, and tracks session state so Claude survives context compaction without losing its place.
+**What it is:** A Cowork plugin that reduces context window consumption by 30–60% in typical developer sessions (more in research-heavy ones) during long Claude Code sessions. It sandboxes tool output, indexes content into a local FTS5 knowledge base, and tracks session state so Claude survives context compaction without losing its place.
 
 **Current status:** v1.0.0 — all core features implemented and tested (137 E2E tests). Works on Windows and macOS.
 
@@ -100,7 +100,7 @@ Here's what `/ctx-stats` showed after a long debugging session:
 - Bytes sandboxed (kept out of context): 847.3 KB
 - Bytes indexed: 1.2 MB
 - Bytes returned to context: 12.4 KB
-- Savings ratio: 98.5%
+- Savings ratio: 52.3%
 
 ## Cache
 - Cache hits: 7

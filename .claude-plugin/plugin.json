@@ -1,7 +1,7 @@
 {
   "name": "context-mode",
   "version": "1.6.0",
-  "description": "Context window optimization for Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, and routes tools automatically — reducing context consumption by up to 98%.",
+  "description": "Context window optimization for Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, and routes tools automatically — reducing context consumption by 30–60% in typical sessions, more in research-heavy ones.",
   "author": { "name": "Scott Converse" },
   "homepage": "https://scottconverse.github.io/context-mode/",
   "repository": "https://github.com/scottconverse/context-mode",

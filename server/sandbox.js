@@ -340,9 +340,12 @@ for f in FILES:
 ${code}`;
         break;
       case 'shell':
-        // For shell, create file list as env var (quote-safe for paths with spaces/special chars)
+        // For shell, create file list using single-quoted strings.
+        // Single quotes prevent ALL shell expansion (backticks, $(), $var, etc.).
+        // The only character that needs escaping inside single quotes is ' itself,
+        // handled via the standard: close-quote, escaped-quote, reopen-quote ('\'').
         wrappedCode = `
-FILES=(${files.map(f => `"${f.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join(' ')})
+FILES=(${files.map(f => `'${f.replace(/'/g, "'\\''")}'`).join(' ')})
 ${code}`;
         break;
       default:

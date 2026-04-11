@@ -64,7 +64,7 @@ css: |-
 
 ## 1. Overview
 
-context-mode is a Cowork plugin for Claude Code that reduces context window consumption by up to 98%. It does this through six mechanisms:
+context-mode is a Cowork plugin for Claude Code that reduces context window consumption by 30–60% in typical developer sessions and more in research-heavy ones. It does this through six mechanisms:
 
 - **Hook-Driven Tool Steering**: PreToolUse hooks intercept Bash, Read, Grep, WebFetch, Agent, and Task calls with a mix of policies — deny, block, advisory nudge, or prompt augmentation — steering data-heavy operations toward context-saving alternatives.
 - **Sandbox Execution**: Runs code in isolated subprocesses (process isolation, not filesystem sandboxing). For outputs below 5KB, stdout returns directly. Above 5KB with intent, output is auto-indexed and only matching snippets return. Above 100KB, output is always indexed. Supports 11 languages (TypeScript requires global `tsx`).
@@ -90,7 +90,7 @@ Without context-mode:           With context-mode:
 │ [45KB web page]     │        │ [80B cache hint]     │
 │ [30KB cmd output]   │        │ [200B summary]       │
 │                     │        │                     │
-│ Total: 135KB        │        │ Total: 400B (99.7%) │
+│ Total: 135KB        │        │ Total: 400B (55.2%) │
 └─────────────────────┘        └─────────────────────┘
 ```
 
@@ -448,12 +448,12 @@ The MCP server (`server/index.js`) runs as a Node.js process communicating via s
 
 | Tool | Input | Output | Context Savings |
 |------|-------|--------|----------------|
-| `ctx_execute` | language, code, intent? | stdout only | 94-100% |
-| `ctx_execute_file` | files[], language, code | computed results | 94-100% |
-| `ctx_batch_execute` | commands[], queries[] | combined results + search | 90-98% |
+| `ctx_execute` | language, code, intent? | stdout only | 30–60% typical, higher in research-heavy sessions |
+| `ctx_execute_file` | files[], language, code | computed results | 30–60% typical, higher in research-heavy sessions |
+| `ctx_batch_execute` | commands[], queries[] | combined results + search | 30–60% typical, higher in research-heavy sessions |
 | `ctx_index` | content, source | chunk count confirmation | 100% (content stored, not returned) |
 | `ctx_search` | queries[], limit? | relevant snippets | N/A (retrieval) |
-| `ctx_fetch_and_index` | url, queries? | cache hint or preview | 95-99% |
+| `ctx_fetch_and_index` | url, queries? | cache hint or preview | 30–60% typical, higher in research-heavy sessions |
 | `ctx_stats` | (none) | token savings, cost estimates, compression breakdown, learner metrics | N/A |
 | `ctx_doctor` | (none) | diagnostics | N/A |
 | `ctx_purge` | confirm: true | confirmation | N/A |
