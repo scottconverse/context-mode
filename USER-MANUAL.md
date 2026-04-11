@@ -150,6 +150,8 @@ Run this any time to see how much context space Context Mode has saved. Here's w
 ## Learner
   Patterns tracked:  47 decisions
   Retrieval rate:    8/47 (17.0%)
+  Miss rate:         3/47 (6.4%)
+  Signal rate:       23.4% (hits + misses → retention adjustment)
   Confidence:        High
 ```
 
@@ -161,7 +163,11 @@ Run this any time to see how much context space Context Mode has saved. Here's w
 - **Total saved** — Compression savings plus sandboxed tokens combined.
 - **Est. cost saved** — What those saved tokens would have cost at current pricing for each model tier.
 - **Top Compressed Outputs** — Which types of tool output were compressed the most. The format is: `pattern (times seen): before → after (reduction%)`.
-- **Learner** — The self-learning system tracks how often compressed content gets retrieved later. A high retrieval rate means the compressor is being too aggressive; it adjusts automatically over time. "High" confidence means enough data has been collected for the weights to be meaningful.
+- **Learner** — The self-learning system tracks compression decisions and whether they were correct:
+  - **Retrieval rate**: how often compressed content was later found by a search (indicates compression was too aggressive)
+  - **Miss rate**: how often a search returned nothing for content that was compressed away (also indicates over-compression)
+  - **Signal rate**: hits + misses combined — this drives the retention weight adjustment
+  - **Confidence**: "High" means enough data has been collected for the weights to be meaningful
 
 **How to use it:** Type `/ctx-stats` in the Claude Code input and press Enter.
 
