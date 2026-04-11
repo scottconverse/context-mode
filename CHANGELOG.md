@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.0] - 2026-04-10
+
+### Added
+- **Enhanced Stage 3 scoring** — multi-signal block relevance scorer replaces flat +0.8/+0.2 model. Scores based on file recency (hot/warm/cold tiers), file touch frequency (log₂ boost), stack trace detection, and function/class definition detection. Combined with learner retention weights for adaptive compression.
+- **Configurable compression level** — `CONTEXT_MODE_COMPRESSION` environment variable with three presets: `conservative` (threshold 0.2), `balanced` (threshold 0.4, default), `aggressive` (threshold 0.7). Active level shown in `ctx_stats` header.
+- **Miss signal minimum KB guard** — miss signals are suppressed when the knowledge base DB is under 50KB, preventing false-positive miss accumulation on fresh installs (addresses v1.4.0 review feedback).
+- 5 new vitest tests for enhanced scoring (recency tiers, frequency boost, stack traces, combined signals, score cap)
+- 1 new vitest test for compression level configuration
+
+### Changed
+- `scoreBlock()` rewritten with 6 scoring signals (was 2)
+- `stageSessionAware()` builds enriched session file map with timestamps and touch counts (was flat string array)
+- `getRecentSessionEvents()` now returns timestamp field from session_events table
+- `RELEVANCE_THRESHOLD` replaced with dynamic `getRelevanceThreshold()` based on configured level
+
 ## [1.4.0] - 2026-04-10
 
 ### Added
