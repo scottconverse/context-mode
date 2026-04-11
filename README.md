@@ -204,7 +204,7 @@ context-mode provides **process isolation**, not filesystem sandboxing. Understa
 ## Platform Support
 
 - Windows (requires Git Bash for shell execution)
-- macOS
+- macOS (nvm/volta supported — node path auto-resolved; registers in `~/.mcp.json` for desktop app compatibility)
 - Linux
 
 ## Requirements

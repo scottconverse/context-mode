@@ -27,6 +27,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFileSync, unlinkSync, readdirSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
+import { ensureMcpJson } from "./core/ensure-mcp-json.js";
 
 const toolNamer = createToolNamer();
 
@@ -106,6 +107,10 @@ try {
     } catch {
       // Learner cleanup is best-effort
     }
+
+    // Ensure ~/.mcp.json has our server entry — on macOS the desktop app
+    // reads MCP config from ~/.mcp.json, not ~/.claude/settings.json.
+    ensureMcpJson(join(HOOK_DIR, ".."));
 
     // Proactively capture CLAUDE.md files — Claude Code loads them as system
     // context at startup, invisible to PostToolUse hooks. We read them from

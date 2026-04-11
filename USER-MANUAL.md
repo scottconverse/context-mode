@@ -388,5 +388,5 @@ JavaScript, TypeScript, Python, Shell (Bash), Ruby, Go, Rust, PHP, Perl, R, Elix
 ## Platform Support
 
 - **Windows** — Requires Git (for Bash). Node.js must be installed.
-- **macOS** — Works out of the box with system Bash.
+- **macOS** — Works with system Bash. If you use nvm or volta for Node.js, the installer automatically resolves the full node path. The plugin registers itself in `~/.mcp.json` (required by the Claude desktop app on macOS) in addition to `~/.claude/settings.json`.
 - **Linux** — Works out of the box.

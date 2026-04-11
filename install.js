@@ -191,6 +191,12 @@ knownMkt[MARKETPLACE_NAME] = {
 };
 writeFileSync(KNOWN_MKT_PATH, JSON.stringify(knownMkt, null, 2));
 
+// ─── Step 4b: Ensure ~/.mcp.json (required for macOS desktop app) ────────────
+
+import { ensureMcpJson } from './hooks/core/ensure-mcp-json.js';
+ensureMcpJson(CACHE_DIR);
+log('  MCP server registered in ~/.mcp.json');
+
 // ─── Step 5: Install dependencies ────────────────────────────────────────────
 
 log('Step 5/7: Installing dependencies...');
@@ -259,7 +265,7 @@ log('Step 7/7: Server probe...');
 let probeOk = false;
 try {
   const { spawn } = await import('node:child_process');
-  const server = spawn('node', [join(CACHE_DIR, 'start.js')], {
+  const server = spawn(process.execPath, [join(CACHE_DIR, 'start.js')], {
     stdio: ['pipe', 'pipe', 'pipe'],
     timeout: 15000,
     env: { ...process.env, CLAUDE_PROJECT_DIR: process.cwd() }

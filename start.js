@@ -12,6 +12,7 @@ import { existsSync, readFileSync, writeFileSync, readdirSync, openSync, closeSy
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
+import { ensureMcpJson } from "./hooks/core/ensure-mcp-json.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const originalCwd = process.cwd();
@@ -24,6 +25,10 @@ if (!process.env.CLAUDE_PROJECT_DIR) {
 if (!process.env.CONTEXT_MODE_PROJECT_DIR) {
   process.env.CONTEXT_MODE_PROJECT_DIR = originalCwd;
 }
+
+// Ensure ~/.mcp.json has our server entry — on macOS the desktop app
+// reads MCP config from ~/.mcp.json, not ~/.claude/settings.json.
+ensureMcpJson(__dirname);
 
 // Self-heal: if a newer version dir exists, update registry so next session uses it
 const cacheMatch = __dirname.match(

@@ -84,4 +84,9 @@ try {
   process.exit(1);
 }
 
+// Ensure ~/.mcp.json has our server entry — on macOS the desktop app
+// reads MCP config from ~/.mcp.json, not ~/.claude/settings.json.
+import { ensureMcpJson } from '../hooks/core/ensure-mcp-json.js';
+ensureMcpJson(pluginRoot);
+
 console.error('[context-mode] Setup complete. Data:', pluginData);
