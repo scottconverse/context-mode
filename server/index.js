@@ -413,12 +413,14 @@ server.tool(
     const stdout = result.stdout || '';
 
     // Intent-based search for large outputs
+    let alreadyIndexed = false;
     if (intent && Buffer.byteLength(stdout, 'utf8') > INTENT_SEARCH_THRESHOLD) {
       try {
         const store = await getStoreAsync();
         const source = `file:${files[0]}:${Date.now()}`;
         store.index({ content: stdout, source });
         sessionStats.bytesIndexed += Buffer.byteLength(stdout, 'utf8');
+        alreadyIndexed = true;
 
         const results = store.searchWithFallback(intent, 2, source);
         if (results.length > 0) {
@@ -445,8 +447,8 @@ server.tool(
       const weights = learner.getWeights(toolPattern);
       const source = `file:${files[0]}:${Date.now()}`;
 
-      // Index full output to KB before compression
-      if (Buffer.byteLength(stdout, 'utf8') > INTENT_SEARCH_THRESHOLD) {
+      // Index full output to KB before compression (skip if intent already indexed)
+      if (!alreadyIndexed && Buffer.byteLength(stdout, 'utf8') > INTENT_SEARCH_THRESHOLD) {
         try {
           const store = await getStoreAsync();
           store.index({ content: stdout, source });

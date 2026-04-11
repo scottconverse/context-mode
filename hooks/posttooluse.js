@@ -77,14 +77,14 @@ try {
           // Check: content DB file exists and is >50KB (cheap stat, no DB open).
           let kbHasContent = false;
           try {
-            const { statSync, readdirSync: rds } = await import('node:fs');
-            const dbDir = pjoin(hd(), '.claude', 'plugins', 'data', 'context-mode', 'content');
-            if (fsExists(dbDir)) {
-              const dbFiles = rds(dbDir).filter(f => f.endsWith('.db'));
-              for (const dbFile of dbFiles) {
-                const st = statSync(pjoin(dbDir, dbFile));
-                if (st.size > 50 * 1024) { kbHasContent = true; break; }
-              }
+            const { statSync } = await import('node:fs');
+            const { createHash } = await import('node:crypto');
+            const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+            const projectHash = createHash('sha256').update(projectDir).digest('hex').slice(0, 16);
+            const dbPath = pjoin(hd(), '.claude', 'plugins', 'data', 'context-mode', 'content', `${projectHash}.db`);
+            if (fsExists(dbPath)) {
+              const st = statSync(dbPath);
+              kbHasContent = st.size > 50 * 1024;
             }
           } catch {
             // If we can't check, skip the miss signal (conservative)

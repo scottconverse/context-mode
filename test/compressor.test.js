@@ -474,6 +474,34 @@ describe('Enhanced Stage 3 Scoring', () => {
     expect(result.text).toContain('auth.js');
   });
 
+  it('cuts warm file blocks at balanced threshold with zero retention (boundary)', () => {
+    // Warm file = +0.4, source ext = +0.1 = 0.5 total. With retention 0.0, 0.5 > 0.4 → preserved.
+    // But without the source ext match, 0.4 + 0.0 = 0.4, NOT > 0.4 → cut.
+    const text = 'Checking warm-module status\nAll good\n\nInstalling dependencies...\nProgress 50%';
+    const context = {
+      sessionEvents: [
+        { type: 'file_operation', data: 'warm-module', timestamp: now - 15 * 60 * 1000, count: 1 }
+      ],
+      learnerWeights: { retentionScore: 0.0 },
+    };
+    const result = stageSessionAware(text, context);
+    // warm-module has no file extension → no +0.1 bonus → score = 0.4 exactly → 0.4 > 0.4 is false → cut
+    expect(result.applied).toBe(true);
+  });
+
+  it('preserves warm file blocks when learner adds retention', () => {
+    const text = 'Checking warm-module status\nAll good\n\nInstalling dependencies...\nProgress 50%';
+    const context = {
+      sessionEvents: [
+        { type: 'file_operation', data: 'warm-module', timestamp: now - 15 * 60 * 1000, count: 1 }
+      ],
+      learnerWeights: { retentionScore: 0.1 },
+    };
+    const result = stageSessionAware(text, context);
+    // 0.4 + 0.1 = 0.5 > 0.4 → preserved
+    expect(result.text).toContain('warm-module');
+  });
+
   it('cuts blocks with only cold session files when retention is low', () => {
     const text = 'Reading old-config.yaml...\nParsed 3 keys\n\nInstalling dependencies...\nProgress 50%';
     const context = {
