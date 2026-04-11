@@ -953,10 +953,14 @@ server.tool(
 
       if (lifetime.totalDecisions > 0) {
         const retrievalRate = (lifetime.totalRetrievals / lifetime.totalDecisions * 100).toFixed(1);
+        const missRate = ((lifetime.totalMisses || 0) / lifetime.totalDecisions * 100).toFixed(1);
+        const signalRate = (((lifetime.totalRetrievals + (lifetime.totalMisses || 0)) / lifetime.totalDecisions) * 100).toFixed(1);
         output += `## Learner\n`;
         output += `  Patterns tracked:  ${lifetime.totalDecisions} decisions\n`;
         output += `  Retrieval rate:    ${lifetime.totalRetrievals}/${lifetime.totalDecisions} (${retrievalRate}%)\n`;
-        output += `  Confidence:        ${lifetime.totalRetrievals / lifetime.totalDecisions > 0.1 ? 'High' : 'Learning'}\n\n`;
+        output += `  Miss rate:         ${lifetime.totalMisses || 0}/${lifetime.totalDecisions} (${missRate}%)\n`;
+        output += `  Signal rate:       ${signalRate}% (hits + misses → retention adjustment)\n`;
+        output += `  Confidence:        ${(lifetime.totalRetrievals + (lifetime.totalMisses || 0)) / lifetime.totalDecisions > 0.1 ? 'High' : 'Learning'}\n\n`;
       }
 
       if (lifetime.totalCalls > 0) {
@@ -970,7 +974,8 @@ server.tool(
         output += `  Est. cost saved: $${ltOpus} (Opus) / $${ltSonnet} (Sonnet) / $${ltHaiku} (Haiku)\n`;
         output += `  Avg. compression: ${ltPct}%\n`;
         if (lifetime.totalDecisions > 0) {
-          output += `  Learner accuracy: ${(lifetime.totalRetrievals / lifetime.totalDecisions * 100).toFixed(1)}%\n`;
+          const ltSignalRate = (((lifetime.totalRetrievals + (lifetime.totalMisses || 0)) / lifetime.totalDecisions) * 100).toFixed(1);
+          output += `  Learner signal rate: ${ltSignalRate}% (${lifetime.totalRetrievals} hits + ${lifetime.totalMisses || 0} misses / ${lifetime.totalDecisions} decisions)\n`;
         }
       }
     } catch {}
