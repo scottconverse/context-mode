@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.1] - 2026-04-10
+
+### Fixed
+- **ctx_execute_file double-indexing** — when `intent` is provided and output exceeds the threshold, the content was indexed twice (once in the intent path, once in the compression pipeline). The compression pipeline now skips indexing if intent already handled it.
+- **Miss signal KB guard scoped to current project** — the guard now checks only the current project's DB (via `CLAUDE_PROJECT_DIR` hash) instead of all DBs in the content directory. Prevents false-positive miss signals from one project's KB size enabling misses for another project.
+
+### Added
+- 2 warm file tier boundary tests (warm file at threshold with zero retention → cut; warm file with learner retention → preserved)
+
 ## [1.5.0] - 2026-04-10
 
 ### Added

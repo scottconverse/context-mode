@@ -30,7 +30,7 @@ const PLUGIN_ROOT = join(__dirname, '..');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 const INTENT_SEARCH_THRESHOLD = 5000;       // Auto-index if output > 5KB
 const LARGE_OUTPUT_THRESHOLD = 102400;       // 100KB
 const SEARCH_WINDOW_MS = 60000;             // 60s throttle window
