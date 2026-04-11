@@ -86,7 +86,9 @@ export class Learner {
   processSignals() {
     let files;
     try {
-      files = readdirSync(this.#signalDir).filter(f => f.startsWith('retrieval-') && f.endsWith('.json'));
+      files = readdirSync(this.#signalDir).filter(f =>
+        (f.startsWith('retrieval-') || f.startsWith('miss-')) && f.endsWith('.json')
+      );
     } catch {
       return;
     }
@@ -94,32 +96,40 @@ export class Learner {
     const now = Date.now();
     const cutoff = now - RETRIEVAL_WINDOW_MS;
 
-    // Get recent unmatched decisions
+    // Get recent unmatched decisions (not already retrieved or missed)
     const recentDecisions = this.#db.prepare(`
-      SELECT id, content_preview, timestamp FROM compression_log
-      WHERE was_retrieved = 0 AND timestamp > ?
+      SELECT id, content_preview, timestamp, was_retrieved, was_missed FROM compression_log
+      WHERE was_retrieved = 0 AND was_missed = 0 AND timestamp > ?
     `).all(cutoff);
 
     for (const file of files) {
       const filePath = join(this.#signalDir, file);
       try {
         const signal = JSON.parse(readFileSync(filePath, 'utf8'));
+        const isMiss = signal.type === 'miss' || file.startsWith('miss-');
         const queries = signal.queries || [];
 
         for (const query of queries) {
           const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
 
           for (const decision of recentDecisions) {
-            if (decision.was_retrieved) continue;
+            if (decision.was_retrieved || decision.was_missed) continue;
             const previewWords = (decision.content_preview || '').toLowerCase().split(/\s+/);
             const overlap = queryWords.filter(w => previewWords.some(pw => pw.includes(w)));
 
             if (overlap.length >= 2) {
-              const delayMs = now - decision.timestamp;
-              this.#db.prepare(`
-                UPDATE compression_log SET was_retrieved = 1, retrieval_delay_ms = ? WHERE id = ?
-              `).run(delayMs, decision.id);
-              decision.was_retrieved = true;
+              if (isMiss) {
+                this.#db.prepare(`
+                  UPDATE compression_log SET was_missed = 1 WHERE id = ?
+                `).run(decision.id);
+                decision.was_missed = true;
+              } else {
+                const delayMs = now - decision.timestamp;
+                this.#db.prepare(`
+                  UPDATE compression_log SET was_retrieved = 1, retrieval_delay_ms = ? WHERE id = ?
+                `).run(delayMs, decision.id);
+                decision.was_retrieved = true;
+              }
             }
           }
         }
@@ -133,8 +143,8 @@ export class Learner {
     // Clean up old signal files (>1 hour)
     try {
       for (const file of readdirSync(this.#signalDir)) {
-        const match = file.match(/retrieval-(\d+)\.json/);
-        if (match && now - parseInt(match[1]) > 60 * 60 * 1000) {
+        const match = file.match(/(retrieval|miss)-(\d+)/);
+        if (match && now - parseInt(match[2]) > 60 * 60 * 1000) {
           try { unlinkSync(join(this.#signalDir, file)); } catch {}
         }
       }

@@ -123,6 +123,95 @@ describe('Learner — Retrieval Detection', () => {
   });
 });
 
+describe('Learner — Miss Detection', () => {
+  it('detects miss from miss signal file', () => {
+    learner.recordDecision({
+      toolPattern: 'git_log',
+      contentHash: 'miss123',
+      contentPreview: 'commit fix auth middleware routing',
+      sessionContext: 'editing server/index.js',
+      sourceLabel: 'exec:shell:123',
+    });
+
+    const signal = {
+      type: 'miss',
+      queries: ['auth middleware'],
+      timestamp: Date.now(),
+      resultCount: 0,
+    };
+    writeFileSync(
+      join(signalDir, `miss-${Date.now()}.json`),
+      JSON.stringify(signal),
+    );
+
+    learner.processSignals();
+
+    const rows = db.prepare('SELECT * FROM compression_log WHERE was_missed = 1').all();
+    expect(rows).toHaveLength(1);
+  });
+
+  it('does not double-mark a decision as both retrieved and missed', () => {
+    learner.recordDecision({
+      toolPattern: 'git_log',
+      contentHash: 'both123',
+      contentPreview: 'commit fix auth middleware routing',
+      sessionContext: 'editing',
+      sourceLabel: 'exec:shell:123',
+    });
+
+    // Mark as retrieved first
+    db.prepare('UPDATE compression_log SET was_retrieved = 1 WHERE content_hash = ?').run('both123');
+
+    // Then write a miss signal
+    const signal = {
+      type: 'miss',
+      queries: ['auth middleware'],
+      timestamp: Date.now(),
+      resultCount: 0,
+    };
+    writeFileSync(
+      join(signalDir, `miss-${Date.now()}.json`),
+      JSON.stringify(signal),
+    );
+
+    learner.processSignals();
+
+    // Should still be retrieved, not missed (retrieval takes precedence)
+    const row = db.prepare('SELECT * FROM compression_log WHERE content_hash = ?').get('both123');
+    expect(row.was_retrieved).toBe(1);
+    expect(row.was_missed).toBe(0);
+  });
+
+  it('does not match miss signals older than 10 minutes', () => {
+    learner.recordDecision({
+      toolPattern: 'git_log',
+      contentHash: 'old_miss',
+      contentPreview: 'commit fix auth middleware routing',
+      sessionContext: 'editing',
+      sourceLabel: 'exec:shell:123',
+    });
+
+    // Backdate by 15 minutes
+    db.prepare('UPDATE compression_log SET timestamp = ?').run(Date.now() - 15 * 60 * 1000);
+
+    const signal = {
+      type: 'miss',
+      queries: ['auth middleware'],
+      timestamp: Date.now(),
+      resultCount: 0,
+    };
+    writeFileSync(
+      join(signalDir, `miss-${Date.now()}.json`),
+      JSON.stringify(signal),
+    );
+
+    learner.processSignals();
+
+    const rows = db.prepare('SELECT * FROM compression_log WHERE was_missed = 1').all();
+    expect(rows).toHaveLength(0);
+  });
+});
+
 describe('Learner — Weight Computation', () => {
   it('computes higher retention when retrievals are frequent', () => {
     for (let i = 0; i < 10; i++) {
