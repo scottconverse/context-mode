@@ -21,7 +21,7 @@ import { detectRuntimes, getRuntimeSummary, getAvailableLanguages, isWindows } f
 import { PolyglotExecutor } from './sandbox.js';
 import { ContentStore } from './knowledge.js';
 import { openDatabase } from './db-base.js';
-import { compress } from './compressor.js';
+import { compress, getCompressionLevel } from './compressor.js';
 import { Learner } from './learner.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -168,7 +168,7 @@ function getRecentSessionEvents(limit = 50) {
       _sessionDB = openDatabase(sessionDbPath);
     }
     const rows = _sessionDB.prepare(
-      'SELECT type, category, data FROM session_events ORDER BY timestamp DESC LIMIT ?'
+      'SELECT type, category, data, timestamp FROM session_events ORDER BY timestamp DESC LIMIT ?'
     ).all(limit);
     return rows;
   } catch {
@@ -919,7 +919,7 @@ server.tool(
     const sandboxedTokens = Math.round(sessionStats.bytesSandboxed / 4);
     const totalSaved = (totalOrigTokens - totalCompTokens) + sandboxedTokens;
 
-    let output = `# Token Savings This Session (${elapsedStr})\n\n`;
+    let output = `# Token Savings This Session (${elapsedStr}) — compression: ${getCompressionLevel()}\n\n`;
 
     if (totalOrigTokens > 0) {
       const pct = ((1 - totalCompTokens / totalOrigTokens) * 100).toFixed(1);

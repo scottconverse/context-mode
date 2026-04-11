@@ -71,14 +71,35 @@ try {
           writeFileSync(signalPath, signal, 'utf8');
         } else {
           // Miss signal — search returned nothing
-          const signal = JSON.stringify({
-            type: 'miss',
-            queries: queryList,
-            timestamp: Date.now(),
-            resultCount: 0,
-          });
-          const signalPath = pjoin(signalDir, `miss-${Date.now()}-${process.pid}.json`);
-          writeFileSync(signalPath, signal, 'utf8');
+          // Guard: don't write miss signals if KB is empty/tiny.
+          // On a fresh install, every search returns 0 results — writing miss signals
+          // would flood the learner with false positives that inflate retention weights.
+          // Check: content DB file exists and is >50KB (cheap stat, no DB open).
+          let kbHasContent = false;
+          try {
+            const { statSync, readdirSync: rds } = await import('node:fs');
+            const dbDir = pjoin(hd(), '.claude', 'plugins', 'data', 'context-mode', 'content');
+            if (fsExists(dbDir)) {
+              const dbFiles = rds(dbDir).filter(f => f.endsWith('.db'));
+              for (const dbFile of dbFiles) {
+                const st = statSync(pjoin(dbDir, dbFile));
+                if (st.size > 50 * 1024) { kbHasContent = true; break; }
+              }
+            }
+          } catch {
+            // If we can't check, skip the miss signal (conservative)
+          }
+
+          if (kbHasContent) {
+            const signal = JSON.stringify({
+              type: 'miss',
+              queries: queryList,
+              timestamp: Date.now(),
+              resultCount: 0,
+            });
+            const signalPath = pjoin(signalDir, `miss-${Date.now()}-${process.pid}.json`);
+            writeFileSync(signalPath, signal, 'utf8');
+          }
         }
       }
     } catch {
