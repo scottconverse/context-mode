@@ -167,7 +167,8 @@ export class Learner {
     const row = this.#db.prepare(`
       SELECT
         COUNT(*) as total,
-        SUM(CASE WHEN was_retrieved = 1 THEN 1 ELSE 0 END) as retrieved
+        SUM(CASE WHEN was_retrieved = 1 THEN 1 ELSE 0 END) as retrieved,
+        SUM(CASE WHEN was_missed = 1 THEN 1 ELSE 0 END) as missed
       FROM compression_log
       WHERE tool_pattern = ? AND timestamp > ?
     `).get(toolPattern, cutoff);
@@ -178,7 +179,9 @@ export class Learner {
     }
 
     const retrievalRate = row.retrieved / row.total;
-    const retentionScore = Math.min(retrievalRate * RETENTION_MULTIPLIER, 1.0);
+    const missRate = row.missed / row.total;
+    const signalRate = retrievalRate + missRate;
+    const retentionScore = Math.min(signalRate * RETENTION_MULTIPLIER, 1.0);
 
     this.#weightCache.set(toolPattern, { retentionScore, cachedAt: Date.now() });
     return { retentionScore };
@@ -236,7 +239,8 @@ export class Learner {
     const accuracy = this.#db.prepare(`
       SELECT
         COUNT(*) as total,
-        SUM(CASE WHEN was_retrieved = 1 THEN 1 ELSE 0 END) as retrievals
+        SUM(CASE WHEN was_retrieved = 1 THEN 1 ELSE 0 END) as retrievals,
+        SUM(CASE WHEN was_missed = 1 THEN 1 ELSE 0 END) as misses
       FROM compression_log
     `).get();
 
@@ -248,6 +252,7 @@ export class Learner {
       sessionDays: row.sessionDays,
       totalDecisions: accuracy?.total || 0,
       totalRetrievals: accuracy?.retrievals || 0,
+      totalMisses: accuracy?.misses || 0,
     };
   }
 

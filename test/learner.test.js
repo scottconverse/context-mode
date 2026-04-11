@@ -248,6 +248,45 @@ describe('Learner — Weight Computation', () => {
   });
 });
 
+describe('Learner — Weight with Misses', () => {
+  it('increases retention when misses are frequent', () => {
+    for (let i = 0; i < 10; i++) {
+      learner.recordDecision({
+        toolPattern: 'docker_build',
+        contentHash: `hash-${i}`,
+        contentPreview: `docker content ${i}`,
+        sessionContext: 'building',
+        sourceLabel: `exec:shell:${i}`,
+      });
+    }
+    // Mark 3 as missed → 30% miss rate → clamp((0 + 0.3) * 3) = 0.9
+    db.prepare('UPDATE compression_log SET was_missed = 1 WHERE id <= 3').run();
+
+    learner.clearWeightCache();
+    const { retentionScore } = learner.getWeights('docker_build');
+    expect(retentionScore).toBeCloseTo(0.9, 1);
+  });
+
+  it('combines hits and misses for retention', () => {
+    for (let i = 0; i < 10; i++) {
+      learner.recordDecision({
+        toolPattern: 'cargo_build',
+        contentHash: `hash-${i}`,
+        contentPreview: `cargo content ${i}`,
+        sessionContext: 'building',
+        sourceLabel: `exec:shell:${i}`,
+      });
+    }
+    // 2 retrieved + 2 missed = 40% signal rate → clamp(0.4 * 3) = 1.0
+    db.prepare('UPDATE compression_log SET was_retrieved = 1 WHERE id <= 2').run();
+    db.prepare('UPDATE compression_log SET was_missed = 1 WHERE id IN (3, 4)').run();
+
+    learner.clearWeightCache();
+    const { retentionScore } = learner.getWeights('cargo_build');
+    expect(retentionScore).toBe(1.0);
+  });
+});
+
 describe('Learner — Decay / Prune', () => {
   it('deletes decisions older than 7 days', () => {
     learner.recordDecision({
@@ -313,7 +352,28 @@ describe('Learner — Lifetime Stats', () => {
     expect(totals.totalCompressedTokens).toBe(8000);
     expect(totals.totalCalls).toBe(8);
     expect(totals).toHaveProperty('totalRetrievals');
-    expect(totals).not.toHaveProperty('totalMisses');
+    expect(totals).toHaveProperty('totalMisses');
+  });
+});
+
+describe('Learner — Lifetime Stats with Misses', () => {
+  it('returns totalMisses in lifetime stats', () => {
+    learner.recordDecision({
+      toolPattern: 'test_pattern',
+      contentHash: 'h1',
+      contentPreview: 'content',
+      sessionContext: 'test',
+      sourceLabel: 's1',
+    });
+    db.prepare('UPDATE compression_log SET was_missed = 1').run();
+
+    learner.flushStats({
+      compression: { test_pattern: { calls: 1, originalTokens: 1000, compressedTokens: 500 } },
+    });
+
+    const totals = learner.getLifetimeStats();
+    expect(totals).toHaveProperty('totalMisses');
+    expect(totals.totalMisses).toBe(1);
   });
 });
 
