@@ -36,6 +36,15 @@ describe('Learner — Schema', () => {
   });
 });
 
+describe('Learner — Schema v2 (was_missed)', () => {
+  it('has was_missed column in compression_log', () => {
+    const columns = db.prepare("PRAGMA table_info(compression_log)").all();
+    const wasMissed = columns.find(c => c.name === 'was_missed');
+    expect(wasMissed).toBeDefined();
+    expect(wasMissed.dflt_value).toBe('0');
+  });
+});
+
 describe('Learner — Cold Start', () => {
   it('returns default 0.5 retention for unknown patterns', () => {
     const { retentionScore } = learner.getWeights('git_log');

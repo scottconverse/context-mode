@@ -39,6 +39,7 @@ export class Learner {
         content_preview TEXT,
         session_context TEXT,
         was_retrieved INTEGER DEFAULT 0,
+        was_missed INTEGER DEFAULT 0,
         retrieval_delay_ms INTEGER,
         source_label TEXT
       );
@@ -46,7 +47,16 @@ export class Learner {
       CREATE INDEX IF NOT EXISTS idx_cl_pattern ON compression_log(tool_pattern);
       CREATE INDEX IF NOT EXISTS idx_cl_hash ON compression_log(content_hash);
       CREATE INDEX IF NOT EXISTS idx_cl_timestamp ON compression_log(timestamp);
+    `);
 
+    // Migration: add was_missed column if it doesn't exist (v1.3.x → v1.4.0)
+    try {
+      this.#db.exec('ALTER TABLE compression_log ADD COLUMN was_missed INTEGER DEFAULT 0');
+    } catch {
+      // Column already exists — expected on fresh DBs or repeat startups
+    }
+
+    this.#db.exec(`
       CREATE TABLE IF NOT EXISTS compression_stats (
         date TEXT NOT NULL,
         tool_pattern TEXT NOT NULL,
