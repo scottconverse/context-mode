@@ -133,7 +133,7 @@ The main Context Mode skill loads a decision tree, tool-selection patterns, and 
 Run this any time to see how much context space Context Mode has saved. Here's what the output looks like:
 
 ```
-# Token Savings This Session (45m)
+# Token Savings This Session (45m) — compression: balanced
 
   Compressed:    12,400 → 3,100 tokens (75.0% reduction)
   Sandboxed:     38,800 tokens kept out of context
@@ -349,9 +349,10 @@ When one of these keywords appears on a line, that line and the two lines above 
 Context Mode tracks its own compression decisions and learns from them:
 
 1. **Compression decision** — When Stage 3 cuts a block, it logs the decision with a content hash
-2. **Retrieval signal** — If Claude later searches for that content (via `ctx_search`), a signal file is written noting the retrieval
-3. **Weight adjustment** — Periodically, the learner reads these signals and adjusts retention weights per tool pattern. If compressed content gets retrieved often, the weight increases (meaning future output from that tool will be compressed less aggressively). If compressed content is rarely retrieved, the weight stays low or decreases.
-4. **Decay** — Signals older than 7 days are pruned so the learner adapts to changing work patterns
+2. **Retrieval signal** — If Claude later searches for that content (via `ctx_search`) and finds it, a retrieval signal is written
+3. **Miss signal** — If Claude searches and gets no results, a miss signal is written instead — this means content that was compressed away was actually needed
+4. **Weight adjustment** — The learner reads both signal types and adjusts retention weights per tool pattern. Both retrievals and misses increase the weight (meaning future output from that tool will be compressed less aggressively). If compressed content is never searched for, the weight stays low or decreases.
+5. **Decay** — Signals older than 7 days are pruned so the learner adapts to changing work patterns
 
 The learner's weights are cached for 5 minutes and stored in a SQLite database alongside the knowledge base.
 
