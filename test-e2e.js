@@ -298,6 +298,20 @@ try {
   const purgeResult = await client.callTool({ name: 'ctx_purge', arguments: { confirm: true } });
   purgeResult.content?.[0]?.text?.includes('purged') ? PASS('MCP: ctx_purge') : FAIL('MCP: ctx_purge');
 
+  // Call ctx_fetch_and_index with unreachable URL
+  try {
+    const fetchResult = await client.callTool({
+      name: 'ctx_fetch_and_index',
+      arguments: { url: 'http://127.0.0.1:1/nonexistent', force: true }
+    });
+    const fetchText = fetchResult.content?.[0]?.text || '';
+    (fetchResult.isError || fetchText.includes('Fetch failed') || fetchText.includes('Failed to fetch'))
+      ? PASS('MCP: ctx_fetch_and_index error handling')
+      : FAIL('MCP: ctx_fetch_and_index error handling');
+  } catch {
+    PASS('MCP: ctx_fetch_and_index error handling');
+  }
+
   await client.close();
 } catch (err) {
   FAIL('MCP smoke test', err.message);

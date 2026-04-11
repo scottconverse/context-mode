@@ -654,6 +654,13 @@ try {
     const rawBytes = Buffer.byteLength(stdout, 'utf8');
     sessionStats.bytesSandboxed += rawBytes;
 
+    // Guard: empty stdout means fetch produced no content
+    if (!stdout.trim()) {
+      return makeErrorResponse(
+        `Fetch failed: no content returned from ${url}. Check the URL is accessible and try again.`
+      );
+    }
+
     // Parse JSON envelope from sandbox
     let contentType = 'text/html';
     let content = stdout;
