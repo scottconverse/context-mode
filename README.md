@@ -4,7 +4,7 @@
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org)
 
-Context window optimization plugin for Claude Code in Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by up to 98% in research-heavy sessions (run `/context-mode:ctx-stats` to see your actual savings in tokens and dollars). Current version: **1.5.1**.
+Context window optimization plugin for Claude Code in Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by up to 98% in research-heavy sessions (run `/context-mode:ctx-stats` to see your actual savings in tokens and dollars). Current version: **1.6.0**.
 
 ## What It Does
 
@@ -54,17 +54,34 @@ Once installed, Claude automatically prefers context-saving tools. You can also 
 
 ## Automatic Tool Routing
 
-Context-mode registers PreToolUse hooks that intercept five built-in Claude Code tools before they execute:
+Context-mode registers PreToolUse hooks that intercept 18 tool and command patterns before they execute. Every rule is defined declaratively in `hooks/core/routing-rules.js` — the table below is auto-generated from that file on every release.
 
-| Intercepted Tool | Redirected To |
-|-----------------|---------------|
-| `Bash` | `ctx_execute` (sandbox) |
-| `Read` | `ctx_execute_file` (sandbox) |
-| `Grep` | `ctx_execute` (sandbox search) |
-| `WebFetch` | `ctx_fetch_and_index` (indexed, cached) |
-| `Agent` | Routed through context-mode orchestration |
+<!-- ROUTING_TABLE_START -->
+| Intercepted Tool / Command | Redirected To | Rule ID |
+|---|---|---|
+| `curl` / `wget` | `ctx_execute` or `ctx_fetch_and_index` | `curl-wget` |
+| Inline HTTP (`fetch`, `requests.get`, `http.get`) | `ctx_execute` | `inline-http` |
+| `gradle` / `maven` | `ctx_execute` | `build-tools` |
+| `git log` (unbounded) | `ctx_execute` (compressor) | `git-log` |
+| `git diff` (unbounded) | `ctx_execute` (compressor) | `git-diff` |
+| `npm test` / `jest` / `vitest` | `ctx_execute` (compressor) | `npm-test` |
+| `pytest` | `ctx_execute` (compressor) | `pytest` |
+| `npm install` / `npm ci` | `ctx_execute` (compressor) | `npm-install` |
+| `pip install` | `ctx_execute` (compressor) | `pip-install` |
+| `cargo build` / `cargo test` | `ctx_execute` (compressor) | `cargo` |
+| `docker build` | `ctx_execute` (compressor) | `docker-build` |
+| `make` / `cmake --build` | `ctx_execute` (compressor) | `make` |
+| All other `Bash` commands | Passthrough (once-per-session guidance nudge) | `bash-guidance` |
+| `Read` | Passthrough (once-per-session guidance nudge) | `read-guidance` |
+| `Grep` | Passthrough (once-per-session guidance nudge) | `grep-guidance` |
+| `WebFetch` | `ctx_fetch_and_index` + `ctx_search` | `webfetch` |
+| `Agent` | Routing block injected into subagent prompt | `agent-inject` |
+| `Task` | Routing block injected into subagent prompt | `task-inject` |
+<!-- ROUTING_TABLE_END -->
 
-**Bash whitelist** — some Bash calls are intentionally allowed through without sandboxing, because they write state or navigate rather than produce large output: `git` commands, `mkdir`, `rm`, `mv`, directory navigation (`cd`, `ls`, `pwd`), and `echo`. These pass through to the native tool unchanged.
+**Safe passthrough** — curl/wget calls that use silent mode + file output (no stdout alias) are allowed through. git log/diff calls with `--oneline`, `-n N`, `--stat`, a single named file, or a pipe to a reducing command pass through unchanged. Test runners and build tools with explicit pipes pass through.
+
+**Why this matters** — routing happens automatically. You don't change how you work; Claude doesn't change how it calls tools. The hooks silently upgrade every eligible call to a context-saving equivalent.
 
 **Why this matters** — routing happens automatically. You don't change how you work; Claude doesn't change how it calls tools. The hooks silently upgrade every eligible call to a context-saving equivalent.
 
@@ -168,7 +185,9 @@ Existing databases from earlier versions bootstrap cleanly to v1 with no data lo
 node test-e2e.js
 ```
 
-216 tests across 19 sections covering: utils, exit classification, runtime detection, sandbox executor, knowledge base, session DB, snapshot builder, event extraction, routing block, hook cmd wrapper, MCP protocol smoke test, plugin discoverability, spec compliance, OSS attribution, plugin manifest validation, PreToolUse routing, hooks.json validation, plugin CLAUDE.md/settings validation, and schema migration.
+222 tests across 20 sections covering: utils, exit classification, runtime detection, sandbox executor, knowledge base, session DB, snapshot builder, event extraction, routing block, hook cmd wrapper, MCP protocol smoke test, plugin discoverability, spec compliance, OSS attribution, plugin manifest validation, PreToolUse routing, hooks.json validation, plugin CLAUDE.md/settings validation, schema migration, and version consistency.
+
+An additional per-rule and per-condition vitest suite (`test/routing-rules.test.js`) covers all 18 routing rules and every routing condition predicate independently.
 
 ## Security Model
 

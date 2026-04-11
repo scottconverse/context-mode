@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.0] - 2026-04-11
+
+### Added
+- **Declarative routing rules** (`hooks/core/routing-rules.js`) — all 18 routing rules extracted from imperative if/else chains into a plain data structure. Each rule declares its tool, match regex, pre-processor, safety predicate, action, and doc metadata. Adding or modifying a routing rule is now a config entry, not a code change.
+- **Routing condition helpers** (`hooks/core/routing-conditions.js`) — pure predicate functions (`hasFileOutput`, `isStdoutAlias`, `isSilent`, `isVerbose`, `hasLimit`, `hasShortFormat`, `hasPipe`, `hasStat`, `hasSingleFile`) extracted from routing logic and individually testable.
+- **Per-rule routing test suite** (`test/routing-rules.test.js`) — ~55 vitest tests covering every routing rule and every condition predicate in isolation.
+- **Version stamper** (`scripts/stamp-version.js`) — reads version from `package.json` and stamps all 6 dependent files. Validates CHANGELOG has a matching entry. Exits non-zero on failure.
+- **Routing table generator** (`scripts/gen-routing-table.js`) — reads `ROUTING_RULES` and auto-injects a markdown table into `README.md` between sentinel comments. Called by `stamp-version.js` on every release.
+- **Version consistency test** (section 20 in `test-e2e.js`) — 6 assertions verifying all version-bearing files match `package.json`.
+- `npm run stamp` and `npm run gen-routing-table` scripts in `package.json`.
+- `verify-release.sh` now runs `stamp-version.js` as step 0.
+
+### Changed
+- `hooks/core/routing.js` rewritten as a declarative engine (~160 lines) that iterates `ROUTING_RULES`. Identical routing decisions for identical inputs — no behavior change.
+- `README.md` routing table auto-generated from `routing-rules.js`; static 5-row table replaced with full 18-rule table with sentinel comments.
+- `README.md` test count updated to 222 E2E tests across 20 sections.
+- `docs/index.html` architecture diagram, hooks row, and test count updated.
+- `USER-MANUAL.md` routing table expanded to all 18 rules; inline HTTP and gradle/maven entries added.
+
 ## [1.5.1] - 2026-04-10
 
 ### Fixed

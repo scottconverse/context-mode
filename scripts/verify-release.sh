@@ -25,6 +25,15 @@ echo "  context-mode — Pre-Push Verification"
 echo "============================================"
 echo ""
 
+# ── 0. Stamp Version ─────────────────────────────────────────────
+echo "0. Version Stamp"
+if node scripts/stamp-version.js; then
+  pass "stamp-version.js succeeded"
+else
+  fail "stamp-version.js failed — fix version drift before continuing"
+  exit 1
+fi
+
 # ── 1. Secrets Scan ──────────────────────────────────────────────
 echo "1. Secrets Scan"
 SECRETS_FOUND=0

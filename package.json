@@ -1,6 +1,6 @@
 {
   "name": "context-mode",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "type": "module",
   "description": "Context window optimization for Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, and tracks session state — reducing context consumption by up to 98% while preserving errors and session-relevant content verbatim.",
   "main": "server/index.js",
@@ -10,7 +10,9 @@
   "scripts": {
     "start": "node server/index.js",
     "test": "node test-e2e.js && node test-adversarial.js",
-    "setup": "node scripts/setup.js"
+    "setup": "node scripts/setup.js",
+    "stamp": "node scripts/stamp-version.js",
+    "gen-routing-table": "node scripts/gen-routing-table.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

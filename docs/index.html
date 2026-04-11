@@ -304,17 +304,18 @@ Cowork Session
   |
   |-- SessionStart hook     --> routing block + session guide injection
   |-- UserPromptSubmit hook --> prompt preprocessing + context injection
-  |-- PreToolUse hook       --> 23 matchers (routing-block + core/routing)
-  |     |-- Bash matcher    --> curl/wget block; large-output → sandbox
+  |-- PreToolUse hook       --> 18 declarative rules (routing-rules.js + engine)
+  |     |-- curl/wget       --> block stdout floods; allow silent+file-output
+  |     |-- inline HTTP     --> fetch()/requests.get() → ctx_execute sandbox
+  |     |-- gradle/maven    --> build tools → ctx_execute sandbox
   |     |-- git log/diff    --> redirect unbounded through compressor
-  |     |-- npm test/jest   --> redirect test runners through compressor
-  |     |-- pytest/cargo/make/docker --> redirect build tools
-  |     |-- npm/pip install --> redirect package managers
-  |     |-- Read matcher    --> large file → execute_file
-  |     |-- Grep matcher    --> wide search → batch_execute
-  |     |-- WebFetch matcher --> block; redirect → fetch_and_index
-  |     |-- Agent matcher   --> subagent guidance nudge (once/session)
-  |     \-- (4 additional matchers)
+  |     |-- npm test/jest/vitest --> redirect test runners through compressor
+  |     |-- pytest          --> redirect through compressor
+  |     |-- npm/pip install --> redirect package managers through compressor
+  |     |-- cargo/docker/make --> redirect build tools through compressor
+  |     |-- Read/Grep       --> once-per-session guidance nudge
+  |     |-- WebFetch        --> deny; redirect → ctx_fetch_and_index
+  |     \-- Agent/Task      --> inject routing block into subagent prompt
   |-- PostToolUse hook      --> event capture (13 categories, 4 priorities)
   |-- SubagentStop hook     --> subagent result summarization
   |-- PreCompact hook       --> snapshot builder (&#8804;2KB XML)
@@ -401,10 +402,10 @@ Cowork Session
           <tr><td>Throttling</td><td>Progressive: 2&rarr;1&rarr;blocked over 60s window</td></tr>
           <tr><td>Compression</td><td>3-stage pipeline: deterministic &rarr; pattern-based (10 matchers) &rarr; session-aware (learner weights)</td></tr>
           <tr><td>Learner</td><td>Retrieval-based feedback loop, retention weights (5min cache), 7-day decay, signal files</td></tr>
-          <tr><td>Hooks</td><td>6 events, 23 matchers (PreToolUse, PostToolUse, PreCompact, SessionStart, UserPromptSubmit, SubagentStop)</td></tr>
+          <tr><td>Hooks</td><td>6 events, 18 declarative routing rules (PreToolUse, PostToolUse, PreCompact, SessionStart, UserPromptSubmit, SubagentStop)</td></tr>
           <tr><td>Platform</td><td>Windows, macOS, Linux (cross-platform .cmd wrapper)</td></tr>
           <tr><td>Schema</td><td>PRAGMA user_version tracking, ordered migrations, automatic backup</td></tr>
-          <tr><td>Tests</td><td>216 E2E + 58 adversarial + 76 compression/routing (350 total)</td></tr>
+          <tr><td>Tests</td><td>222 E2E (20 sections) + 58 adversarial + 76 compression + ~55 per-rule routing (vitest) = 410+ total</td></tr>
           <tr><td>License</td><td>Elastic License 2.0</td></tr>
         </tbody>
       </table>
@@ -428,7 +429,7 @@ Cowork Session
 
   <footer>
     <div class="container">
-      context-mode v1.5.1 &middot; Elastic License 2.0 &middot; Built for Claude Code in Cowork
+      context-mode v1.6.0 &middot; Elastic License 2.0 &middot; Built for Claude Code in Cowork
       <br>
       Ported from <a href="https://github.com/mksglu/context-mode" style="color: var(--accent);">mksglu/context-mode</a> by <a href="https://github.com/mksglu" style="color: var(--accent);">@mksglu</a>
     </div>

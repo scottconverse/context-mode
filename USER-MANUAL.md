@@ -89,12 +89,15 @@ The strongest enforcement is on WebFetch (fully denied) and curl/wget (blocked).
 
 Everything else runs through the sandbox.
 
-#### Auto-Redirected Commands (New in v1.3.0)
+#### Auto-Redirected Commands
 
-Some commands produce so much output that they're automatically redirected through the compression pipeline. These commands are intercepted before they run and rerouted through Context Mode's sandbox, where their output is compressed before it enters the conversation:
+Some commands produce so much output that they're automatically redirected through the compression pipeline. These commands are intercepted before they run and rerouted through Context Mode's sandbox, where their output is compressed before it enters the conversation. All 18 routing rules are defined declaratively in `hooks/core/routing-rules.js` — see the [full routing table in README.md](README.md#automatic-tool-routing) for the complete list with rule IDs.
 
 | Command | What Happens |
 |---------|-------------|
+| `curl` / `wget` (stdout) | **Blocked** — redirects to `ctx_execute` or `ctx_fetch_and_index`. Silent file-output downloads pass through. |
+| `fetch()` / `requests.get()` inline | **Blocked** — redirects to `ctx_execute` sandbox |
+| `gradle` / `maven` / `mvn` | Redirected — build output compressed, errors preserved |
 | `git log` (unbounded) | Redirected — but `git log --oneline` or `git log -n 5` pass through normally |
 | `git diff` (unbounded) | Redirected — but `git diff --stat` or piped through `grep` passes through |
 | `npm test` / `jest` / `vitest` | Redirected — test output compressed (passes collapsed, failures preserved) |
@@ -103,7 +106,7 @@ Some commands produce so much output that they're automatically redirected throu
 | `pip install` | Redirected — download progress stripped, warnings preserved |
 | `cargo build` / `cargo test` | Redirected — compile steps collapsed, errors preserved |
 | `docker build` | Redirected — cache lines collapsed, step output and errors preserved |
-| `make` / `cmake --build` | Redirected — similar to cargo, compile noise reduced |
+| `make` / `cmake --build` | Redirected — compile noise reduced, errors preserved |
 
 **When commands pass through normally:** If you pipe output through another command (like `git log | grep fix`), limit results (like `git log -n 5`), or use compact flags (like `git diff --stat`), the command runs normally without redirection. Context Mode only intercepts commands that would produce large, unbounded output.
 

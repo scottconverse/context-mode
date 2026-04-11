@@ -21,6 +21,7 @@
  *   17. hooks.json Validation
  *   18. Plugin CLAUDE.md and Settings
  *   19. Schema Migration
+ *   20. Version Consistency
  */
 
 import { ContentStore } from './server/knowledge.js';
@@ -797,6 +798,42 @@ if (existsSync(sessDir)) {
       try { unlinkSync(join(sessDir, f)); } catch {}
     }
   } catch {}
+}
+
+// ─── 20. Version Consistency ──────────────────────────────────────────
+SECTION('20. Version Consistency');
+{
+  const pkgVersion = JSON.parse(readFileSync(join(PLUGIN_ROOT, 'package.json'), 'utf8')).version;
+  const pluginJson = JSON.parse(readFileSync(join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8'));
+  const serverSrc = readFileSync(join(PLUGIN_ROOT, 'server', 'index.js'), 'utf8');
+  const readmeSrc = readFileSync(join(PLUGIN_ROOT, 'README.md'), 'utf8');
+  const changelogSrc = readFileSync(join(PLUGIN_ROOT, 'CHANGELOG.md'), 'utf8');
+  const indexHtmlSrc = readFileSync(join(PLUGIN_ROOT, 'docs', 'index.html'), 'utf8');
+  const readmeFullSrc = readFileSync(join(PLUGIN_ROOT, 'docs', 'README-FULL.md'), 'utf8');
+
+  pluginJson.version === pkgVersion
+    ? PASS(`plugin.json version matches package.json (${pkgVersion})`)
+    : FAIL('plugin.json version mismatch', `${pluginJson.version} !== ${pkgVersion}`);
+
+  new RegExp(`const VERSION = '${pkgVersion.replace(/\./g, '\\.')}'`).test(serverSrc)
+    ? PASS(`server/index.js VERSION constant matches (${pkgVersion})`)
+    : FAIL('server/index.js VERSION mismatch', `expected ${pkgVersion}`);
+
+  readmeSrc.includes(`Current version: **${pkgVersion}**`)
+    ? PASS(`README.md references current version (${pkgVersion})`)
+    : FAIL('README.md version reference missing or stale', `expected ${pkgVersion}`);
+
+  changelogSrc.includes(`[${pkgVersion}]`)
+    ? PASS(`CHANGELOG.md has entry for [${pkgVersion}]`)
+    : FAIL('CHANGELOG.md missing version entry', `expected [${pkgVersion}]`);
+
+  indexHtmlSrc.includes(`context-mode v${pkgVersion}`)
+    ? PASS(`docs/index.html footer references current version (${pkgVersion})`)
+    : FAIL('docs/index.html version stale', `expected context-mode v${pkgVersion}`);
+
+  readmeFullSrc.includes(`**Version ${pkgVersion}**`)
+    ? PASS(`docs/README-FULL.md references current version (${pkgVersion})`)
+    : FAIL('docs/README-FULL.md version stale', `expected **Version ${pkgVersion}**`);
 }
 
 // ─── Summary ──────────────────────────────────────────────────────────
