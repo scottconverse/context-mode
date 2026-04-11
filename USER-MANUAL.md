@@ -17,6 +17,7 @@ Context Mode provides three things:
 1. **Sandbox Execution** — Claude runs code in a separate process. Only the result comes back, not all the raw data.
 2. **Knowledge Base** — Large documents get indexed into a local database. Claude searches for specific information instead of loading entire files.
 3. **Session Memory** — When the context window does get compressed, Context Mode saves what Claude was doing and restores it afterward.
+4. **Token Compression** — When tool output does come back, Context Mode automatically shrinks it before it enters the conversation. Passing tests get collapsed to a summary. Install progress bars disappear. Only errors and warnings are kept word-for-word.
 
 ## Installing Context Mode
 
@@ -88,6 +89,24 @@ The strongest enforcement is on WebFetch (fully denied) and curl/wget (blocked).
 
 Everything else runs through the sandbox.
 
+#### Auto-Redirected Commands (New in v1.3.0)
+
+Some commands produce so much output that they're automatically redirected through the compression pipeline. These commands are intercepted before they run and rerouted through Context Mode's sandbox, where their output is compressed before it enters the conversation:
+
+| Command | What Happens |
+|---------|-------------|
+| `git log` (unbounded) | Redirected — but `git log --oneline` or `git log -n 5` pass through normally |
+| `git diff` (unbounded) | Redirected — but `git diff --stat` or piped through `grep` passes through |
+| `npm test` / `jest` / `vitest` | Redirected — test output compressed (passes collapsed, failures preserved) |
+| `pytest` | Redirected — same compression as npm test |
+| `npm install` / `npm ci` | Redirected — progress bars stripped, warnings preserved |
+| `pip install` | Redirected — download progress stripped, warnings preserved |
+| `cargo build` / `cargo test` | Redirected — compile steps collapsed, errors preserved |
+| `docker build` | Redirected — cache lines collapsed, step output and errors preserved |
+| `make` / `cmake --build` | Redirected — similar to cargo, compile noise reduced |
+
+**When commands pass through normally:** If you pipe output through another command (like `git log | grep fix`), limit results (like `git log -n 5`), or use compact flags (like `git diff --stat`), the command runs normally without redirection. Context Mode only intercepts commands that would produce large, unbounded output.
+
 **Routing guidance at every turn** — at the start of each prompt, Context Mode quietly injects a short routing guide into Claude's working memory. This tells Claude which tool to pick in different situations, so it stays consistent even deep into a long session. You never see this — it's invisible infrastructure.
 
 ### The "Think in Code" Directive
@@ -111,12 +130,38 @@ The main Context Mode skill loads a decision tree, tool-selection patterns, and 
 **How to use it:** Type `/context-mode` in the Claude Code input and press Enter. Claude will acknowledge the skill and apply its guidance for the rest of the session.
 
 #### `/ctx-stats` — See Your Savings
-Run this any time you want to know how much context Context Mode has saved in this session. You'll see numbers like:
-- How many tool calls were redirected
-- How many tokens were kept out of context
-- What percentage of potential context bloat was avoided
+Run this any time to see how much context space Context Mode has saved. Here's what the output looks like:
 
-You don't need to run this for Context Mode to work — it's just for your curiosity or peace of mind.
+```
+# Token Savings This Session (45m)
+
+  Compressed:    12,400 → 3,100 tokens (75.0% reduction)
+  Sandboxed:     38,800 tokens kept out of context
+  KB retrievals: 12 searches
+  ─────────────────────────────────
+  Total saved:   48,100 tokens
+  Est. cost saved: $0.72 (Opus) / $0.14 (Sonnet) / $0.04 (Haiku)
+
+## Top Compressed Outputs
+  npm_test (x3): 4.2K → 0.8K (81.0%)
+  git_log (x2): 3.1K → 1.2K (61.3%)
+  pip_install (x1): 2.8K → 0.4K (85.7%)
+
+## Learner
+  Patterns tracked:  47 decisions
+  Retrieval rate:    8/47 (17.0%)
+  Confidence:        High
+```
+
+**What each line means:**
+
+- **Compressed** — How many tokens went through the compression pipeline and how much smaller they got. "12,400 → 3,100" means the compressor saw 12,400 tokens of output and reduced it to 3,100.
+- **Sandboxed** — Tokens that never entered the conversation at all because they were processed in the sandbox and only the result came back.
+- **KB retrievals** — How many times Claude searched the knowledge base instead of re-reading raw content.
+- **Total saved** — Compression savings plus sandboxed tokens combined.
+- **Est. cost saved** — What those saved tokens would have cost at current pricing for each model tier.
+- **Top Compressed Outputs** — Which types of tool output were compressed the most. The format is: `pattern (times seen): before → after (reduction%)`.
+- **Learner** — The self-learning system tracks how often compressed content gets retrieved later. A high retrieval rate means the compressor is being too aggressive; it adjusts automatically over time. "High" confidence means enough data has been collected for the weights to be meaningful.
 
 **How to use it:** Type `/ctx-stats` in the Claude Code input and press Enter.
 
@@ -173,6 +218,32 @@ From your perspective, compaction with Context Mode feels like a brief pause. Fr
 
 **What you might notice:** Occasionally, after compaction, Claude may say something like "resuming from session guide" or briefly recap what it was working on. This is normal — it's reading the snapshot and confirming context before continuing.
 
+### Token Compression — Automatic Output Shrinking
+
+Starting in version 1.3.0, Context Mode automatically compresses tool output before it enters the conversation. You don't need to do anything — this happens in the background every time Claude runs a command through the sandbox.
+
+**What gets compressed:**
+
+- **Test results** — When Claude runs your tests, passing tests are collapsed into a count ("42 tests passed"). Failing tests are kept exactly as they are, word for word, so Claude can diagnose the problem.
+- **Install logs** — When packages are installed (npm, pip), progress bars and download status are stripped. Warnings and errors are preserved.
+- **Build output** — Compiler output from tools like `cargo build`, `docker build`, and `make` gets condensed. Compile errors and warnings are kept intact.
+- **Git logs and diffs** — Long commit histories and large diffs are condensed while keeping the structure readable.
+- **Directory listings** — Large folder listings are trimmed to the most relevant entries.
+
+**What is never compressed:**
+
+Errors and warnings are sacred. If a line contains words like "error," "warning," "fail," "panic," "exception," or "traceback," that line — plus the two lines above and below it — are always preserved exactly as they appeared. Context Mode will never hide a problem from Claude.
+
+**Small outputs are left alone:**
+
+If the output is under 2KB (roughly 40 lines of text), Context Mode only strips invisible terminal formatting codes. It doesn't try to compress small outputs because the savings wouldn't be worth the risk of losing useful detail.
+
+**How much does it save?**
+
+In a typical session with test runs, installs, and builds, compression reduces token usage by 40–90% on top of the savings from sandboxing. You can see exact numbers by running `/ctx-stats`.
+
+---
+
 ## Updating Context Mode
 
 To update to the latest version, run the same install command again:
@@ -220,16 +291,85 @@ Context Mode reduces context usage when Claude uses its tools, but it can't forc
 
 **Fix:** You can remind Claude to prefer context-mode tools. The routing block injected at session start should guide this, but an explicit reminder helps.
 
+### "Fetch failed: no content returned"
+This means Context Mode tried to download a web page but got nothing back. The URL might be wrong, the site might be down, or it might be blocking automated requests.
+
+**Fix:** Check that the URL is correct and accessible in a browser. If the site requires authentication or blocks bots, the content can't be fetched automatically — try copying the content manually and using `ctx_index` to store it.
+
+---
+
+## How It Works — Technical Appendix
+
+This section is for technically curious users who want to understand what's happening under the hood. You don't need to read this to use Context Mode — everything described here happens automatically.
+
+### The 3-Stage Compression Pipeline
+
+Every piece of tool output that exceeds 2KB goes through three compression stages:
+
+**Stage 1 — Deterministic Stripping (Lossless)**
+Removes invisible noise that adds no value: ANSI color codes (the escape sequences that make terminal output colorful), carriage return overwrites (used by progress bars), UTF-8 byte order marks, trailing whitespace, and duplicate blank lines. This stage always runs, even on small outputs, because it's cheap and never loses meaningful content.
+
+**Stage 2 — Pattern-Based Compression**
+Recognizes 10 specific types of tool output and applies tailored compression rules to each:
+
+| Pattern | What It Does |
+|---------|-------------|
+| npm test (jest/vitest) | Collapses passing test suites to a count; preserves failing tests verbatim |
+| pytest | Same approach — passes collapsed, failures preserved |
+| git log | Condenses commit entries while keeping structure |
+| git diff | Reduces hunks while preserving changed lines |
+| npm install | Strips progress bars and download indicators |
+| pip install | Strips download progress and cache messages |
+| cargo build | Collapses compile steps, preserves errors and warnings |
+| docker build | Collapses cache lines and layer steps |
+| make/cmake | Reduces compile noise, preserves errors |
+| directory listing | Trims large listings to most relevant entries |
+
+If the output doesn't match any known pattern, this stage is skipped entirely.
+
+**Stage 3 — Session-Aware Relevance (Lossy)**
+Splits the output into blocks and scores each one for relevance to the current session. Blocks that mention files you've been working on score higher. Blocks containing error keywords are always preserved. Low-relevance blocks are cut and replaced with a note like "42 lines in 3 blocks summarized (indexed, use ctx_search to query)." The cut content is still in the knowledge base — Claude can search for it if needed later.
+
+### Error Safety Invariant
+
+The compression pipeline enforces one absolute rule: **lines containing error-related keywords are never compressed.** The protected keywords are:
+
+`error`, `Error`, `ERROR`, `fail`, `FAIL`, `warning`, `Warning`, `WARN`, `panic`, `exception`, `traceback`, `TypeError`, `ReferenceError`, `SyntaxError`, `ENOENT`, `EPERM`, `EACCES`
+
+When one of these keywords appears on a line, that line and the two lines above and below it are marked as protected. No compression stage will touch them. This means Claude always sees the full context of any error, even in heavily compressed output.
+
+### Self-Learning Feedback Loop
+
+Context Mode tracks its own compression decisions and learns from them:
+
+1. **Compression decision** — When Stage 3 cuts a block, it logs the decision with a content hash
+2. **Retrieval signal** — If Claude later searches for that content (via `ctx_search`), a signal file is written noting the retrieval
+3. **Weight adjustment** — Periodically, the learner reads these signals and adjusts retention weights per tool pattern. If compressed content gets retrieved often, the weight increases (meaning future output from that tool will be compressed less aggressively). If compressed content is rarely retrieved, the weight stays low or decreases.
+4. **Decay** — Signals older than 7 days are pruned so the learner adapts to changing work patterns
+
+The learner's weights are cached for 5 minutes and stored in a SQLite database alongside the knowledge base.
+
+### The 2KB Threshold
+
+Outputs smaller than 2,048 bytes only get Stage 1 processing (ANSI stripping). The reasoning: small outputs don't consume much context, and aggressive compression on a 30-line output risks losing detail that matters. The 2KB threshold is where the cost-benefit tips toward compression.
+
+---
+
 ## Glossary
 
-- **Context Window** — The conversation memory Claude uses. It has a limited size. When it fills up, older parts get compressed.
-- **Sandbox** — A separate process that runs code in isolation. It can't affect your files directly.
-- **FTS5** — Full-Text Search 5, a technology built into SQLite for searching text efficiently.
 - **BM25** — A ranking algorithm that determines which search results are most relevant.
-- **TTL Cache** — Time-To-Live cache. Once a web page is fetched and indexed, it's cached for 24 hours so it doesn't need to be re-fetched.
 - **Compaction** — When Claude's context window gets full, older messages are compressed to make room. Context Mode saves session state before this happens.
-- **MCP** — Model Context Protocol, the standard way Claude Code communicates with plugins.
+- **Compression** — The process of shrinking tool output before it enters the conversation. Context Mode uses a 3-stage pipeline: stripping invisible formatting, applying pattern-specific rules, and filtering by session relevance.
+- **Context Window** — The conversation memory Claude uses. It has a limited size. When it fills up, older parts get compressed.
 - **Cowork** — The Claude desktop application that runs Claude Code sessions.
+- **FTS5** — Full-Text Search 5, a technology built into SQLite for searching text efficiently.
+- **MCP** — Model Context Protocol, the standard way Claude Code communicates with plugins.
+- **Pipeline** — A series of processing steps that data passes through in order. Context Mode's compression pipeline has three stages.
+- **Retention Score** — A number that controls how aggressively the compressor filters content for a given tool pattern. Higher scores mean more content is kept. The self-learning system adjusts these automatically.
+- **Retrieval Rate** — The percentage of compressed content that Claude later searches for. A high retrieval rate means the compressor was cutting things Claude actually needed.
+- **Sandbox** — A separate process that runs code in isolation. It can't affect your files directly.
+- **Token** — The smallest unit of text that Claude processes. Roughly 4 characters or 3/4 of a word. Context windows are measured in tokens.
+- **TTL Cache** — Time-To-Live cache. Once a web page is fetched and indexed, it's cached for 24 hours so it doesn't need to be re-fetched.
 
 ## Supported Languages (for sandbox execution)
 
