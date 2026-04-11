@@ -854,11 +854,11 @@ server.tool(
       const lifetime = learner.getLifetimeStats();
 
       if (lifetime.totalDecisions > 0) {
-        const accuracy = ((1 - lifetime.totalMisses / lifetime.totalDecisions) * 100).toFixed(1);
+        const retrievalRate = (lifetime.totalRetrievals / lifetime.totalDecisions * 100).toFixed(1);
         output += `## Learner\n`;
         output += `  Patterns tracked:  ${lifetime.totalDecisions} decisions\n`;
-        output += `  Retrieval misses:  ${lifetime.totalMisses} (${(lifetime.totalMisses / lifetime.totalDecisions * 100).toFixed(1)}%)\n`;
-        output += `  Confidence:        ${lifetime.totalMisses / lifetime.totalDecisions < 0.05 ? 'High' : 'Adjusting'}\n\n`;
+        output += `  Retrieval rate:    ${lifetime.totalRetrievals}/${lifetime.totalDecisions} (${retrievalRate}%)\n`;
+        output += `  Confidence:        ${lifetime.totalRetrievals / lifetime.totalDecisions > 0.1 ? 'High' : 'Learning'}\n\n`;
       }
 
       if (lifetime.totalCalls > 0) {
@@ -872,7 +872,7 @@ server.tool(
         output += `  Est. cost saved: $${ltOpus} (Opus) / $${ltSonnet} (Sonnet) / $${ltHaiku} (Haiku)\n`;
         output += `  Avg. compression: ${ltPct}%\n`;
         if (lifetime.totalDecisions > 0) {
-          output += `  Learner accuracy: ${((1 - lifetime.totalMisses / lifetime.totalDecisions) * 100).toFixed(1)}%\n`;
+          output += `  Learner accuracy: ${(lifetime.totalRetrievals / lifetime.totalDecisions * 100).toFixed(1)}%\n`;
         }
       }
     } catch {}

@@ -216,7 +216,7 @@ export class Learner {
     const accuracy = this.#db.prepare(`
       SELECT
         COUNT(*) as total,
-        SUM(CASE WHEN was_retrieved = 1 THEN 1 ELSE 0 END) as misses
+        SUM(CASE WHEN was_retrieved = 1 THEN 1 ELSE 0 END) as retrievals
       FROM compression_log
     `).get();
 
@@ -227,7 +227,7 @@ export class Learner {
       firstDate: row.firstDate,
       sessionDays: row.sessionDays,
       totalDecisions: accuracy?.total || 0,
-      totalMisses: accuracy?.misses || 0,
+      totalRetrievals: accuracy?.retrievals || 0,
     };
   }
 

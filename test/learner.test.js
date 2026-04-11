@@ -214,6 +214,8 @@ describe('Learner — Lifetime Stats', () => {
     expect(totals.totalOriginalTokens).toBe(70000);
     expect(totals.totalCompressedTokens).toBe(8000);
     expect(totals.totalCalls).toBe(8);
+    expect(totals).toHaveProperty('totalRetrievals');
+    expect(totals).not.toHaveProperty('totalMisses');
   });
 });
 
