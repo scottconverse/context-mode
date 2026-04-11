@@ -312,6 +312,32 @@ try {
     PASS('MCP: ctx_fetch_and_index error handling');
   }
 
+  // --- Execute Throttle ---
+  // Test: normal execution works
+  const execThrottleResult = await client.callTool({
+    name: 'ctx_execute',
+    arguments: { language: 'javascript', code: 'console.log("throttle-test-unique-" + Date.now())' }
+  });
+  const execThrottleText = execThrottleResult.content?.[0]?.text || '';
+  execThrottleText.includes('throttle-test-unique-')
+    ? PASS('Execute throttle: normal execution works')
+    : FAIL('Execute throttle: normal execution works', `got: ${execThrottleText.slice(0, 100)}`);
+
+  // Test: duplicate detection (exact same code within window)
+  const dupCode = 'console.log("dup-detect-' + Date.now() + '")';
+  await client.callTool({
+    name: 'ctx_execute',
+    arguments: { language: 'javascript', code: dupCode }
+  });
+  const dupResult = await client.callTool({
+    name: 'ctx_execute',
+    arguments: { language: 'javascript', code: dupCode }
+  });
+  const dupText = dupResult.content?.[0]?.text || '';
+  (dupResult.isError || dupText.includes('Duplicate execution'))
+    ? PASS('Execute throttle: duplicate detection')
+    : FAIL('Execute throttle: duplicate detection', `got: ${dupText.slice(0, 100)}`);
+
   await client.close();
 } catch (err) {
   FAIL('MCP smoke test', err.message);
