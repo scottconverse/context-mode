@@ -387,7 +387,49 @@ server.tool(
     }
     }
 
-    output += stdout;
+    // ─── Compression pipeline ───
+    let compressed = stdout;
+    try {
+      const toolPattern = `file:${language}`;
+      const learner = getLearner();
+      const sessionEvents = getRecentSessionEvents();
+      const weights = learner.getWeights(toolPattern);
+      const source = `file:${files[0]}:${Date.now()}`;
+
+      // Index full output to KB before compression
+      if (Buffer.byteLength(stdout, 'utf8') > INTENT_SEARCH_THRESHOLD) {
+        try {
+          const store = await getStoreAsync();
+          store.index({ content: stdout, source });
+          sessionStats.bytesIndexed += Buffer.byteLength(stdout, 'utf8');
+        } catch {}
+      }
+
+      const compResult = compress(stdout, {
+        toolName: toolPattern,
+        command: code,
+        sessionEvents,
+        learnerWeights: weights,
+        sourceLabel: source,
+      });
+      compressed = compResult.compressed;
+
+      for (const decision of compResult.stats.decisions) {
+        learner.recordDecision({
+          toolPattern,
+          contentHash: decision.contentHash,
+          contentPreview: decision.contentPreview,
+          sessionContext: sessionEvents.slice(0, 3).map(e => e.data).join('; '),
+          sourceLabel: source,
+        });
+      }
+
+      trackCompression(toolPattern, compResult.stats.originalBytes, compResult.stats.compressedBytes);
+    } catch (compErr) {
+      process.stderr.write(`[context-mode] execute_file compression error: ${compErr.message}\n`);
+    }
+
+    output += compressed;
     const responseBytes = Buffer.byteLength(output, 'utf8');
     trackCall('ctx_execute_file', responseBytes);
     return makeTextResponse(output.trim() || '(no output)');
