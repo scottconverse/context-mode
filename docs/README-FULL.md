@@ -30,7 +30,7 @@ css: |-
 
 # context-mode — Full Technical Documentation
 
-**Version 1.2.1** | Elastic License 2.0 | April 2026
+**Version 1.3.1** | Elastic License 2.0 | April 2026
 
 > Ported from [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu) (Elastic License 2.0). Core algorithms, database schemas, search pipeline, sandbox executor architecture, session event system, and compaction snapshot builder are derived from that project and adapted for the Cowork plugin architecture.
 
@@ -52,22 +52,25 @@ css: |-
 12. [Sandbox Executor](#12-sandbox-executor)
 13. [Session Continuity](#13-session-continuity)
 14. [Search Algorithm](#14-search-algorithm)
-15. [Design Decisions](#15-design-decisions)
-16. [Configuration Reference](#16-configuration-reference)
-17. [Platform Support](#17-platform-support)
-18. [Schema Versioning](#18-schema-versioning)
-19. [Testing](#19-testing)
+15. [Compression Pipeline](#15-compression-pipeline)
+16. [Self-Learning Compression](#16-self-learning-compression)
+17. [Design Decisions](#17-design-decisions)
+18. [Configuration Reference](#18-configuration-reference)
+19. [Platform Support](#19-platform-support)
+20. [Schema Versioning](#20-schema-versioning)
+21. [Testing](#21-testing)
 
 ---
 
 ## 1. Overview
 
-context-mode is a Cowork plugin for Claude Code that reduces context window consumption by up to 98%. It does this through five mechanisms:
+context-mode is a Cowork plugin for Claude Code that reduces context window consumption by up to 98%. It does this through six mechanisms:
 
 - **Hook-Driven Tool Steering**: PreToolUse hooks intercept Bash, Read, Grep, WebFetch, Agent, and Task calls with a mix of policies — deny, block, advisory nudge, or prompt augmentation — steering data-heavy operations toward context-saving alternatives.
 - **Sandbox Execution**: Runs code in isolated subprocesses (process isolation, not filesystem sandboxing). For outputs below 5KB, stdout returns directly. Above 5KB with intent, output is auto-indexed and only matching snippets return. Above 100KB, output is always indexed. Supports 11 languages (TypeScript requires global `tsx`).
 - **Knowledge Base**: Indexes content into a local SQLite FTS5 database. Retrieves only relevant snippets via BM25 + trigram dual-strategy search.
 - **Session Continuity**: Captures session events via hooks, builds priority-tiered snapshots before compaction, and restores session state afterward. A bootstrapper with dependency self-healing ensures the server starts cleanly on every session.
+- **Token Compression**: A 3-stage pipeline compresses tool output before it returns to context — deterministic stripping, pattern-based compression (10 tool-specific matchers), and session-aware relevance filtering guided by a self-learning retention model.
 - **Main Skill**: The `context-mode` skill provides an in-session decision tree, tool-selection patterns, and anti-patterns so Claude consistently picks the right tool.
 
 ### Problem Statement
@@ -141,6 +144,36 @@ node install.js
   <div class="caption">Figure 2: Data Flow — tool call through event capture, compaction, and session resume</div>
 </div>
 
+### Compression Pipeline
+
+```mermaid
+flowchart LR
+    A["Executor stdout"] --> B["Stage 1\nANSI Strip"]
+    B --> C{"Output ≥ 2KB?"}
+    C -->|No| D["Return\n(Stage 1 only)"]
+    C -->|Yes| E["Stage 2\nPattern Match"]
+    E --> F["Stage 3\nSession-Aware"]
+    F --> G["Context"]
+    H["Learner\nWeights"] -.->|retention score| F
+```
+
+<div class="caption">Figure 3: Compression Pipeline — 3-stage output compression between executor and context return</div>
+
+### Learner Feedback Loop
+
+```mermaid
+flowchart TD
+    A["Stage 3 cuts a block"] --> B["compression_log\n(SQLite)"]
+    B --> C["Claude calls ctx_search"]
+    C --> D["PostToolUse signal file"]
+    D --> E["processSignals()"]
+    E --> F["Weight update\n(compression_stats)"]
+    F -->|retention score| A
+    G["7-day decay"] -.->|prune old entries| B
+```
+
+<div class="caption">Figure 4: Learner Feedback Loop — compression decisions feed retrieval signals back to retention weights</div>
+
 ### Directory Structure
 
 ```
@@ -163,11 +196,13 @@ context-mode/
 │   ├── snapshot.js           # Compaction snapshot builder
 │   ├── runtime.js            # Language runtime detection
 │   ├── migrate.js            # Schema versioning and migration runner
+│   ├── compressor.js         # 3-stage compression pipeline (10 pattern matchers)
+│   ├── learner.js            # Self-learning retention weights (SQLite, 7-day window)
 │   ├── db-base.js            # SQLite utilities
 │   ├── utils.js              # Query sanitization, Levenshtein
 │   └── exit-classify.js      # Non-zero exit classification
 ├── hooks/
-│   ├── hooks.json            # 6 hook events, 14 matchers (9 PreToolUse)
+│   ├── hooks.json            # 6 hook events, 23 matchers (9 PreToolUse + 14 routing)
 │   ├── run-hook.cmd          # Cross-platform hook wrapper (CMD/bash polyglot)
 │   ├── pretooluse.js         # PreToolUse: routes Bash, Read, Grep, WebFetch, Agent, Task
 │   ├── posttooluse.js        # PostToolUse: captures session events (<20ms)
@@ -219,7 +254,7 @@ Introduced in v1.1.0. PreToolUse hooks intercept five built-in Claude Code tools
 | `WebFetch` | **Deny** | Blocked; guidance redirects to `ctx_fetch_and_index` |
 | `Agent` / `Task` | **Augment** | Routing block injected into the sub-agent's prompt |
 
-### 9 PreToolUse Matchers
+### PreToolUse Matchers
 
 The hooks.json registers 9 matchers for the PreToolUse event:
 
@@ -232,6 +267,26 @@ The hooks.json registers 9 matchers for the PreToolUse event:
 7. `mcp__plugin_context-mode_context-mode__ctx_execute` — adds intent context
 8. `mcp__plugin_context-mode_context-mode__ctx_execute_file` — adds intent context
 9. `mcp__plugin_context-mode_context-mode__ctx_batch_execute` — adds intent context
+
+### Command Routing Matchers (v1.3.0)
+
+Within the Bash PreToolUse handler, 14 additional command-level matchers redirect high-output commands through the compression pipeline:
+
+| Matcher | Pass-Through Conditions |
+|---------|------------------------|
+| `git log` | `--oneline`, `-n N`, `-N`, piped through `grep`/`head`/`tail` |
+| `git diff` | `--stat`, `--name-only`, `--name-status`, piped |
+| `npm test` / `jest` / `vitest` | None — always redirected |
+| `pytest` / `python -m pytest` | None — always redirected |
+| `npm install` / `npm ci` | None — always redirected |
+| `pip install` | None — always redirected |
+| `cargo build` | None — always redirected |
+| `cargo test` | None — always redirected |
+| `docker build` | None — always redirected |
+| `make` | None — always redirected |
+| `cmake --build` | None — always redirected |
+
+Commands with pass-through conditions are only redirected when the output would be unbounded. Adding flags that limit output (like `git log -n 5`) or piping through filters (like `| grep`) causes the command to pass through normally.
 
 ### Bash Whitelist
 
@@ -272,7 +327,7 @@ On every user prompt turn, the `UserPromptSubmit` hook fires and injects the cur
 | `UserPromptSubmit` | `userpromptsubmit.js` | 1 | Inject routing block on every prompt turn |
 | `SubagentStop` | `subagent-stop.js` | 1 | Capture sub-agent outcomes into session DB |
 
-Total: 6 hook events, 14 matchers.
+Total: 6 hook events, 23 matchers (9 PreToolUse hook matchers + 14 command routing matchers in routing.js).
 
 ### Cross-Platform Hook Execution
 
@@ -399,9 +454,11 @@ The MCP server (`server/index.js`) runs as a Node.js process communicating via s
 | `ctx_index` | content, source | chunk count confirmation | 100% (content stored, not returned) |
 | `ctx_search` | queries[], limit? | relevant snippets | N/A (retrieval) |
 | `ctx_fetch_and_index` | url, queries? | cache hint or preview | 95-99% |
-| `ctx_stats` | (none) | session report | N/A |
+| `ctx_stats` | (none) | token savings, cost estimates, compression breakdown, learner metrics | N/A |
 | `ctx_doctor` | (none) | diagnostics | N/A |
 | `ctx_purge` | confirm: true | confirmation | N/A |
+
+> **v1.3.0**: `ctx_execute`, `ctx_batch_execute`, and `ctx_execute_file` now compress output through the 3-stage pipeline before returning to context. Error output is never compressed.
 
 ### Auto-indexing Behavior
 
@@ -416,6 +473,8 @@ When `ctx_execute` output exceeds 5KB and an `intent` parameter is provided, the
 | 1-3 | Full results (2 per query) |
 | 4-8 | Reduced (1 per query) + warning |
 | 9+ | Blocked, redirect to ctx_batch_execute |
+
+> **v1.3.1**: `ctx_fetch_and_index` now returns an explicit error message ("Fetch failed: no content returned from {url}") when a URL fetch produces no output, instead of silently indexing empty content.
 
 ---
 
@@ -543,7 +602,116 @@ Lower-priority sections are dropped first if budget is tight. Each section inclu
 
 ---
 
-## 15. Design Decisions
+## 15. Compression Pipeline
+
+Added in v1.3.0. The compression pipeline processes tool output through three stages before it enters the context window.
+
+### Architecture
+
+The pipeline is implemented in `server/compressor.js` (689 lines). It exports three stage functions and a `compress()` entry point.
+
+### Stage 1 — Deterministic Stripping
+
+Always runs. Removes:
+- ANSI escape codes (`\x1b[...m` sequences)
+- Carriage return overwrites (progress bar rewrites)
+- UTF-8 BOM markers
+- Trailing whitespace per line
+- Duplicate blank lines (collapsed to single)
+
+### Stage 2 — Pattern-Based Compression
+
+Runs when output ≥ 2,048 bytes. Detects tool type from the command string and applies one of 10 pattern matchers:
+
+| Matcher | Detection | Compression Strategy |
+|---------|-----------|---------------------|
+| `npm_test` | `npm test`, `npx jest`, `npx vitest` | Collapse passing suites to count; preserve failures verbatim |
+| `npm_install` | `npm install`, `npm ci` | Strip progress bars, preserve warnings/errors |
+| `git_log` | `git log` | Condense commit entries |
+| `git_diff` | `git diff` | Reduce hunks, preserve changed lines |
+| `pip_install` | `pip install` | Strip download progress |
+| `pytest` | `pytest`, `python -m pytest` | Collapse passes, preserve failures |
+| `cargo_build` | `cargo build`, `cargo test` | Collapse compile steps |
+| `docker_build` | `docker build` | Collapse cache/layer lines |
+| `make` | `make`, `cmake --build` | Reduce compile noise |
+| `directory_listing` | `ls`, `find`, `tree` | Trim to relevant entries |
+
+### Stage 3 — Session-Aware Relevance
+
+Runs when output ≥ 2,048 bytes. Splits output into blank-line-separated blocks and scores each:
+
+- **File relevance** (+0.8): block mentions a file from the current session's file operations
+- **Code file reference** (+0.2): block mentions any source file pattern (`.js`, `.py`, `.rs`, etc.)
+- **Error protection** (1.0): block contains an error-tagged line
+
+Blocks scoring above the relevance threshold (adjusted by learner retention score) are preserved. Below-threshold blocks are cut and replaced with a summary line. Cut content remains in the knowledge base.
+
+### Error Safety Invariant
+
+The regex `/\b(error|Error|ERROR|fail|FAIL|warning|Warning|WARN|panic|exception|traceback|TypeError|ReferenceError|SyntaxError|ENOENT|EPERM|EACCES)\b/` tags lines as protected. Protected lines and their 2-line context (above and below) are never compressed by any stage.
+
+### Constants
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `COMPRESSION_THRESHOLD_BYTES` | 2,048 | Below this, only Stage 1 runs |
+| `RELEVANCE_THRESHOLD` | 0.4 | Minimum score for block preservation |
+| `DEFAULT_RETENTION` | 0.5 | Learner weight when no data exists |
+
+---
+
+## 16. Self-Learning Compression
+
+Added in v1.3.0. The learner (`server/learner.js`) tracks compression decisions and adjusts retention weights based on retrieval patterns.
+
+### Schema
+
+```sql
+-- Tracks every Stage 3 cut decision
+CREATE TABLE compression_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT,
+  tool_pattern TEXT,
+  content_hash TEXT,
+  content_preview TEXT,
+  was_retrieved INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Aggregated per-pattern weights
+CREATE TABLE compression_stats (
+  tool_pattern TEXT PRIMARY KEY,
+  total_compressed INTEGER DEFAULT 0,
+  total_retrieved INTEGER DEFAULT 0,
+  retention_weight REAL DEFAULT 0.5,
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+```
+
+### Feedback Loop
+
+1. **Log**: When `compress()` runs Stage 3 and cuts blocks, each decision is logged with a content hash and preview
+2. **Signal**: PostToolUse hook detects `ctx_search` calls and writes signal files to the plugin data directory
+3. **Process**: `processSignals()` reads signal files, matches content hashes against `compression_log`, and marks matches as `was_retrieved = 1`
+4. **Update**: Per-pattern stats are recalculated — `retention_weight` increases when retrieval rate is high, decreases when low
+5. **Apply**: Next `compress()` call reads the updated retention weight and uses it in Stage 3 scoring
+
+### Lifecycle
+
+- **SessionStart**: Prunes `compression_log` and `compression_stats` entries older than 7 days
+- **Weight cache**: Retention weights are cached in memory for 5 minutes to avoid repeated SQLite reads
+- **Stats flush**: Compression statistics are flushed to SQLite every 5 minutes and on shutdown
+
+### Learner in ctx_stats
+
+The `ctx_stats` output includes a Learner section:
+- **Patterns tracked**: total compression decisions logged
+- **Retrieval rate**: how many compressed items were later retrieved via ctx_search
+- **Confidence**: "High" when retrieval count / decision count > 0.1, "Learning" otherwise
+
+---
+
+## 17. Design Decisions
 
 ### Why SQLite FTS5 over vector search?
 
@@ -567,7 +735,7 @@ Without throttling, Claude can fall into a search loop: search → not quite rig
 
 ---
 
-## 16. Configuration Reference
+## 18. Configuration Reference
 
 ### Key Constants
 
@@ -597,7 +765,7 @@ Without throttling, Claude can fall into a search loop: search → not quite rig
 
 ---
 
-## 17. Platform Support
+## 19. Platform Support
 
 ### Windows
 
@@ -632,7 +800,7 @@ Without throttling, Claude can fall into a search loop: search → not quite rig
 
 ---
 
-## 18. Schema Versioning
+## 20. Schema Versioning
 
 Both the knowledge base and session databases use SQLite's built-in `PRAGMA user_version` for schema version tracking. This provides zero-overhead versioning with no additional tables or queries.
 
@@ -673,11 +841,11 @@ The runner automatically backs up the v1 database, runs the ALTER TABLE in a tra
 
 ---
 
-## 19. Testing
+## 21. Testing
 
 ### E2E Test Suite
 
-The project ships a single comprehensive E2E test file (`test-e2e.js`) covering 216 tests across 19 sections:
+The project ships a single comprehensive E2E test file (`test-e2e.js`) covering 355 tests across 19 sections (216 E2E + 62 adversarial + 32 compressor + 13 learner + 31 routing + 1 fetch error):
 
 | Section | Coverage |
 |---------|----------|
