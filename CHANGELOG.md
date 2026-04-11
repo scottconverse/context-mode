@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.1] - 2026-04-10
+
+### Fixed
+- **Learner accuracy display** — `ctx_stats` was showing inverted accuracy: `was_retrieved=1` (a retrieval hit) was counted as a "miss." Renamed `totalMisses` → `totalRetrievals`, corrected the percentage display and confidence labels.
+- **ctx_execute_file compression** — output from `ctx_execute_file` now goes through the same 3-stage compression pipeline as `ctx_execute` and `ctx_batch_execute`. Previously, large file-processing outputs bypassed compression entirely.
+- **ctx_fetch_and_index silent failure** — when a URL fetch fails and produces no output, the tool now returns an explicit error message instead of silently indexing empty content and reporting success.
+
 ## [1.3.0] - 2026-04-10
 
 ### Added
