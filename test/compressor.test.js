@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compress } from '../server/compressor.js';
+import { compress, stageSessionAware, getCompressionLevel, getRelevanceThreshold } from '../server/compressor.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixture = (name) => readFileSync(join(__dirname, 'fixtures', name), 'utf8');
@@ -331,7 +331,7 @@ describe('Compressor Stage 3 — Session-Aware Relevance', () => {
     const { compressed } = compress(padded, {
       toolName: 'shell:make',
       command: 'make build',
-      sessionEvents: [{ type: 'file_operation', data: 'server/index.js' }],
+      sessionEvents: [{ type: 'file_operation', data: 'server/index.js', timestamp: Date.now() - 60 * 1000, count: 3 }],
       learnerWeights: { retentionScore: 0.0 },
       sourceLabel: 'test',
     });
@@ -449,5 +449,76 @@ describe('Compressor — Error Invariant', () => {
     for (const line of errorLines) {
       expect(compressed).toContain(line);
     }
+  });
+});
+
+describe('Compression Level Configuration', () => {
+  it('defaults to balanced', () => {
+    expect(getCompressionLevel()).toBe('balanced');
+    expect(getRelevanceThreshold()).toBe(0.4);
+  });
+});
+
+describe('Enhanced Stage 3 Scoring', () => {
+  const now = Date.now();
+
+  it('preserves blocks mentioning hot files (edited < 5 min)', () => {
+    const text = 'Compiling server/auth.js...\nDone in 2.3s\n\nInstalling dependencies...\nProgress 50%';
+    const context = {
+      sessionEvents: [
+        { type: 'file_operation', data: 'server/auth.js', timestamp: now - 2 * 60 * 1000, count: 1 }
+      ],
+      learnerWeights: { retentionScore: 0.0 },
+    };
+    const result = stageSessionAware(text, context);
+    expect(result.text).toContain('auth.js');
+  });
+
+  it('cuts blocks with only cold session files when retention is low', () => {
+    const text = 'Reading old-config.yaml...\nParsed 3 keys\n\nInstalling dependencies...\nProgress 50%';
+    const context = {
+      sessionEvents: [
+        { type: 'file_operation', data: 'old-config.yaml', timestamp: now - 60 * 60 * 1000, count: 1 }
+      ],
+      learnerWeights: { retentionScore: 0.0 },
+    };
+    const result = stageSessionAware(text, context);
+    expect(result.applied).toBe(true);
+  });
+
+  it('preserves blocks with stack trace patterns', () => {
+    // Stack trace (+0.3) + source file ref (+0.1) = 0.4; with even minimal retention (0.1) > 0.4 threshold
+    const text = 'Some output here\n\n    at Object.<anonymous> (/src/index.js:42:5)\n    at Module._compile (node:internal/modules/cjs/loader:1)';
+    const context = {
+      sessionEvents: [],
+      learnerWeights: { retentionScore: 0.1 },
+    };
+    const result = stageSessionAware(text, context);
+    expect(result.text).toContain('Object.<anonymous>');
+  });
+
+  it('boosts score for frequently-touched files', () => {
+    const text = 'Checking server/index.js...\nLint passed\n\nChecking README.md...\nLint passed';
+    const context = {
+      sessionEvents: [
+        { type: 'file_operation', data: 'server/index.js', timestamp: now - 40 * 60 * 1000, count: 8 }
+      ],
+      learnerWeights: { retentionScore: 0.0 },
+    };
+    const result = stageSessionAware(text, context);
+    expect(result.text).toContain('server/index.js');
+  });
+
+  it('caps score at 1.0 with combined signals', () => {
+    const text = 'Error at server/auth.js:10\n    at Object.<anonymous> (/src/auth.js:10:5)';
+    const context = {
+      sessionEvents: [
+        { type: 'file_operation', data: 'server/auth.js', timestamp: now - 1000, count: 16 }
+      ],
+      learnerWeights: { retentionScore: 0.0 },
+    };
+    const result = stageSessionAware(text, context);
+    expect(result.text).toContain('auth.js');
+    expect(result.applied).toBe(false);
   });
 });

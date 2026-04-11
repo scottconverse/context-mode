@@ -541,23 +541,68 @@ export function stagePatternBased(text, context) {
 
 // ─── Stage 3: Session-Aware Relevance ───────────────────────────────────────
 
-const RELEVANCE_THRESHOLD = 0.4;
+const COMPRESSION_LEVELS = {
+  conservative: 0.2,
+  balanced: 0.4,
+  aggressive: 0.7,
+};
+
+const _compressionLevel = COMPRESSION_LEVELS[process.env.CONTEXT_MODE_COMPRESSION]
+  ? process.env.CONTEXT_MODE_COMPRESSION
+  : 'balanced';
+
+export function getCompressionLevel() { return _compressionLevel; }
+export function getRelevanceThreshold() { return COMPRESSION_LEVELS[_compressionLevel]; }
+
 const DEFAULT_RETENTION = 0.5;
 
 /**
  * Score a block of text for relevance to current session.
+ * sessionFiles: [{ path, timestamp, count }]
  */
 function scoreBlock(block, sessionFiles, errorProtected) {
   if (errorProtected) return 1.0;
 
+  const now = Date.now();
+  const FIVE_MIN = 5 * 60 * 1000;
+  const THIRTY_MIN = 30 * 60 * 1000;
+
   let score = 0;
 
-  if (sessionFiles.some(f => block.includes(f))) {
-    score += 0.8;
+  // File recency + frequency signals
+  for (const file of sessionFiles) {
+    if (!block.includes(file.path)) continue;
+
+    const age = now - (file.timestamp || 0);
+    if (age < FIVE_MIN) {
+      score += 0.6; // Hot file
+    } else if (age < THIRTY_MIN) {
+      score += 0.4; // Warm file
+    } else {
+      score += 0.2; // Cold file
+    }
+
+    // Frequency boost: log2(count) * 0.1, max 0.3
+    if (file.count > 1) {
+      score += Math.min(Math.log2(file.count) * 0.1, 0.3);
+    }
+
+    break; // Only count the best-matching file
   }
 
+  // Stack trace pattern detection
+  if (/^\s+at\s+|^File\s+"|^Traceback\s/m.test(block)) {
+    score += 0.3;
+  }
+
+  // Function/class definition detection
+  if (/\b(function\s+\w|def\s+\w|class\s+\w|fn\s+\w|func\s+\w)\b/.test(block)) {
+    score += 0.1;
+  }
+
+  // Generic source file reference
   if (/\b[\w\-./]+\.(js|ts|py|rs|go|java|jsx|tsx|vue|rb|php|css|html|json|yaml|yml|toml|md)\b/.test(block)) {
-    score += 0.2;
+    score += 0.1;
   }
 
   return Math.min(score, 1.0);
@@ -569,10 +614,24 @@ function scoreBlock(block, sessionFiles, errorProtected) {
  * summarizes the rest.
  */
 export function stageSessionAware(text, context) {
-  const sessionFiles = (context.sessionEvents || [])
-    .filter(e => e.type === 'file_operation')
-    .map(e => e.data)
-    .filter(Boolean);
+  // Build enriched session file data with recency and frequency
+  const fileMap = new Map(); // path → { path, timestamp, count }
+  for (const e of (context.sessionEvents || [])) {
+    if (e.type === 'file_operation' && e.data) {
+      const existing = fileMap.get(e.data);
+      if (existing) {
+        existing.count += (e.count || 1);
+        existing.timestamp = Math.max(existing.timestamp, e.timestamp || 0);
+      } else {
+        fileMap.set(e.data, {
+          path: e.data,
+          timestamp: e.timestamp || 0,
+          count: e.count || 1,
+        });
+      }
+    }
+  }
+  const sessionFiles = [...fileMap.values()];
 
   const retentionScore = context.learnerWeights?.retentionScore ?? DEFAULT_RETENTION;
 
@@ -602,7 +661,7 @@ export function stageSessionAware(text, context) {
     const blockText = block.lines.map(l => l.text).join('\n');
     const hasError = block.lines.some(l => errorLines.has(l.idx));
     const relevance = scoreBlock(blockText, sessionFiles, hasError);
-    const shouldPreserve = (relevance + retentionScore) > RELEVANCE_THRESHOLD || hasError;
+    const shouldPreserve = (relevance + retentionScore) > getRelevanceThreshold() || hasError;
 
     if (shouldPreserve) {
       result.push(...block.lines.map(l => l.text));
