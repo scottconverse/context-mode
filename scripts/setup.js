@@ -6,6 +6,7 @@
  */
 
 import { execSync } from 'node:child_process';
+import { npmExecOpts } from '../hooks/core/npm-exec.js';
 import { existsSync, mkdirSync, copyFileSync, readFileSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,12 +56,11 @@ if (needsInstall) {
   console.error('[context-mode] Installing dependencies to', pluginData);
   copyFileSync(srcPkg, dstPkg);
   try {
-    const npmCmd = process.platform === "win32" ? "npm" : `"${join(dirname(process.execPath), "npm")}"`;
-    execSync(`${npmCmd} install --omit=dev`, {
+    execSync('npm install --omit=dev', npmExecOpts({
       cwd: pluginData,
       stdio: 'inherit',
       timeout: 120_000
-    });
+    }));
   } catch (err) {
     try { unlinkSync(dstPkg); } catch { /* ignore */ }
     console.error('[context-mode] Failed to install dependencies:', err.message);

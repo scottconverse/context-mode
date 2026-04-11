@@ -27,14 +27,10 @@ import { execSync } from "node:child_process";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { npmExecOpts } from "./core/npm-exec.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
-
-const npmCmd = process.platform === "win32"
-  ? "npm"
-  : `"${join(dirname(process.execPath), "npm")}"`;
-
 
 const NATIVE_DEPS = ["better-sqlite3"];
 
@@ -44,11 +40,11 @@ export function ensureDeps() {
     if (!existsSync(pkgDir)) {
       // Package not installed at all
       try {
-        execSync(`${npmCmd} install ${pkg} --no-package-lock --no-save --silent`, {
+        execSync(`npm install ${pkg} --no-package-lock --no-save --silent`, npmExecOpts({
           cwd: root,
           stdio: "pipe",
           timeout: 120000,
-        });
+        }));
       } catch { /* best effort — hook degrades gracefully without DB */ }
     } else if (
       !existsSync(resolve(pkgDir, "build", "Release")) &&
@@ -56,11 +52,11 @@ export function ensureDeps() {
     ) {
       // Package installed but native binary missing (e.g., npm ignore-scripts=true)
       try {
-        execSync(`${npmCmd} rebuild ${pkg} --ignore-scripts=false`, {
+        execSync(`npm rebuild ${pkg} --ignore-scripts=false`, npmExecOpts({
           cwd: root,
           stdio: "pipe",
           timeout: 120000,
-        });
+        }));
       } catch { /* best effort — hook degrades gracefully without DB */ }
     }
   }
@@ -106,11 +102,11 @@ export function ensureNativeCompat(pluginRoot) {
     } catch (probeErr) {
       if (probeErr?.message?.includes("NODE_MODULE_VERSION")) {
         // ABI mismatch — rebuild for current Node version
-        execSync(`${npmCmd} rebuild better-sqlite3`, {
+        execSync('npm rebuild better-sqlite3', npmExecOpts({
           cwd: pluginRoot,
           stdio: "pipe",
           timeout: 60000,
-        });
+        }));
         if (existsSync(binaryPath)) {
           copyFileSync(binaryPath, abiCachePath);
         }

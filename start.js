@@ -109,18 +109,16 @@ if (cacheMatch) {
 import "./hooks/ensure-deps.js";
 
 // Install pure-JS deps used by server
-const npmCmd = process.platform === "win32"
-  ? "npm"
-  : `"${join(dirname(process.execPath), "npm")}"`;
+import { npmExecOpts } from "./hooks/core/npm-exec.js";
 
 for (const pkg of ["turndown", "turndown-plugin-gfm"]) {
   if (!existsSync(resolve(__dirname, "node_modules", pkg))) {
     try {
-      execSync(`${npmCmd} install ${pkg} --no-package-lock --no-save --silent`, {
+      execSync(`npm install ${pkg} --no-package-lock --no-save --silent`, npmExecOpts({
         cwd: __dirname,
         stdio: "pipe",
         timeout: 120000,
-      });
+      }));
     } catch { /* best effort */ }
   }
 }

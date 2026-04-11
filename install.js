@@ -30,11 +30,7 @@ import { createRequire } from 'node:module';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Resolve npm path — on Mac/Linux with nvm, bare 'npm' isn't on PATH.
-// On Windows, npm is always on PATH; quoting a bare command breaks cmd.exe resolution.
-const npmCmd = process.platform === "win32"
-  ? "npm"
-  : `"${join(dirname(process.execPath), "npm")}"`;
+import { npmExecOpts } from './hooks/core/npm-exec.js';
 
 
 const PLUGIN_NAME = 'context-mode';
@@ -213,21 +209,21 @@ mkdirSync(DATA_DIR, { recursive: true });
 
 copyFileSync(join(CACHE_DIR, 'package.json'), join(DATA_DIR, 'package.json'));
 try {
-  execSync(`${npmCmd} install --omit=dev`, {
+  execSync('npm install --omit=dev', npmExecOpts({
     cwd: DATA_DIR,
     stdio: 'pipe',
     timeout: 120_000
-  });
+  }));
   log('  Dependencies installed to ' + DATA_DIR);
 } catch (e) {
   // Fallback: install in cache dir
   log('  Data dir install failed, installing in cache...');
   try {
-    execSync(`${npmCmd} install --omit=dev`, {
+    execSync('npm install --omit=dev', npmExecOpts({
       cwd: CACHE_DIR,
       stdio: 'pipe',
       timeout: 120_000
-    });
+    }));
     log('  Dependencies installed to ' + CACHE_DIR);
   } catch (e2) {
     err('Failed to install dependencies: ' + e2.message);
