@@ -30,6 +30,13 @@ import { createRequire } from 'node:module';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Resolve npm path — on Mac/Linux with nvm, bare 'npm' isn't on PATH.
+// On Windows, npm is always on PATH; quoting a bare command breaks cmd.exe resolution.
+const npmCmd = process.platform === "win32"
+  ? "npm"
+  : `"${join(dirname(process.execPath), "npm")}"`;
+
+
 const PLUGIN_NAME = 'context-mode';
 const MARKETPLACE_NAME = 'scottconverse-context-mode';
 const PLUGIN_ID = `${PLUGIN_NAME}@${MARKETPLACE_NAME}`;
@@ -206,7 +213,7 @@ mkdirSync(DATA_DIR, { recursive: true });
 
 copyFileSync(join(CACHE_DIR, 'package.json'), join(DATA_DIR, 'package.json'));
 try {
-  execSync('npm install --omit=dev', {
+  execSync(`${npmCmd} install --omit=dev`, {
     cwd: DATA_DIR,
     stdio: 'pipe',
     timeout: 120_000
@@ -216,7 +223,7 @@ try {
   // Fallback: install in cache dir
   log('  Data dir install failed, installing in cache...');
   try {
-    execSync('npm install --omit=dev', {
+    execSync(`${npmCmd} install --omit=dev`, {
       cwd: CACHE_DIR,
       stdio: 'pipe',
       timeout: 120_000

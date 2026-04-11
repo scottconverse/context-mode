@@ -55,7 +55,8 @@ if (needsInstall) {
   console.error('[context-mode] Installing dependencies to', pluginData);
   copyFileSync(srcPkg, dstPkg);
   try {
-    execSync('npm install --omit=dev', {
+    const npmCmd = process.platform === "win32" ? "npm" : `"${join(dirname(process.execPath), "npm")}"`;
+    execSync(`${npmCmd} install --omit=dev`, {
       cwd: pluginData,
       stdio: 'inherit',
       timeout: 120_000

@@ -9,7 +9,7 @@
 
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync, readdirSync, openSync, closeSync, unlinkSync, statSync, constants as fsConstants } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 import { ensureMcpJson } from "./hooks/core/ensure-mcp-json.js";
@@ -109,10 +109,14 @@ if (cacheMatch) {
 import "./hooks/ensure-deps.js";
 
 // Install pure-JS deps used by server
+const npmCmd = process.platform === "win32"
+  ? "npm"
+  : `"${join(dirname(process.execPath), "npm")}"`;
+
 for (const pkg of ["turndown", "turndown-plugin-gfm"]) {
   if (!existsSync(resolve(__dirname, "node_modules", pkg))) {
     try {
-      execSync(`npm install ${pkg} --no-package-lock --no-save --silent`, {
+      execSync(`${npmCmd} install ${pkg} --no-package-lock --no-save --silent`, {
         cwd: __dirname,
         stdio: "pipe",
         timeout: 120000,

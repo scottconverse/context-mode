@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - **macOS MCP server not connecting** — the Claude desktop app on macOS reads MCP config from `~/.mcp.json`, not `~/.claude/settings.json`. The installer and plugin hooks now write/merge the context-mode entry into `~/.mcp.json` with the fully resolved node path (works with nvm, volta, etc.). Self-heals on every session start.
 - **Server probe fails with nvm** — probe spawn now uses `process.execPath` (full path to running node binary) instead of bare `'node'` which isn't on PATH in nvm environments.
+- **All npm commands fail with nvm on macOS** — bare `npm` isn't on PATH in nvm shell environments. All `execSync('npm ...')` calls in install.js, start.js, ensure-deps.js, and setup.js now resolve the full npm path from `dirname(process.execPath)` on non-Windows platforms.
 
 ### Added
 - `hooks/core/ensure-mcp-json.js` — shared module that merges context-mode into `~/.mcp.json`, preserving other MCP servers. Called from install.js, start.js, sessionstart.js, and setup.js.

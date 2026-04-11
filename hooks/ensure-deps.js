@@ -24,12 +24,17 @@
 
 import { existsSync, copyFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
+
+const npmCmd = process.platform === "win32"
+  ? "npm"
+  : `"${join(dirname(process.execPath), "npm")}"`;
+
 
 const NATIVE_DEPS = ["better-sqlite3"];
 
@@ -39,7 +44,7 @@ export function ensureDeps() {
     if (!existsSync(pkgDir)) {
       // Package not installed at all
       try {
-        execSync(`npm install ${pkg} --no-package-lock --no-save --silent`, {
+        execSync(`${npmCmd} install ${pkg} --no-package-lock --no-save --silent`, {
           cwd: root,
           stdio: "pipe",
           timeout: 120000,
@@ -51,7 +56,7 @@ export function ensureDeps() {
     ) {
       // Package installed but native binary missing (e.g., npm ignore-scripts=true)
       try {
-        execSync(`npm rebuild ${pkg} --ignore-scripts=false`, {
+        execSync(`${npmCmd} rebuild ${pkg} --ignore-scripts=false`, {
           cwd: root,
           stdio: "pipe",
           timeout: 120000,
@@ -101,7 +106,7 @@ export function ensureNativeCompat(pluginRoot) {
     } catch (probeErr) {
       if (probeErr?.message?.includes("NODE_MODULE_VERSION")) {
         // ABI mismatch — rebuild for current Node version
-        execSync("npm rebuild better-sqlite3", {
+        execSync(`${npmCmd} rebuild better-sqlite3`, {
           cwd: pluginRoot,
           stdio: "pipe",
           timeout: 60000,
