@@ -205,9 +205,9 @@ export class Learner {
       INSERT INTO compression_stats (date, tool_pattern, calls, original_tokens, compressed_tokens)
       VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(date, tool_pattern) DO UPDATE SET
-        calls = calls + excluded.calls,
-        original_tokens = original_tokens + excluded.original_tokens,
-        compressed_tokens = compressed_tokens + excluded.compressed_tokens
+        calls = excluded.calls,
+        original_tokens = excluded.original_tokens,
+        compressed_tokens = excluded.compressed_tokens
     `);
 
     const tx = this.#db.transaction(() => {

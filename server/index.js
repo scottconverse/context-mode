@@ -30,7 +30,7 @@ const PLUGIN_ROOT = join(__dirname, '..');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const VERSION = '1.6.0';
+const VERSION = '1.6.1';
 const INTENT_SEARCH_THRESHOLD = 5000;       // Auto-index if output > 5KB
 const LARGE_OUTPUT_THRESHOLD = 102400;       // 100KB
 const SEARCH_WINDOW_MS = 60000;             // 60s throttle window
@@ -951,6 +951,7 @@ server.tool(
     // Learner status
     try {
       const learner = getLearner();
+      learner.flushStats({ compression: compressionStats }); // flush current session before reading lifetime
       const lifetime = learner.getLifetimeStats();
 
       if (lifetime.totalDecisions > 0) {
