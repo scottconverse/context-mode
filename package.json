@@ -1,6 +1,6 @@
 {
   "name": "context-mode",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "type": "module",
   "description": "Context window optimization for Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, and tracks session state — reducing context consumption by 30–60% in typical sessions, more in research-heavy ones, while preserving errors and session-relevant content verbatim.",
   "main": "server/index.js",
@@ -28,6 +28,8 @@
   },
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
-    "md-to-pdf": "^5.2.5"
+    "docx": "^9.6.1",
+    "md-to-pdf": "^5.2.5",
+    "pdfkit": "^0.18.0"
   }
 }

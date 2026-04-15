@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-04-15
+
 ### Fixed
+- **`ctx_stats` Lifetime and Learner sections never appeared** — `ContentStore` declared `#db` as a private field with no public accessor, so `getLearner()` passed `undefined` to `new Learner()`. The resulting `TypeError` in `#ensureSchema()` was swallowed by `catch {}`, meaning `compression_stats` and `compression_log` tables were never created. Added `get db() { return this.#db; }` getter to `ContentStore` to expose the live better-sqlite3 instance.
+- **`ctx_stats` shows stale lifetime totals** — added `learner.flushStats({ compression: compressionStats })` immediately before `getLifetimeStats()` in the `ctx_stats` handler. The existing 5-min periodic timer and shutdown flush only persist stats periodically; this ensures `ctx_stats` always reflects the current session's compression totals without waiting for the next flush interval.
+- **Lifetime stats double-counted on multiple flushes** — changed the `compression_stats` UPSERT from accumulating (`calls + excluded.calls`) to replacing (`excluded.calls`). With `flushStats` now called from both the periodic timer and `ctx_stats`, ADD semantics would double-count the same session's data on every subsequent call. REPLACE is idempotent: each flush overwrites the row for `(today, tool_pattern)` with the current in-memory snapshot.
 - **macOS MCP server not connecting** — the Claude desktop app on macOS reads MCP config from `~/.mcp.json`, not `~/.claude/settings.json`. The installer and plugin hooks now write/merge the context-mode entry into `~/.mcp.json` with the fully resolved node path (works with nvm, volta, etc.). Self-heals on every session start.
 - **Server probe fails with nvm** — probe spawn now uses `process.execPath` (full path to running node binary) instead of bare `'node'` which isn't on PATH in nvm environments.
 - **All npm commands fail with nvm on macOS** — npm's shebang (`#!/usr/bin/env node`) needs `node` on PATH. All npm `execSync` calls now use a shared `npmExecOpts()` helper that prepends `dirname(process.execPath)` to PATH on non-Windows platforms. 4 files, 7 call sites.
