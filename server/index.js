@@ -951,6 +951,7 @@ server.tool(
     // Learner status
     try {
       const learner = getLearner();
+      learner.flushStats({ compression: compressionStats }); // flush current session before reading lifetime
       const lifetime = learner.getLifetimeStats();
 
       if (lifetime.totalDecisions > 0) {

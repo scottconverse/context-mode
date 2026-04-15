@@ -100,6 +100,9 @@ export class ContentStore {
     this.#prepareStatements();
   }
 
+  /** Expose underlying DB handle so Learner can share the same SQLite file. */
+  get db() { return this.#db; }
+
   // ─── Prepared Statements ──────────────────────────────────────────────────
 
   #prepareStatements() {
