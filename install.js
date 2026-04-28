@@ -171,12 +171,12 @@ if (existsSync(SETTINGS_PATH)) {
 if (!settings.enabledPlugins) settings.enabledPlugins = {};
 settings.enabledPlugins[PLUGIN_ID] = true;
 
-// Also register the marketplace
+// Also register the marketplace (git source — `local` was deprecated by CLI schema)
+const GIT_SOURCE = { source: 'git', url: 'https://github.com/scottconverse/context-mode.git' };
+
 if (!settings.extraKnownMarketplaces) settings.extraKnownMarketplaces = {};
 if (!settings.extraKnownMarketplaces[MARKETPLACE_NAME]) {
-  settings.extraKnownMarketplaces[MARKETPLACE_NAME] = {
-    source: { source: 'local', path: MARKETPLACE_DIR }
-  };
+  settings.extraKnownMarketplaces[MARKETPLACE_NAME] = { source: GIT_SOURCE };
 }
 
 writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
@@ -188,7 +188,7 @@ if (existsSync(KNOWN_MKT_PATH)) {
   try { knownMkt = JSON.parse(readFileSync(KNOWN_MKT_PATH, 'utf8')); } catch {}
 }
 knownMkt[MARKETPLACE_NAME] = {
-  source: { source: 'local', path: MARKETPLACE_DIR },
+  source: GIT_SOURCE,
   installLocation: MARKETPLACE_DIR,
   lastUpdated: new Date().toISOString()
 };
