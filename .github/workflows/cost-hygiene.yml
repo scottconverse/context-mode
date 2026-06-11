@@ -1,0 +1,68 @@
+name: Cost Hygiene Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Summarize retained artifacts and caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "## Cost Hygiene Check" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "This workflow reports retained Actions storage signals. It does not delete anything." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          artifacts_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100")"
+          caches_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100")"
+          artifact_count="$(jq '.total_count // 0' <<<"$artifacts_json")"
+          cache_count="$(jq '.total_count // 0' <<<"$caches_json")"
+          artifact_bytes="$(jq '[.artifacts[]?.size_in_bytes // 0] | add // 0' <<<"$artifacts_json")"
+          cache_bytes="$(jq '[.actions_caches[]?.size_in_bytes // 0] | add // 0' <<<"$caches_json")"
+
+          {
+            echo "| Signal | Count | Approx MB |"
+            echo "|---|---:|---:|"
+            awk -v c="$artifact_count" -v b="$artifact_bytes" 'BEGIN { printf "| Actions artifacts | %s | %.1f |\n", c, b / 1048576 }'
+            awk -v c="$cache_count" -v b="$cache_bytes" 'BEGIN { printf "| Actions caches | %s | %.1f |\n", c, b / 1048576 }'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check workflow guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Workflow guardrails" >> "$GITHUB_STEP_SUMMARY"
+          missing_concurrency=0
+          missing_retention=0
+          if compgen -G ".github/workflows/*.yml" > /dev/null || compgen -G ".github/workflows/*.yaml" > /dev/null; then
+            for wf in .github/workflows/*.yml .github/workflows/*.yaml; do
+              [ -e "$wf" ] || continue
+              if grep -Eq 'pull_request|push:' "$wf" && ! grep -Eq '^concurrency:' "$wf"; then
+                echo "- Missing top-level concurrency: \`$wf\`" >> "$GITHUB_STEP_SUMMARY"
+                missing_concurrency=1
+              fi
+              if grep -Eq 'actions/upload-artifact@' "$wf" && ! grep -Eq 'retention-days:' "$wf"; then
+                echo "- Artifact upload without explicit retention-days: \`$wf\`" >> "$GITHUB_STEP_SUMMARY"
+                missing_retention=1
+              fi
+            done
+          fi
+          if [ "$missing_concurrency" -eq 0 ] && [ "$missing_retention" -eq 0 ]; then
+            echo "- No obvious missing workflow guardrails found." >> "$GITHUB_STEP_SUMMARY"
+          fi
