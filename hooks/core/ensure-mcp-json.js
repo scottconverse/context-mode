@@ -14,6 +14,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { resolveDataDir, getPlatformId } from "./platform.js";
 
 /**
  * Resolve the absolute path to the `node` binary currently running.
@@ -40,23 +41,15 @@ export function ensureMcpJson(pluginRoot) {
     const nodePath = resolveNodePath();
     const startScript = join(pluginRoot, "start.js");
 
-    // Resolve data directory (same logic as server/index.js and setup.js)
-    const home = homedir();
-    let pluginData = process.env.CLAUDE_PLUGIN_DATA;
-    if (!pluginData || pluginData.includes("${") || pluginData.includes("CLAUDE_PLUGIN_DATA")) {
-      const specPath = join(home, ".claude", "plugins", "data", "context-mode");
-      if (existsSync(join(home, ".claude", "plugins"))) {
-        pluginData = specPath;
-      } else {
-        pluginData = join(pluginRoot, ".data");
-      }
-    }
+    const pluginData = resolveDataDir(pluginRoot);
 
     const desired = {
       command: nodePath,
       args: [startScript],
       env: {
         CLAUDE_PLUGIN_DATA: pluginData,
+        CONTEXT_MODE_DATA: pluginData,
+        CONTEXT_MODE_PLATFORM: getPlatformId(),
         NODE_PATH: join(pluginData, "node_modules"),
       },
     };

@@ -4,7 +4,7 @@ context-mode
 ![License: Elastic-2.0](LICENSE)
 ![Node](https://nodejs.org)
 
-Context window optimization plugin for Claude Code in Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 3060% in typical developer sessions and more in research-heavy ones (run /context-mode:ctx-stats to see your actual savings in tokens and dollars). Current version: 1.6.1.
+Context window optimization for any AI agent (Claude Code, Cursor, Grok, Codex, Copilot, Gemini, and 16 more). Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30-60% in typical developer sessions and more in research-heavy ones (run ctx_stats to see your actual savings in tokens and dollars). Current version: 1.7.0
 
 What It Does
 

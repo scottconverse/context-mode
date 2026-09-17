@@ -1,23 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * context-mode installer for Claude Code / Cowork.
+ * context-mode installer.
  *
  * Usage:
  *   npx github:scottconverse/context-mode
- *   — or —
+ *   npx github:scottconverse/context-mode --adapter grok
  *   node install.js
+ *   node install.js --list
+ *   node install.js --adapter cursor --out ./out
  *
- * What it does:
- *   1. Clones/copies the plugin to the plugin cache
- *   2. Creates a local marketplace entry
- *   3. Registers the plugin in installed_plugins.json
- *   4. Enables the plugin in settings.json
- *   5. Installs dependencies (better-sqlite3, zod, MCP SDK)
- *   6. Verifies FTS5 works
- *   7. Probes the MCP server to confirm all 9 tools respond
- *
- * After running, start a new Claude Code session. The plugin loads automatically.
+ * Default (no flags): Claude Code / Cowork 7-step marketplace installer.
+ * --adapter / --list: generate host-specific instruction, MCP, and hook files.
  */
 
 import { execSync } from 'node:child_process';
@@ -31,6 +25,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import { npmExecOpts } from './hooks/core/npm-exec.js';
+import { runAdapterCli } from './adapters/cli.js';
+
+if (runAdapterCli(process.argv.slice(2))) {
+  process.exit(process.exitCode ?? 0);
+}
 
 
 const PLUGIN_NAME = 'context-mode';
@@ -56,6 +55,8 @@ function err(msg) { console.error(`[context-mode] ERROR: ${msg}`); }
 if (!existsSync(CLAUDE_DIR)) {
   err(`Claude directory not found at ${CLAUDE_DIR}`);
   err('Is Claude Code installed? Install it first: https://code.claude.com');
+  err('Installing for a different agent?  node install.js --list');
+  err('Then:  node install.js --adapter <id> --out ./out');
   process.exit(1);
 }
 

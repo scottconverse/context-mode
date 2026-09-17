@@ -11,14 +11,20 @@ import "./suppress-stderr.js";
 import { readStdin } from "./core/stdin.js";
 import { routePreToolUse } from "./core/routing.js";
 import { formatDecision } from "./core/formatters.js";
+import { getPlatformAdapter, normalizeHookPayload } from "./core/platform.js";
 
 try {
   const raw = await readStdin();
   const input = JSON.parse(raw);
-  const tool = input.tool_name ?? "";
-  const toolInput = input.tool_input ?? {};
+  const normalized = normalizeHookPayload(input, getPlatformAdapter());
+  const tool = normalized.tool_name ?? "";
+  const toolInput = normalized.tool_input ?? {};
 
-  const decision = routePreToolUse(tool, toolInput, process.env.CLAUDE_PROJECT_DIR);
+  const decision = routePreToolUse(
+    tool,
+    toolInput,
+    process.env.CONTEXT_MODE_PROJECT_DIR || process.env.CLAUDE_PROJECT_DIR,
+  );
   const response = formatDecision(decision);
   if (response !== null) {
     process.stdout.write(JSON.stringify(response) + "\n");

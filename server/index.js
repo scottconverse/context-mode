@@ -2,7 +2,7 @@
  * Context Mode MCP Server
  *
  * Provides sandbox execution, knowledge base indexing/search,
- * and session continuity tools for Cowork.
+ * and session continuity tools for any MCP host.
  *
  * Ported from mksglu/context-mode (https://github.com/mksglu/context-mode)
  * by @mksglu, licensed under Elastic License 2.0.
@@ -15,7 +15,6 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { homedir as osHomedir } from 'node:os';
 
 import { detectRuntimes, getRuntimeSummary, getAvailableLanguages, isWindows } from './runtime.js';
 import { PolyglotExecutor } from './sandbox.js';
@@ -23,6 +22,7 @@ import { ContentStore } from './knowledge.js';
 import { openDatabase } from './db-base.js';
 import { compress, getCompressionLevel } from './compressor.js';
 import { Learner } from './learner.js';
+import { resolveDataDir } from '../hooks/core/platform.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,7 +30,7 @@ const PLUGIN_ROOT = join(__dirname, '..');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const VERSION = '1.6.1';
+const VERSION = '1.7.0';
 const INTENT_SEARCH_THRESHOLD = 5000;       // Auto-index if output > 5KB
 const LARGE_OUTPUT_THRESHOLD = 102400;       // 100KB
 const SEARCH_WINDOW_MS = 60000;             // 60s throttle window
@@ -45,30 +45,7 @@ const EXECUTE_BLOCK_AFTER = 10;             // After 10 calls: blocked
 
 // ─── Data Directories ─────────────────────────────────────────────────────────
 
-// Resolve CLAUDE_PLUGIN_DATA: Cowork may or may not expand ${CLAUDE_PLUGIN_DATA}
-// in .mcp.json env block. If it's unexpanded (literal string), resolve it ourselves.
-function resolvePluginData() {
-  const envVal = process.env.CLAUDE_PLUGIN_DATA;
-
-  // If Cowork expanded it properly, use it
-  if (envVal && !envVal.includes('${') && !envVal.includes('CLAUDE_PLUGIN_DATA')) {
-    return envVal;
-  }
-
-  // Resolve per spec: ~/.claude/plugins/data/<plugin-id>/
-  // Plugin ID: name@marketplace with non-alphanumeric chars replaced by -
-  const pluginName = 'context-mode';
-  const homedir = process.env.USERPROFILE || process.env.HOME || osHomedir();
-  const specPath = join(homedir, '.claude', 'plugins', 'data', pluginName);
-  if (existsSync(join(homedir, '.claude', 'plugins'))) {
-    return specPath;
-  }
-
-  // Fallback: .data inside plugin root
-  return join(PLUGIN_ROOT, '.data');
-}
-
-const PLUGIN_DATA = resolvePluginData();
+const PLUGIN_DATA = resolveDataDir(PLUGIN_ROOT);
 const CONTENT_DIR = join(PLUGIN_DATA, 'content');
 const SESSIONS_DIR = join(PLUGIN_DATA, 'sessions');
 

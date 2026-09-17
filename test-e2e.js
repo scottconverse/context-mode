@@ -810,6 +810,8 @@ SECTION('20. Version Consistency');
   const changelogSrc = readFileSync(join(PLUGIN_ROOT, 'CHANGELOG.md'), 'utf8');
   const indexHtmlSrc = readFileSync(join(PLUGIN_ROOT, 'docs', 'index.html'), 'utf8');
   const readmeFullSrc = readFileSync(join(PLUGIN_ROOT, 'docs', 'README-FULL.md'), 'utf8');
+  const userManualSrc = readFileSync(join(PLUGIN_ROOT, 'USER-MANUAL.md'), 'utf8');
+  const marketplaceJson = JSON.parse(readFileSync(join(PLUGIN_ROOT, '.claude-plugin', 'marketplace.json'), 'utf8'));
 
   pluginJson.version === pkgVersion
     ? PASS(`plugin.json version matches package.json (${pkgVersion})`)
@@ -834,6 +836,14 @@ SECTION('20. Version Consistency');
   readmeFullSrc.includes(`**Version ${pkgVersion}**`)
     ? PASS(`docs/README-FULL.md references current version (${pkgVersion})`)
     : FAIL('docs/README-FULL.md version stale', `expected **Version ${pkgVersion}**`);
+
+  userManualSrc.includes(`Current version: **${pkgVersion}**`)
+    ? PASS(`USER-MANUAL.md references current version (${pkgVersion})`)
+    : FAIL('USER-MANUAL.md version reference missing or stale', `expected ${pkgVersion}`);
+
+  marketplaceJson.plugins?.[0]?.version === pkgVersion
+    ? PASS(`marketplace.json version matches package.json (${pkgVersion})`)
+    : FAIL('marketplace.json version mismatch', `${marketplaceJson.plugins?.[0]?.version} !== ${pkgVersion}`);
 }
 
 // ─── Summary ──────────────────────────────────────────────────────────

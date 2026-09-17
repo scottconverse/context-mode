@@ -12,9 +12,12 @@
  *   3. README.md                   — Current version: **x.y.z**
  *   4. docs/README-FULL.md         — **Version x.y.z** | ...
  *   5. docs/index.html             — context-mode vx.y.z &middot;
+ *   6. USER-MANUAL.md              — Current version: **x.y.z**
+ *   7. README.txt                  — Current version: x.y.z
+ *   8. .claude-plugin/marketplace.json — "version": "x.y.z"
  *
  * Validated (not stamped):
- *   6. CHANGELOG.md                — must contain [x.y.z] entry
+ *   9. CHANGELOG.md                — must contain [x.y.z] entry
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -107,7 +110,29 @@ ok &= stamp(
   `context-mode v${version} &middot;`
 );
 
-// 6. CHANGELOG.md — validate entry exists (don't auto-generate)
+// 6. USER-MANUAL.md
+ok &= stamp(
+  'USER-MANUAL.md',
+  /Current version:\s*\*\*[\d.]+\*\*/,
+  `Current version: **${version}**`
+);
+
+// 7. README.txt (plain-text export of README)
+ok &= stamp(
+  'README.txt',
+  /Current version:\s*[\d.]+/,
+  `Current version: ${version}`,
+  { required: false }
+);
+
+// 8. .claude-plugin/marketplace.json
+ok &= stamp(
+  '.claude-plugin/marketplace.json',
+  /"version":\s*"\d+\.\d+\.\d+"/,
+  `"version": "${version}"`
+);
+
+// 9. CHANGELOG.md — validate entry exists (don't auto-generate)
 const changelog = read('CHANGELOG.md');
 if (!changelog.includes(`[${version}]`)) {
   console.error(`  FAIL CHANGELOG.md — missing entry for [${version}]`);
