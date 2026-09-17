@@ -4,23 +4,23 @@
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org)
 
-Context window optimization plugin for Claude Code in Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30–60% in typical developer sessions and more in research-heavy ones (run `/context-mode:ctx-stats` to see your actual savings in tokens and dollars). Current version: **1.6.0**.
+Context window optimization for any AI agent (Claude Code, Cursor, Grok, Codex, Copilot, Gemini, and 16 more). Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30–60% in typical developer sessions and more in research-heavy ones (run `ctx_stats` to see your actual savings in tokens and dollars). Current version: **1.7.0**.
 
 ## What It Does
 
-Long Claude Code sessions consume context rapidly. Every file read, web fetch, and shell command dumps raw output into the context window. Context-mode solves this with seven capabilities:
+Long agent sessions consume context rapidly. Every file read, web fetch, and shell command dumps raw output into the context window. Context-mode solves this with seven capabilities:
 
-1. **Automatic Tool Routing** — PreToolUse hooks intercept Bash, Read, Grep, WebFetch, and Agent calls before they execute and redirect them through the context-mode sandbox. 9 new matchers (v1.3.0) cover git log/diff, npm test/install, pytest, pip, cargo, docker, and make. You get the result; the raw output stays out of context. See [Automatic Tool Routing](#automatic-tool-routing) below.
+1. **Automatic Tool Routing** — On hook-capable hosts, PreToolUse intercepts shell / read / grep / webfetch / agent calls before they execute and redirects them through the context-mode sandbox. Host tool names are canonicalized (`run_terminal_command`, `Shell`, `Bash` are the same rule). 9 matchers (v1.3.0) cover git log/diff, npm test/install, pytest, pip, cargo, docker, and make. You get the result; the raw output stays out of context. See [Automatic Tool Routing](#automatic-tool-routing) below.
 2. **Sandbox Execution** — Runs code in isolated subprocesses, capturing only stdout. Raw file contents and command output never enter context. Supports 11 languages.
 3. **Token Compression** — A 3-stage pipeline compresses tool output that returns to context: (1) deterministic ANSI/terminal stripping, (2) pattern-based matchers that understand 10 tool output formats (jest, pytest, git log, cargo build, etc.) and collapse passing tests, compile steps, and progress bars while preserving failures verbatim, (3) session-aware relevance filtering that keeps content related to your current work. Errors, warnings, and tracebacks are never compressed away.
 4. **Self-Learning** — A feedback loop tracks what compressed content Claude later searches for. If compressed content is frequently retrieved, the learner raises retention for that tool pattern. Run `ctx_stats` to see learner accuracy and lifetime savings.
 5. **Knowledge Base** — Chunks and indexes content into a local SQLite FTS5 database with BM25 + trigram dual-strategy search. Retrieves only the relevant snippets.
 6. **Session Continuity** — Captures session events via hooks and rebuilds a structured Session Guide after context compaction, so Claude resumes from exactly where it left off. The `start.js` bootstrapper handles version self-healing, ABI dependency checks, and pure-JS package installation before starting the server on every session.
-7. **Main Skill + CLAUDE.md** — The `context-mode` skill provides an in-session decision tree, tool-selection patterns, and anti-patterns so Claude consistently picks the right tool. A `CLAUDE.md` file (shipped with the plugin) gives Claude the "Think in Code" directive and tool-selection rules. A `.claude/settings.json` ships deny/allow permission rules so Claude Code behaves safely out of the box.
+7. **Instruction file + skill** — A generated instruction file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …) gives the agent the "Think in Code" directive and tool-selection rules. On Claude Code, a `.claude/settings.json` ships deny/allow permission rules so the host behaves safely out of the box.
 
 ## Install
 
-**Quickest — one command:**
+**Claude Code / Cowork — one command:**
 
 ```bash
 npx --yes --package=github:scottconverse/context-mode context-mode
@@ -37,12 +37,23 @@ The installer runs 7 steps automatically: copies the plugin to cache, creates a 
 
 Start a new session. Verify with `/context-mode:ctx-doctor`.
 
+**Any other agent — generate an adapter:**
+
+```bash
+npx --yes --package=github:scottconverse/context-mode context-mode --list
+npx --yes --package=github:scottconverse/context-mode context-mode --adapter grok --out ./out
+npx --yes --package=github:scottconverse/context-mode context-mode --adapter cursor --out ./out
+```
+
+That writes the host instruction file, MCP config, optional hooks.json, and a version-stamped `adapter.json`. Copy the files into place for that host. 22 adapters ship in [`adapters/`](adapters/README.md).
+
 **Manual install:**
 
 ```bash
 git clone https://github.com/scottconverse/context-mode.git
 cd context-mode
-node install.js
+node install.js                  # Claude Code / Cowork
+node install.js --adapter generic --out ./out
 ```
 
 ## Quick Start
@@ -54,7 +65,7 @@ Once installed, Claude automatically prefers context-saving tools. You can also 
 
 ## Automatic Tool Routing
 
-Context-mode registers PreToolUse hooks that intercept 18 tool and command patterns before they execute. Every rule is defined declaratively in `hooks/core/routing-rules.js` — the table below is auto-generated from that file on every release.
+Context-mode registers PreToolUse hooks that intercept 18 tool and command patterns before they execute. Host tool names are canonicalized first (`run_terminal_command` / `Shell` / `Bash` are the same rule). Every rule is defined declaratively in `hooks/core/routing-rules.js` — the table below is auto-generated from that file on every release.
 
 <!-- ROUTING_TABLE_START -->
 | Intercepted Tool / Command | Redirected To | Rule ID |
@@ -81,11 +92,9 @@ Context-mode registers PreToolUse hooks that intercept 18 tool and command patte
 
 **Safe passthrough** — curl/wget calls that use silent mode + file output (no stdout alias) are allowed through. git log/diff calls with `--oneline`, `-n N`, `--stat`, a single named file, or a pipe to a reducing command pass through unchanged. Test runners and build tools with explicit pipes pass through.
 
-**Why this matters** — routing happens automatically. You don't change how you work; Claude doesn't change how it calls tools. The hooks silently upgrade every eligible call to a context-saving equivalent.
+**Why this matters** — routing happens automatically on hook-capable hosts. You don't change how you work; the agent doesn't change how it calls tools. The hooks silently upgrade every eligible call to a context-saving equivalent. Instruction-only hosts (Grok, Zed, Continue, …) use the generated decision tree instead — generate an adapter and paste the instruction file.
 
-**Why this matters** — routing happens automatically. You don't change how you work; Claude doesn't change how it calls tools. The hooks silently upgrade every eligible call to a context-saving equivalent.
-
-**Session injection** — a UserPromptSubmit hook fires at the start of each prompt turn and injects a routing block into Claude's context. This routing block lists the decision tree Claude should follow when choosing between tools, so the model always has current guidance even in long sessions.
+**Session injection** — a UserPromptSubmit hook (where the host supports it) fires at the start of each prompt turn and injects a routing block into context. This routing block lists the decision tree the agent should follow when choosing between tools, so the model always has current guidance even in long sessions.
 
 ## Hook Events
 
@@ -124,12 +133,17 @@ JavaScript, TypeScript, Python, Shell (Bash), Ruby, Go, Rust, PHP, Perl, R, Elix
 
 ```
 context-mode/
-├── .claude-plugin/plugin.json    ← Cowork plugin manifest
+├── adapters/                     ← 22 host bindings + generator (v1.7.0)
+│   ├── catalog.js                ← tool maps, hook maps, instruction filenames
+│   ├── generate.js               ← writes AGENTS.md / mcp.json / hooks.json
+│   └── cli.js                    ← --list / --adapter / --out
+├── .claude-plugin/plugin.json    ← Cowork plugin manifest (Claude adapter)
 ├── .claude/settings.json         ← Shipped deny/allow permission rules
 ├── .mcp.json                     ← MCP server registration
-├── CLAUDE.md                     ← Think in Code directive (shipped with plugin)
+├── CLAUDE.md                     ← Think in Code directive (Claude adapter)
 ├── start.js                      ← Bootstrapper: version self-heal, ensure-deps, server start
-├── install.js                    ← One-command installer (7-step probe)
+├── install.js                    ← One-command installer (Claude) or --adapter generator
+├── hooks/dispatch.js             ← context-mode hook <platform> <event>
 ├── server/
 │   ├── index.js                  ← MCP server (9 tools)
 │   ├── sandbox.js                ← Subprocess executor
@@ -187,7 +201,7 @@ node test-e2e.js
 
 222 tests across 20 sections covering: utils, exit classification, runtime detection, sandbox executor, knowledge base, session DB, snapshot builder, event extraction, routing block, hook cmd wrapper, MCP protocol smoke test, plugin discoverability, spec compliance, OSS attribution, plugin manifest validation, PreToolUse routing, hooks.json validation, plugin CLAUDE.md/settings validation, schema migration, and version consistency.
 
-An additional per-rule and per-condition vitest suite (`test/routing-rules.test.js`) covers all 18 routing rules and every routing condition predicate independently.
+An additional per-rule and per-condition vitest suite (`test/routing-rules.test.js`) covers all 18 routing rules and every routing condition predicate independently. `test/adapters.test.js` covers the 22-adapter catalog, host tool canonicalization, payload normalization, and generator version stamping.
 
 ## Security Model
 
@@ -199,7 +213,7 @@ context-mode provides **process isolation**, not filesystem sandboxing. Understa
 
 - **Permission rules:** The shipped `.claude/settings.json` denies `sudo`, `rm -rf /`, and `.env` file reads. These are guardrails for the development environment, not a security boundary.
 
-- **Data storage:** Databases are stored in `~/.claude/plugins/data/context-mode/` with WAL mode enabled. Schema migrations back up the database before destructive changes. No data is sent to external services — all indexing and search is local via SQLite FTS5.
+- **Data storage:** Databases are stored in `CONTEXT_MODE_DATA` (default `~/.context-mode`, or `~/.claude/plugins/data/context-mode/` on Cowork) with WAL mode enabled. Schema migrations back up the database before destructive changes. No data is sent to external services — all indexing and search is local via SQLite FTS5.
 
 ## Platform Support
 
@@ -210,11 +224,11 @@ context-mode provides **process isolation**, not filesystem sandboxing. Understa
 ## Requirements
 
 - Node.js >= 18
-- Claude Code in Cowork
+- An MCP-capable agent. Claude Code in Cowork is the highest-fidelity adapter (hooks + marketplace). 21 other hosts work via generated instruction / MCP / hook files — see [`adapters/README.md`](adapters/README.md).
 
 ## Attribution
 
-This project is a Cowork plugin port of [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu), licensed under the [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license). The core algorithms, database schemas, search pipeline (BM25 + trigram + RRF fusion), sandbox executor architecture, session event system, and compaction snapshot builder are ported from that project and adapted for the Cowork plugin architecture.
+This project is a portable MCP port of [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu), licensed under the [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license). The core algorithms, database schemas, search pipeline (BM25 + trigram + RRF fusion), sandbox executor architecture, session event system, and compaction snapshot builder are ported from that project. v1.7.0 extracts those from the Cowork plugin binding so any MCP host can use them.
 
 ## License
 

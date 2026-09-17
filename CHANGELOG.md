@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-17
+
+### Added
+- **Portable core + 22 host adapters** — the compressor, knowledge base, sandbox, and session snapshot no longer depend on Claude Code or Cowork. An adapter is a tool-name map, a hook-event map, an instruction filename, and an MCP config path. Catalog: Claude Code, Claude Cowork, Cursor, Grok / Grok Build, Codex CLI, VS Code Copilot, Copilot CLI, JetBrains Copilot, OpenCode, Gemini CLI, Antigravity, Zed, Continue, Windsurf, Aider, OpenClaw, KiloCode, Kiro, Qwen Code, Kimi Code, Pi, and a generic MCP client.
+- **Adapter generator** (`adapters/cli.js`) — `node install.js --list` / `--adapter <id> --out <dir>` writes the host instruction file, MCP config, optional `hooks.json`, and a stamped `adapter.json`. Same flags work through the `context-mode` bin, so `npx github:scottconverse/context-mode --adapter grok` is the non-Claude install path.
+- **Host-agnostic hook dispatcher** (`hooks/dispatch.js`) — generated hooks call `node hooks/dispatch.js <platform> <event>`. The dispatcher canonicalizes tool names (`run_terminal_command` → `shell` → `Bash`) so the existing 18-rule routing table does not need a copy per host.
+- **Platform resolver** (`hooks/core/platform.js`) — `CONTEXT_MODE_PLATFORM`, `CONTEXT_MODE_DATA` (preferred), `CONTEXT_MODE_PROJECT_DIR`. `CLAUDE_PLUGIN_DATA` / `CLAUDE_PROJECT_DIR` remain the Cowork fallback. Default data dir is `~/.context-mode` when no Claude plugin tree exists.
+- Adapter unit tests (`test/adapters.test.js`) covering catalog shape, Grok/Cursor/Codex tool mapping, payload normalization, generator version stamping, and cross-host routing.
+
+### Changed
+- Routing engine matches host tool names as well as Claude names. `git log` via Grok's `run_terminal_command` or Cursor's `Shell` hits the same `git-log` rule as Claude `Bash`.
+- PreToolUse handler normalizes payload shapes (`tool_name` / `toolName` / `name`, `command` / `cmd` / `script`) before routing.
+- MCP server data directory goes through `resolveDataDir()` — one function, every host.
+- `~/.mcp.json` registration now also writes `CONTEXT_MODE_DATA` and `CONTEXT_MODE_PLATFORM`.
+- Version stamper now also stamps `USER-MANUAL.md`, `README.txt`, and `.claude-plugin/marketplace.json`. E2E section 20 asserts those surfaces match `package.json`.
+- README, user manual, and GitHub Pages landing (`docs/index.html`) describe any MCP host. Claude Code / Cowork remain the default one-command install.
+
+### Compatibility
+- Claude Code and Cowork installs are unchanged: same marketplace flow, same `hooks/hooks.json`, same `CLAUDE.md`. v1.6.1 users can upgrade in place.
+
 ## [1.6.1] - 2026-04-15
 
 ### Fixed

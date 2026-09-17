@@ -22,8 +22,9 @@ node test-e2e.js
 
 ## Project Structure
 
+- `adapters/` — Host bindings (22 adapters). `catalog.js` is the source of truth for tool maps and hook maps. `cli.js` generates instruction / MCP / hook files. `hooks/dispatch.js` is the host-agnostic hook entry.
 - `server/` — MCP server and core modules (knowledge base, sandbox executor, session DB)
-- `hooks/` — Cowork lifecycle hooks and routing logic
+- `hooks/` — Lifecycle hooks and routing logic
   - `hooks.json` — Hook event registrations (PreToolUse, PostToolUse, PreCompact, SessionStart, UserPromptSubmit, SubagentStop)
   - `run-hook.cmd` — Windows wrapper that dispatches hook events to the correct handler
   - `core/` — Shared hook utilities (formatters, routing logic, stdin reader, tool naming)

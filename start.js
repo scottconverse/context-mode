@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * context-mode bootstrapper for Cowork.
- * Entry point for the MCP server.
+ * context-mode bootstrapper.
+ * Entry point for the MCP server on any host.
  *
  * Ported from mksglu/context-mode (https://github.com/mksglu/context-mode)
  * by @mksglu, licensed under Elastic License 2.0.

@@ -19,6 +19,7 @@ import {
 } from '../routing-block.js';
 import { createToolNamer } from './tool-naming.js';
 import { ROUTING_RULES } from './routing-rules.js';
+import { toClaudeToolName } from './platform.js';
 import { existsSync, mkdirSync, rmSync, openSync, closeSync, constants as fsConstants } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -97,34 +98,36 @@ const GUIDANCE_CONTENT = {
 /**
  * Route a PreToolUse event. Returns normalized decision object or null.
  *
- * @param {string} toolName   - The tool name (canonical Claude Code name)
+ * @param {string} toolName   - Host or Claude Code tool name (canonicalized internally)
  * @param {object} toolInput  - The tool input/parameters
  * @param {string} [projectDir] - Project directory (reserved for future use)
  */
 export function routePreToolUse(toolName, toolInput, projectDir) {
   const t = createToolNamer();
+  const incoming = toolName ?? '';
+  const claudeName = toClaudeToolName(incoming);
 
   // ── MCP passthrough rules (before ROUTING_RULES table) ────────────────
   // ctx_execute, ctx_execute_file, ctx_batch_execute always pass through.
   if (
-    (toolName.includes('context-mode') && /(?:__|\/)(ctx_)?execute$/.test(toolName)) ||
-    /^MCP:(ctx_)?execute$/.test(toolName)
+    (incoming.includes('context-mode') && /(?:__|\/)(ctx_)?execute$/.test(incoming)) ||
+    /^MCP:(ctx_)?execute$/.test(incoming)
   ) return null;
 
   if (
-    (toolName.includes('context-mode') && /(?:__|\/)(ctx_)?execute_file$/.test(toolName)) ||
-    /^MCP:(ctx_)?execute_file$/.test(toolName)
+    (incoming.includes('context-mode') && /(?:__|\/)(ctx_)?execute_file$/.test(incoming)) ||
+    /^MCP:(ctx_)?execute_file$/.test(incoming)
   ) return null;
 
-  if (toolName.includes('context-mode') && /(?:__|\/)(ctx_)?batch_execute$/.test(toolName)) {
+  if (incoming.includes('context-mode') && /(?:__|\/)(ctx_)?batch_execute$/.test(incoming)) {
     return null;
   }
 
   // ── Rule table ────────────────────────────────────────────────────────
   for (const rule of ROUTING_RULES) {
-    if (rule.tool !== toolName) continue;
+    if (rule.tool !== incoming && rule.tool !== claudeName) continue;
 
-    const rawCommand = toolInput.command ?? '';
+    const rawCommand = toolInput.command ?? toolInput.cmd ?? toolInput.script ?? '';
 
     // Apply pre-processor
     const preprocessFn = rule.preprocess ? PREPROCESSORS[rule.preprocess] : null;

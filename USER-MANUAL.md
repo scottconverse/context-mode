@@ -1,27 +1,31 @@
 # Context Mode — User Manual
 
+Current version: **1.7.0**.
+
 ## What Is This?
 
-Context Mode is a plugin for Claude Code (running inside Cowork) that makes long work sessions dramatically more efficient. It keeps your context window clean by processing data in the background instead of dumping it directly into the conversation.
+Context Mode is a local MCP server that makes long agent sessions dramatically more efficient. It keeps the context window clean by processing data in the background instead of dumping it directly into the conversation.
 
-Think of it like this: instead of Claude reading an entire 500-line file into the conversation (consuming precious context space), Context Mode reads the file in a separate process and only brings back the specific information Claude needs.
+It started as a Claude Code / Cowork plugin. As of 1.7.0 it works with any MCP-capable agent — Cursor, Grok, Codex, Copilot, Gemini, and 16 more — through thin adapters. Claude Code remains the highest-fidelity install (hooks + marketplace). Other hosts get a generated instruction file, MCP config, and hooks when the host supports them.
+
+Think of it like this: instead of the agent reading an entire 500-line file into the conversation (consuming precious context space), Context Mode reads the file in a separate process and only brings back the specific information the agent needs.
 
 ## How It Works
 
 ### The Problem
-Every time Claude reads a file, runs a command, or fetches a web page, the raw output goes into the "context window" — the conversation memory Claude uses to stay on track. Over a long session, this fills up fast. When it fills up, Claude has to compress old context, and that can cause it to lose track of what it was doing.
+Every time the agent reads a file, runs a command, or fetches a web page, the raw output goes into the "context window" — the conversation memory it uses to stay on track. Over a long session, this fills up fast. When it fills up, the host has to compress old context, and that can cause the agent to lose track of what it was doing.
 
 ### The Solution
 Context Mode provides three things:
 
-1. **Sandbox Execution** — Claude runs code in a separate process. Only the result comes back, not all the raw data.
-2. **Knowledge Base** — Large documents get indexed into a local database. Claude searches for specific information instead of loading entire files.
-3. **Session Memory** — When the context window does get compressed, Context Mode saves what Claude was doing and restores it afterward.
+1. **Sandbox Execution** — The agent runs code in a separate process. Only the result comes back, not all the raw data.
+2. **Knowledge Base** — Large documents get indexed into a local database. The agent searches for specific information instead of loading entire files.
+3. **Session Memory** — When the context window does get compressed, Context Mode saves what the agent was doing and restores it afterward.
 4. **Token Compression** — When tool output does come back, Context Mode automatically shrinks it before it enters the conversation. Passing tests get collapsed to a summary. Install progress bars disappear. Only errors and warnings are kept word-for-word.
 
 ## Installing Context Mode
 
-### The Easiest Way — One Command
+### Claude Code / Cowork — One Command
 
 Open a terminal and run:
 
@@ -40,6 +44,26 @@ That's it. The installer does everything automatically — you don't need to und
 7. **Confirms success** and tells you what to do next
 
 When it's done, you'll see a success message. At that point, **start a new Claude Code conversation** — the plugin loads automatically at session start.
+
+### Other agents (Cursor, Grok, Codex, Copilot, Gemini, …)
+
+Context Mode 1.7.0 ships 22 adapters. Generate the files for your host and copy them into place:
+
+```bash
+npx --yes --package=github:scottconverse/context-mode context-mode --list
+npx --yes --package=github:scottconverse/context-mode context-mode --adapter grok --out ./out
+```
+
+That writes:
+
+- the instruction file your host actually reads (`AGENTS.md`, `GEMINI.md`, `.cursor/rules/…`, …)
+- MCP config (`mcp.json` or `config.toml`)
+- `hooks.json` if the host can intercept tool calls
+- `adapter.json` stamped with this version
+
+Hook-capable hosts (Cursor, Codex, Copilot, Gemini CLI, …) intercept oversized tool calls the same way Claude does — the dispatcher translates `run_terminal_command` / `Shell` into the shared routing table. Instruction-only hosts (Grok, Zed, Continue, Windsurf, Aider) rely on the generated decision tree. See [`adapters/README.md`](adapters/README.md).
+
+Set `CONTEXT_MODE_PLATFORM` to the adapter id and `CONTEXT_MODE_DATA` to a writable directory (default `~/.context-mode`) when you register the MCP server.
 
 ### Confirming the Install Worked
 
@@ -229,7 +253,7 @@ From your perspective, compaction with Context Mode feels like a brief pause. Fr
 
 ### Token Compression — Automatic Output Shrinking
 
-Starting in version 1.3.0, Context Mode automatically compresses tool output before it enters the conversation. You don't need to do anything — this happens in the background every time Claude runs a command through the sandbox.
+Starting in version 1.3.0, Context Mode automatically compresses tool output before it enters the conversation. You don't need to do anything — this happens in the background every time a command runs through the sandbox.
 
 **What gets compressed:**
 
@@ -241,7 +265,7 @@ Starting in version 1.3.0, Context Mode automatically compresses tool output bef
 
 **What is never compressed:**
 
-Errors and warnings are sacred. If a line contains words like "error," "warning," "fail," "panic," "exception," or "traceback," that line — plus the two lines above and below it — are always preserved exactly as they appeared. Context Mode will never hide a problem from Claude.
+Errors and warnings are sacred. If a line contains words like "error," "warning," "fail," "panic," "exception," or "traceback," that line — plus the two lines above and below it — are always preserved exactly as they appeared. Context Mode will never hide a problem from the agent.
 
 **Small outputs are left alone:**
 
