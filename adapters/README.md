@@ -1,16 +1,18 @@
 # Adapters
 
-**Honest status (v1.7.1).** This directory is a **catalog plus a file generator**. It is not 22 native host plugins.
+**Honest status (v1.8.0).** Claude Code / Cowork is the production install. v1.7.0 (Grok) overclaimed 22 adapters; v1.7.1 said so. This directory is still mostly a **catalog plus a file generator**.
 
-v1.7.0 (designed and shipped by **Grok / xAI Grok Build**, 2026-09-17) published this table as if each row were a working adapter. What exists:
+**Exception:** `adapters/codex/` is a real JavaScript installer. It writes `~/.codex/hooks.json`, `~/.codex/config.toml`, and an `AGENTS.md` sentinel in place. It is **not** production until the repo owner confirms intercept on their Codex. Copilot, Gemini CLI, and Cursor are not started.
+
+v1.7.0 (designed and shipped by **Grok / xAI Grok Build**, 2026-09-17) published this table as if each row were a working adapter. What exists besides Claude and the Codex installer:
 
 - `catalog.js` — host names, tool-name maps, hook-event names, instruction filenames
 - `generate.js` / `cli.js` — writes markdown + MCP snippets + optional `hooks.json` to `--out`
 - `hooks/dispatch.js` — maps foreign tool names onto the existing Claude routing table
 
-Claude Code / Cowork remains the only production install (`node install.js` with no flags). `--adapter` does not install a Cursor/Codex/Copilot/Gemini plugin. Compliance % values below are **estimates**, not measured hit-rates. Nobody ran those hosts for 1.7.0.
+`--adapter` without `--out` is an installer **only** for `codex`. Every other id still generates files for you to copy. Compliance % values below are **estimates**, not measured hit-rates.
 
-Planned: real JavaScript adapters in this repo’s stack (same as `server/`, `hooks/`, `install.js`), host by host: **Codex → Copilot → Gemini CLI → Cursor last.** Instruction-only hosts (Grok, Zed, Continue, Aider, …) will stay MCP + a decision tree, labeled that way.
+Planned next (this repo’s JS stack, not a TypeScript port): **Copilot → Gemini CLI → Cursor last.** Instruction-only hosts (Grok, Zed, Continue, Aider, …) stay MCP + a decision tree, labeled that way.
 
 Current version is stamped from `package.json` (generated `adapter.json` and instruction files carry it).
 
@@ -22,7 +24,7 @@ Current version is stamped from `package.json` (generated `adapter.json` and ins
 | `claude-cowork` | Claude Cowork | 5 | 98% | **production** |
 | `cursor` | Cursor | 3 | 85% | catalog only; planned last |
 | `grok` | Grok / Grok Build | 0 | 60% | instruction-only (no host hooks) |
-| `codex` | Codex CLI | 5 | 95% | catalog only; next native JS adapter |
+| `codex` | Codex CLI | 5 | 0% (unverified) | **installer** (1.8.0); not production until owner smoke-test |
 | `copilot` | VS Code Copilot | 5 | 90% | catalog only; planned |
 | `copilot-cli` | GitHub Copilot CLI | 5 | 90% | catalog only |
 | `copilot-jetbrains` | JetBrains Copilot | 5 | 80% | catalog only |
@@ -41,6 +43,14 @@ Current version is stamped from `package.json` (generated `adapter.json` and ins
 | `pi` | Pi / Oh My Pi | 0 | 55% | instruction-only |
 | `generic` | Any MCP client | 0 | 50% | instruction-only |
 
+## Codex installer
+
+```bash
+npx --yes --package=github:scottconverse/context-mode context-mode --adapter codex
+```
+
+Writes `~/.codex` in place. See [adapters/codex/README.md](codex/README.md). `--adapter codex --out ./out` is still the generator.
+
 ## Generate (experimental)
 
 ```bash
@@ -49,7 +59,7 @@ node adapters/cli.js --adapter grok --out ./out
 npx --yes --package=github:scottconverse/context-mode context-mode --adapter generic --out ./out
 ```
 
-Each run writes files for you to copy. That is not an installer.
+Each run writes files for you to copy. That is not an installer (except `--adapter codex` with no `--out`).
 
 ## Runtime
 
@@ -63,4 +73,4 @@ Set these when launching the MCP server:
 
 `CLAUDE_PLUGIN_DATA` / `CLAUDE_PLUGIN_ROOT` still work. Claude Code and Cowork keep the original marketplace installer.
 
-See [CHANGELOG 1.7.1](../CHANGELOG.md#171---2026-09-17).
+See [CHANGELOG 1.8.0](../CHANGELOG.md#180---2026-09-17).

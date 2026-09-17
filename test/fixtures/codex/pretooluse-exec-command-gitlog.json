@@ -1,0 +1,10 @@
+{
+  "session_id": "codex-sess-exec",
+  "cwd": "/tmp/example-repo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "exec_command",
+  "tool_use_id": "call-exec",
+  "tool_input": {
+    "cmd": "git log"
+  }
+}

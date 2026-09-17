@@ -58,10 +58,13 @@ export function getPlatformAdapter() {
  *
  * Preference order:
  *   1. CONTEXT_MODE_DATA (if expanded)
- *   2. CLAUDE_PLUGIN_DATA (if expanded) — Cowork backward compat
- *   3. ~/.claude/plugins/data/context-mode if that tree exists
- *   4. ~/.context-mode
- *   5. <pluginRoot>/.data
+ *   2. For Claude platforms only:
+ *        CLAUDE_PLUGIN_DATA, then ~/.claude/plugins/data/context-mode
+ *   3. ~/.context-mode
+ *   4. <pluginRoot>/.data
+ *
+ * Codex (and any non-Claude host) must not inherit the Claude plugin tree
+ * just because ~/.claude/plugins happens to exist on the same machine.
  */
 export function resolveDataDir(pluginRoot) {
   const home = process.env.USERPROFILE || process.env.HOME || osHomedir();
@@ -69,11 +72,16 @@ export function resolveDataDir(pluginRoot) {
   const ctx = process.env.CONTEXT_MODE_DATA;
   if (ctx && !ctx.includes('${') && !ctx.includes('CONTEXT_MODE_DATA')) return ctx;
 
-  const claude = process.env.CLAUDE_PLUGIN_DATA;
-  if (claude && !claude.includes('${') && !claude.includes('CLAUDE_PLUGIN_DATA')) return claude;
+  const platform = getPlatformId();
+  const claudeish = platform === 'claude-code' || platform === 'claude-cowork';
 
-  const claudeData = join(home, '.claude', 'plugins', 'data', 'context-mode');
-  if (existsSync(join(home, '.claude', 'plugins'))) return claudeData;
+  if (claudeish) {
+    const claude = process.env.CLAUDE_PLUGIN_DATA;
+    if (claude && !claude.includes('${') && !claude.includes('CLAUDE_PLUGIN_DATA')) return claude;
+
+    const claudeData = join(home, '.claude', 'plugins', 'data', 'context-mode');
+    if (existsSync(join(home, '.claude', 'plugins'))) return claudeData;
+  }
 
   if (home) return join(home, '.context-mode');
   return join(pluginRoot, '.data');

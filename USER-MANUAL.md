@@ -1,6 +1,6 @@
 # Context Mode — User Manual
 
-Current version: **1.7.1**.
+Current version: **1.8.0**.
 
 ## What Is This?
 
@@ -8,9 +8,11 @@ Context Mode is a local MCP server that makes long Claude Code / Cowork sessions
 
 **What it is today:** a production Claude Code / Cowork plugin. That is the supported install.
 
-**What it is not:** a 22-host product. v1.7.0 (shipped by **Grok / xAI Grok Build** on 2026-09-17) said it worked with Cursor, Grok, Codex, Copilot, Gemini, and 16 more. That release added a catalog of host names and a file generator. It did not add native plugins for those hosts. v1.7.1 says so in public. An experimental `--adapter` command still writes instruction files you can copy; that is not the same as “installed and intercepting tools.”
+**What it is not:** a 22-host product. v1.7.0 (shipped by **Grok / xAI Grok Build** on 2026-09-17) said it worked with Cursor, Grok, Codex, Copilot, Gemini, and 16 more. That release added a catalog of host names and a file generator. It did not add native plugins for those hosts. v1.7.1 said so in public. v1.8.0 adds a **Codex CLI installer** (`node install.js --adapter codex`) that writes `~/.codex` in place. That installer is not a production claim until you smoke-test intercept on your Codex. Copilot, Gemini CLI, and Cursor are not started.
 
-Real adapters in this repo’s JavaScript stack are planned next, one host at a time: Codex, Copilot, Gemini CLI, then Cursor. Until those land, use Claude Code / Cowork.
+An experimental `--adapter --out` command still writes instruction files you can copy for other hosts; that is not the same as “installed and intercepting tools.”
+
+Real adapters in this repo’s JavaScript stack continue host by host: Copilot, Gemini CLI, then Cursor last. Until those land and you confirm them, production is Claude Code / Cowork.
 
 Think of it like this: instead of the agent reading an entire 500-line file into the conversation (consuming precious context space), Context Mode reads the file in a separate process and only brings back the specific information the agent needs.
 
@@ -49,6 +51,25 @@ That's it. The installer does everything automatically — you don't need to und
 
 When it's done, you'll see a success message. At that point, **start a new Claude Code conversation** — the plugin loads automatically at session start.
 
+### Codex CLI — installer (not production until you confirm)
+
+You use Codex. Grok cannot run it for you.
+
+```bash
+npx --yes --package=github:scottconverse/context-mode context-mode --adapter codex
+```
+
+That copies the plugin to `~/.context-mode/plugin`, merges `~/.codex/hooks.json` and `[mcp_servers.context-mode]` in `~/.codex/config.toml`, and upserts a sentinel block in `AGENTS.md`. It does **not** dump files into `./out`.
+
+Then, on your machine:
+
+1. Restart Codex (new session).
+2. Ask: `run ctx doctor`
+3. Ask Codex to run `git log` with no `-n` / `--oneline`. You should see a rewrite, not a full log dump.
+4. Ask Codex to `curl https://example.com`. You should see a redirect, not raw HTML.
+
+If those four pass, say so and Copilot is next. If they fail, paste `ctx doctor` and we fix Codex before touching another host.
+
 ### Other agents (experimental — not a supported install)
 
 v1.7.0 added a **file generator**, not 22 native plugins. You can still run it:
@@ -58,9 +79,9 @@ npx --yes --package=github:scottconverse/context-mode context-mode --list
 npx --yes --package=github:scottconverse/context-mode context-mode --adapter grok --out ./out
 ```
 
-That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapter.json`. You copy those files yourself. Grok did not install or test Cursor, Codex, Copilot, or Gemini. Catalog “compliance” numbers are guesses.
+That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapter.json`. You copy those files yourself. Catalog “compliance” numbers are guesses.
 
-Do not treat this as “context-mode works on my agent.” Production is Claude Code / Cowork. Next native JS adapters (this codebase, not a copy of upstream TypeScript): Codex → Copilot → Gemini CLI → Cursor last. See [`adapters/README.md`](adapters/README.md) and [CHANGELOG 1.7.1](CHANGELOG.md#171---2026-09-17).
+Do not treat a generated folder as “context-mode works on my agent.” Production is Claude Code / Cowork. Codex has an in-place installer as of 1.8.0; it still needs your smoke test. Next: Copilot → Gemini CLI → Cursor last. See [`adapters/README.md`](adapters/README.md) and [CHANGELOG 1.8.0](CHANGELOG.md#180---2026-09-17).
 
 ### Confirming the Install Worked
 

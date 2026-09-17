@@ -217,7 +217,8 @@
         compresses what comes back with a self-learning pipeline, and routes tools automatically
         — so the model stays sharp for the entire conversation. 30–60% less context consumed in typical sessions, more in research-heavy ones.
         <strong>Production install is Claude Code / Cowork.</strong>
-        v1.7.0 (Grok / xAI, 2026-09-17) claimed 22 host adapters. That was a catalog and a file generator, not 22 plugins. v1.7.1 says so.
+        v1.7.0 (Grok / xAI, 2026-09-17) claimed 22 host adapters. That was a catalog and a file generator, not 22 plugins.
+        v1.8.0 adds a real Codex CLI installer; it is not production until the owner smoke-tests intercept.
         Run <code>ctx_stats</code> to see your savings in tokens and dollars.
       </p>
       <div class="stat-row">
@@ -254,10 +255,12 @@ User prompt ──► PreToolUse hook ──► sandbox / block / nudge
         <h3>Install</h3>
         <div class="step" style="margin-bottom:6px;">Option 1 — npx (Claude Code / Cowork):</div>
         <code>npx --yes --package=github:scottconverse/context-mode context-mode</code>
-        <div class="step" style="margin:8px 0 6px;">Option 2 — experimental file generator (not a native plugin):</div>
+        <div class="step" style="margin:8px 0 6px;">Option 2 — Codex CLI installer (unverified until owner smoke-test):</div>
+        <code>npx --yes --package=github:scottconverse/context-mode context-mode --adapter codex</code>
+        <div class="step" style="margin:8px 0 6px;">Option 3 — experimental file generator (not a native plugin):</div>
         <code>npx --yes --package=github:scottconverse/context-mode context-mode --list</code>
         <code>npx --yes --package=github:scottconverse/context-mode context-mode --adapter generic --out ./out</code>
-        <div class="step" style="margin:8px 0 6px;">Option 3 — Marketplace (Claude Code / Cowork):</div>
+        <div class="step" style="margin:8px 0 6px;">Option 4 — Marketplace (Claude Code / Cowork):</div>
         <code>/plugin marketplace add scottconverse/context-mode</code>
         <code>/plugin install context-mode@scottconverse-context-mode</code>
         <div class="step">Start a new session. Done.</div>
@@ -304,11 +307,12 @@ User prompt ──► PreToolUse hook ──► sandbox / block / nudge
       <h2>Architecture</h2>
       <div class="arch-diagram">
 System Context (always-on)
-  |-- adapters/catalog.js  --> catalog of 22 host *names* (experimental generator, not 22 plugins)
+  |-- adapters/catalog.js  --> catalog of 22 host *names*; Codex has a real JS installer (1.8.0, unverified)
   |-- generated AGENTS.md / CLAUDE.md / GEMINI.md
   |-- .claude/settings.json --> hook registrations + permissions (Claude — production)
+  |-- ~/.codex/hooks.json + config.toml --> Codex installer (not production until smoke-test)
   |
-Claude Code / Cowork (production). Other hosts: experimental --adapter files only.
+Claude Code / Cowork (production). Codex installer exists; other hosts: experimental --adapter files only.
   |
   |-- start.js bootstrapper (ensure-deps, MCP server spawn)
   |-- CONTEXT_MODE_PLATFORM + CONTEXT_MODE_DATA
@@ -414,7 +418,7 @@ Claude Code / Cowork (production). Other hosts: experimental --adapter files onl
           <tr><td>Throttling</td><td>Progressive: 2&rarr;1&rarr;blocked over 60s window</td></tr>
           <tr><td>Compression</td><td>3-stage pipeline: deterministic &rarr; pattern-based (10 matchers) &rarr; session-aware (learner weights)</td></tr>
           <tr><td>Learner</td><td>Retrieval-based feedback loop, retention weights (5min cache), 7-day decay, signal files</td></tr>
-          <tr><td>Adapters</td><td>Claude Code / Cowork are production. A catalog of 22 host names plus a file generator shipped in 1.7.0 (Grok); that is not 22 native plugins. Corrected in 1.7.1.</td></tr>
+          <tr><td>Adapters</td><td>Claude Code / Cowork are production. Codex CLI has a real JS installer in 1.8.0 (unverified until owner smoke-test). The 1.7.0 “22 adapters” claim was a catalog + generator; corrected in 1.7.1.</td></tr>
           <tr><td>Hooks</td><td>6 events, 18 declarative routing rules. Dispatcher: <code>hooks/dispatch.js <platform> <event></code></td></tr>
           <tr><td>Platform</td><td>Windows, macOS, Linux (cross-platform .cmd wrapper). Data dir: <code>CONTEXT_MODE_DATA</code> or <code>~/.context-mode</code></td></tr>
           <tr><td>Tests</td><td>222 E2E (20 sections) + 58 adversarial + 76 compression + ~55 per-rule routing + adapter catalog tests</td></tr>
@@ -442,9 +446,9 @@ Claude Code / Cowork (production). Other hosts: experimental --adapter files onl
 
   <footer>
     <div class="container">
-      context-mode v1.7.1 &middot; Elastic License 2.0 &middot; Production: Claude Code / Cowork
+      context-mode v1.8.0 &middot; Elastic License 2.0 &middot; Production: Claude Code / Cowork
       <br>
-      v1.7.0 overclaimed 22 adapters (Grok / xAI Grok Build). v1.7.1 is the honesty pass.
+      v1.7.0 overclaimed 22 adapters (Grok). v1.7.1 honesty pass. v1.8.0 Codex installer (not production until smoke-test).
       <br>
       Ported from <a href="https://github.com/mksglu/context-mode" style="color: var(--accent);">mksglu/context-mode</a> by <a href="https://github.com/mksglu" style="color: var(--accent);">@mksglu</a>
     </div>

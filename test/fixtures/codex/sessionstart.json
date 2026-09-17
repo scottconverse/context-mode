@@ -1,0 +1,8 @@
+{
+  "session_id": "codex-sess-start",
+  "transcript_path": null,
+  "cwd": "/tmp/example-repo",
+  "hook_event_name": "SessionStart",
+  "model": "gpt-5",
+  "source": "startup"
+}

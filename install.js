@@ -5,13 +5,14 @@
  *
  * Usage:
  *   npx github:scottconverse/context-mode
- *   npx github:scottconverse/context-mode --adapter grok
+ *   npx github:scottconverse/context-mode --adapter codex
  *   node install.js
  *   node install.js --list
  *   node install.js --adapter cursor --out ./out
  *
  * Default (no flags): Claude Code / Cowork 7-step marketplace installer.
- * --adapter / --list: generate host-specific instruction, MCP, and hook files.
+ * --adapter codex (no --out): real Codex installer, writes ~/.codex in place.
+ * --adapter / --list with --out: experimental file generator.
  */
 
 import { execSync } from 'node:child_process';
@@ -27,7 +28,7 @@ const __dirname = dirname(__filename);
 import { npmExecOpts } from './hooks/core/npm-exec.js';
 import { runAdapterCli } from './adapters/cli.js';
 
-if (runAdapterCli(process.argv.slice(2))) {
+if (await runAdapterCli(process.argv.slice(2))) {
   process.exit(process.exitCode ?? 0);
 }
 
@@ -55,8 +56,9 @@ function err(msg) { console.error(`[context-mode] ERROR: ${msg}`); }
 if (!existsSync(CLAUDE_DIR)) {
   err(`Claude directory not found at ${CLAUDE_DIR}`);
   err('Is Claude Code installed? Install it first: https://code.claude.com');
+  err('Installing for Codex?  node install.js --adapter codex');
   err('Installing for a different agent?  node install.js --list');
-  err('Then:  node install.js --adapter <id> --out ./out');
+  err('Then (experimental generator):  node install.js --adapter <id> --out ./out');
   process.exit(1);
 }
 
