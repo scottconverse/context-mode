@@ -4,9 +4,9 @@
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org)
 
-Context window optimization for **Claude Code / Cowork**. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30–60% in typical developer sessions and more in research-heavy ones (run `ctx_stats` to see your actual savings in tokens and dollars). Current version: **1.7.1**.
+Context window optimization for **Claude Code / Cowork**. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30–60% in typical developer sessions and more in research-heavy ones (run `ctx_stats` to see your actual savings in tokens and dollars). Current version: **1.8.0**.
 
-> **Honest status (1.7.1).** The production product is a Claude Code / Cowork plugin. v1.7.0 (shipped by **Grok / xAI Grok Build** on 2026-09-17) published copy claiming **22 host adapters** and **any AI agent**. That was a catalog plus a file generator, not 22 native plugins. The tag went out before CI finished. This release corrects the public claim. Experimental `--adapter` generation still exists; it is not a supported multi-host product. Real JS adapters will land host-by-host (Codex, Copilot, Gemini CLI, then Cursor). Details: [CHANGELOG 1.7.1](CHANGELOG.md#171---2026-09-17).
+> **Honest status (1.8.0).** Production is Claude Code / Cowork. v1.7.0 (Grok / xAI Grok Build, 2026-09-17) claimed 22 host adapters; that was a catalog + file generator. v1.7.1 said so. **1.8.0 adds a real Codex CLI installer** (`node install.js --adapter codex`) in this repo’s JavaScript stack. It is not production until the owner smoke-tests intercept on their Codex. Copilot, Gemini CLI, and Cursor are not started. Details: [CHANGELOG 1.8.0](CHANGELOG.md#180---2026-09-17).
 
 ## What It Does
 
@@ -39,6 +39,14 @@ The installer runs 7 steps automatically: copies the plugin to cache, creates a 
 
 Start a new session. Verify with `/context-mode:ctx-doctor`.
 
+**Codex CLI — installer (unverified on the owner's machine):**
+
+```bash
+npx --yes --package=github:scottconverse/context-mode context-mode --adapter codex
+```
+
+Writes `~/.codex/hooks.json`, `~/.codex/config.toml`, and an `AGENTS.md` sentinel. Restart Codex, then smoke-test: `ctx doctor`, unbounded `git log`, `curl`. See [`adapters/codex/README.md`](adapters/codex/README.md). This is **not** a production claim.
+
 **Other agents — experimental file generator, not a native plugin:**
 
 ```bash
@@ -46,7 +54,7 @@ npx --yes --package=github:scottconverse/context-mode context-mode --list
 npx --yes --package=github:scottconverse/context-mode context-mode --adapter grok --out ./out
 ```
 
-That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapter.json` for you to copy into place. It does **not** install a host plugin. 22 names live in [`adapters/`](adapters/README.md) as a catalog. None of those except Claude Code / Cowork are a production install. Planned native JS adapters (this repo's stack, not a TypeScript port of upstream): Codex → Copilot → Gemini CLI → Cursor last.
+That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapter.json` for you to copy into place. It does **not** install a host plugin. 22 names live in [`adapters/`](adapters/README.md) as a catalog. Production is Claude Code / Cowork. Codex has an installer in 1.8.0; Copilot → Gemini CLI → Cursor last are next.
 
 **Manual install:**
 
@@ -54,6 +62,7 @@ That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapte
 git clone https://github.com/scottconverse/context-mode.git
 cd context-mode
 node install.js                  # Claude Code / Cowork
+node install.js --adapter codex  # Codex CLI (in-place)
 node install.js --adapter generic --out ./out
 ```
 

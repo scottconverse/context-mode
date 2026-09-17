@@ -1,0 +1,13 @@
+{
+  "session_id": "codex-sess-curl",
+  "transcript_path": null,
+  "cwd": "/tmp/example-repo",
+  "hook_event_name": "PreToolUse",
+  "model": "gpt-5",
+  "turn_id": "turn-2",
+  "tool_name": "Bash",
+  "tool_use_id": "call-curl",
+  "tool_input": {
+    "command": "curl https://example.com"
+  }
+}

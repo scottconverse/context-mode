@@ -1,16 +1,16 @@
 {
   "name": "context-mode",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "type": "module",
-  "description": "Context window optimization for Claude Code / Cowork. Experimental file generator for other MCP hosts. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, and tracks session state.",
+  "description": "Context window optimization for Claude Code / Cowork. Codex CLI installer (unverified). Experimental file generator for other MCP hosts. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, and tracks session state.",
   "main": "server/index.js",
   "bin": {
     "context-mode": "install.js"
   },
   "scripts": {
     "start": "node server/index.js",
-    "test": "node test-e2e.js && node test-adversarial.js && node --test test/adapters.test.js",
-    "test:adapters": "node --test test/adapters.test.js",
+    "test": "node test-e2e.js && node test-adversarial.js && node --test test/adapters.test.js test/codex-adapter.test.js",
+    "test:adapters": "node --test test/adapters.test.js test/codex-adapter.test.js",
     "setup": "node scripts/setup.js",
     "stamp": "node scripts/stamp-version.js",
     "gen-routing-table": "node scripts/gen-routing-table.js",

@@ -1,0 +1,10 @@
+{
+  "session_id": "codex-sess-patch",
+  "cwd": "/tmp/example-repo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "apply_patch",
+  "tool_use_id": "call-patch",
+  "tool_input": {
+    "patch": "*** Begin Patch\n*** Update File: README.md\n@@\n-old\n+new\n*** End Patch\n"
+  }
+}

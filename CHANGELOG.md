@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-17
+
+### Added
+
+**First real JavaScript host installer: Codex CLI.** Designed and shipped by **Grok** (xAI Grok Build) after the 1.7.1 honesty pass, at the repo owner's request. Order remains **Codex → Copilot → Gemini CLI → Cursor last.** This release is Codex only.
+
+What "real installer" means here (this repo's JS ESM / Node ≥18 stack, not a port of mksglu TypeScript adapters):
+
+- `node install.js --adapter codex` writes host files **in place**. It is not `--out ./out`.
+- Copies the plugin to `~/.context-mode/plugin` (npx cache is not a stable hook path).
+- Merges `~/.codex/hooks.json` in the official wrapped shape (`{ "hooks": { "PreToolUse": [...] } }`). PreToolUse matcher is `Bash`. User hooks are kept.
+- Merges `[mcp_servers.context-mode]` into `~/.codex/config.toml` without touching other servers. No TOML library added.
+- Upserts a sentinel block in project `AGENTS.md` and `~/.codex/AGENTS.md`.
+- `ctx_doctor` prints Codex file checks when `CONTEXT_MODE_PLATFORM=codex`.
+- Golden Codex payloads under `test/fixtures/codex/` and `test/codex-adapter.test.js`.
+- MCP tool names for this host are `mcp__context-mode__ctx_*`, not the Cowork plugin prefix.
+
+Host contract taken from OpenAI's Codex hooks and MCP docs. `apply_patch` is a file-edit tool and is **not** intercepted.
+
+### Honesty
+
+This is **not** "context-mode now works on Codex" as a production claim. Grok cannot run Codex on the owner's machine. Production remains Claude Code / Cowork until the owner smoke-tests: new Codex session → `ctx doctor` → unbounded `git log` rewritten → `curl` redirected.
+
+Copilot, Gemini CLI, and Cursor are **not** in this release.
+
+### Changed
+
+- `--adapter codex` (no `--out` / `--print`) runs the installer. Other adapter ids still generate files.
+- `resolveDataDir()` no longer falls through to `~/.claude/plugins` when the platform is not Claude.
+- Codex catalog row: tool map is `Bash` / `exec_command` (was guessed `read_file` / `grep_files`). Compliance set to 0 until measured. Fake "codex plugin marketplace add" install steps removed.
+
+### Compatibility
+
+- Claude Code / Cowork 7-step installer is unchanged.
+- `--adapter <id> --out <dir>` generator is unchanged.
+
 ## [1.7.1] - 2026-09-17
 
 ### Honesty

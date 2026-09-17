@@ -30,9 +30,9 @@ css: |-
 
 # context-mode — Full Technical Documentation
 
-**Version 1.7.1** | Elastic License 2.0 | September 2026
+**Version 1.8.0** | Elastic License 2.0 | September 2026
 
-> Ported from [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu) (Elastic License 2.0). Core algorithms, database schemas, search pipeline, sandbox executor architecture, session event system, and compaction snapshot builder are derived from that project. This repo is a JavaScript Cowork plugin. v1.7.0 (Grok) overclaimed 22 host adapters; v1.7.1 corrects that. Upstream's native TypeScript adapters were not imported.
+> Ported from [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu) (Elastic License 2.0). Core algorithms, database schemas, search pipeline, sandbox executor architecture, session event system, and compaction snapshot builder are derived from that project. This repo is a JavaScript Cowork plugin. v1.7.0 (Grok) overclaimed 22 host adapters; v1.7.1 corrected that. v1.8.0 adds a Codex CLI installer in this repo's JS stack (unverified until owner smoke-test). Upstream's native TypeScript adapters were not imported.
 
 ---
 

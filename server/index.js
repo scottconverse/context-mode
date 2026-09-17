@@ -30,7 +30,7 @@ const PLUGIN_ROOT = join(__dirname, '..');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const VERSION = '1.7.1';
+const VERSION = '1.8.0';
 const INTENT_SEARCH_THRESHOLD = 5000;       // Auto-index if output > 5KB
 const LARGE_OUTPUT_THRESHOLD = 102400;       // 100KB
 const SEARCH_WINDOW_MS = 60000;             // 60s throttle window
@@ -1005,11 +1005,23 @@ server.tool(
 
     // Hook scripts
     output += '## Hook Scripts\n';
-    const hooks = ['posttooluse.js', 'precompact.js', 'sessionstart.js', 'pretooluse.js', 'userpromptsubmit.js'];
+    const hooks = ['posttooluse.js', 'precompact.js', 'sessionstart.js', 'pretooluse.js', 'userpromptsubmit.js', 'dispatch.js'];
     for (const hook of hooks) {
       const hookPath = join(PLUGIN_ROOT, 'hooks', hook);
       const exists = existsSync(hookPath);
       output += `- ${hook}: ${exists ? 'OK' : 'MISSING'}\n`;
+    }
+
+    output += `\nHost platform: ${process.env.CONTEXT_MODE_PLATFORM || 'claude-code (default)'}\n`;
+    if ((process.env.CONTEXT_MODE_PLATFORM || '') === 'codex') {
+      try {
+        const { diagnoseCodex } = await import('../adapters/codex/doctor.js');
+        const report = diagnoseCodex({ dataDir: PLUGIN_DATA });
+        output += '\n## Codex adapter\n';
+        output += report.markdown + '\n';
+      } catch (e) {
+        output += `\n## Codex adapter\nDoctor failed: ${e.message}\n`;
+      }
     }
 
     // Data directories

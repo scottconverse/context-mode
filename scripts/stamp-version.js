@@ -120,7 +120,7 @@ ok &= stamp(
 // 7. README.txt (plain-text export of README)
 ok &= stamp(
   'README.txt',
-  /Current version:\s*[\d.]+/,
+  /Current version:\s*\d+\.\d+\.\d+/,
   `Current version: ${version}`,
   { required: false }
 );

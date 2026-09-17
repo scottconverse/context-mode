@@ -4,7 +4,7 @@ context-mode
 ![License: Elastic-2.0](LICENSE)
 ![Node](https://nodejs.org)
 
-Context window optimization for Claude Code / Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30-60% in typical developer sessions and more in research-heavy ones (run ctx_stats to see your actual savings in tokens and dollars). Current version: 1.7.1. Honest status: v1.7.0 (Grok / xAI Grok Build, 2026-09-17) claimed 22 host adapters; that was a catalog and a file generator. v1.7.1 corrects the claim. Production install is Claude Code / Cowork.
+Context window optimization for Claude Code / Cowork. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30-60% in typical developer sessions and more in research-heavy ones (run ctx_stats to see your actual savings in tokens and dollars). Current version: 1.8.0. Honest status: v1.7.0 (Grok) claimed 22 host adapters; that was a catalog and a file generator. v1.7.1 corrected the claim. v1.8.0 adds a Codex CLI installer (not production until owner smoke-test). Production install is Claude Code / Cowork.
 
 What It Does
 
