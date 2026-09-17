@@ -1,12 +1,16 @@
 # Context Mode — User Manual
 
-Current version: **1.7.0**.
+Current version: **1.7.1**.
 
 ## What Is This?
 
-Context Mode is a local MCP server that makes long agent sessions dramatically more efficient. It keeps the context window clean by processing data in the background instead of dumping it directly into the conversation.
+Context Mode is a local MCP server that makes long Claude Code / Cowork sessions dramatically more efficient. It keeps the context window clean by processing data in the background instead of dumping it directly into the conversation.
 
-It started as a Claude Code / Cowork plugin. As of 1.7.0 it works with any MCP-capable agent — Cursor, Grok, Codex, Copilot, Gemini, and 16 more — through thin adapters. Claude Code remains the highest-fidelity install (hooks + marketplace). Other hosts get a generated instruction file, MCP config, and hooks when the host supports them.
+**What it is today:** a production Claude Code / Cowork plugin. That is the supported install.
+
+**What it is not:** a 22-host product. v1.7.0 (shipped by **Grok / xAI Grok Build** on 2026-09-17) said it worked with Cursor, Grok, Codex, Copilot, Gemini, and 16 more. That release added a catalog of host names and a file generator. It did not add native plugins for those hosts. v1.7.1 says so in public. An experimental `--adapter` command still writes instruction files you can copy; that is not the same as “installed and intercepting tools.”
+
+Real adapters in this repo’s JavaScript stack are planned next, one host at a time: Codex, Copilot, Gemini CLI, then Cursor. Until those land, use Claude Code / Cowork.
 
 Think of it like this: instead of the agent reading an entire 500-line file into the conversation (consuming precious context space), Context Mode reads the file in a separate process and only brings back the specific information the agent needs.
 
@@ -45,25 +49,18 @@ That's it. The installer does everything automatically — you don't need to und
 
 When it's done, you'll see a success message. At that point, **start a new Claude Code conversation** — the plugin loads automatically at session start.
 
-### Other agents (Cursor, Grok, Codex, Copilot, Gemini, …)
+### Other agents (experimental — not a supported install)
 
-Context Mode 1.7.0 ships 22 adapters. Generate the files for your host and copy them into place:
+v1.7.0 added a **file generator**, not 22 native plugins. You can still run it:
 
 ```bash
 npx --yes --package=github:scottconverse/context-mode context-mode --list
 npx --yes --package=github:scottconverse/context-mode context-mode --adapter grok --out ./out
 ```
 
-That writes:
+That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapter.json`. You copy those files yourself. Grok did not install or test Cursor, Codex, Copilot, or Gemini. Catalog “compliance” numbers are guesses.
 
-- the instruction file your host actually reads (`AGENTS.md`, `GEMINI.md`, `.cursor/rules/…`, …)
-- MCP config (`mcp.json` or `config.toml`)
-- `hooks.json` if the host can intercept tool calls
-- `adapter.json` stamped with this version
-
-Hook-capable hosts (Cursor, Codex, Copilot, Gemini CLI, …) intercept oversized tool calls the same way Claude does — the dispatcher translates `run_terminal_command` / `Shell` into the shared routing table. Instruction-only hosts (Grok, Zed, Continue, Windsurf, Aider) rely on the generated decision tree. See [`adapters/README.md`](adapters/README.md).
-
-Set `CONTEXT_MODE_PLATFORM` to the adapter id and `CONTEXT_MODE_DATA` to a writable directory (default `~/.context-mode`) when you register the MCP server.
+Do not treat this as “context-mode works on my agent.” Production is Claude Code / Cowork. Next native JS adapters (this codebase, not a copy of upstream TypeScript): Codex → Copilot → Gemini CLI → Cursor last. See [`adapters/README.md`](adapters/README.md) and [CHANGELOG 1.7.1](CHANGELOG.md#171---2026-09-17).
 
 ### Confirming the Install Worked
 

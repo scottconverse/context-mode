@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>context-mode — Context Window Optimization for any AI agent</title>
+  <title>context-mode — Context Window Optimization for Claude Code / Cowork</title>
   <style>
     :root {
       --bg: #0d1117;
@@ -213,10 +213,11 @@
     <div class="container">
       <h1><span>context-mode</span></h1>
       <p class="tagline">
-        Your agent sessions degrade as context fills up. context-mode sandboxes raw output,
+        Claude Code / Cowork sessions degrade as context fills up. context-mode sandboxes raw output,
         compresses what comes back with a self-learning pipeline, and routes tools automatically
         — so the model stays sharp for the entire conversation. 30–60% less context consumed in typical sessions, more in research-heavy ones.
-        22 host adapters. Claude Code is the default install; Cursor, Grok, Codex, Copilot, Gemini and others generate in one command.
+        <strong>Production install is Claude Code / Cowork.</strong>
+        v1.7.0 (Grok / xAI, 2026-09-17) claimed 22 host adapters. That was a catalog and a file generator, not 22 plugins. v1.7.1 says so.
         Run <code>ctx_stats</code> to see your savings in tokens and dollars.
       </p>
       <div class="stat-row">
@@ -225,8 +226,8 @@
           <div class="stat-label">Context reduction (typical sessions)</div>
         </div>
         <div class="stat">
-          <div class="stat-value">22</div>
-          <div class="stat-label">Host adapters</div>
+          <div class="stat-value">1</div>
+          <div class="stat-label">Production host (Claude / Cowork)</div>
         </div>
         <div class="stat">
           <div class="stat-value">9</div>
@@ -253,9 +254,9 @@ User prompt ──► PreToolUse hook ──► sandbox / block / nudge
         <h3>Install</h3>
         <div class="step" style="margin-bottom:6px;">Option 1 — npx (Claude Code / Cowork):</div>
         <code>npx --yes --package=github:scottconverse/context-mode context-mode</code>
-        <div class="step" style="margin:8px 0 6px;">Option 2 — any other agent:</div>
+        <div class="step" style="margin:8px 0 6px;">Option 2 — experimental file generator (not a native plugin):</div>
         <code>npx --yes --package=github:scottconverse/context-mode context-mode --list</code>
-        <code>npx --yes --package=github:scottconverse/context-mode context-mode --adapter grok --out ./out</code>
+        <code>npx --yes --package=github:scottconverse/context-mode context-mode --adapter generic --out ./out</code>
         <div class="step" style="margin:8px 0 6px;">Option 3 — Marketplace (Claude Code / Cowork):</div>
         <code>/plugin marketplace add scottconverse/context-mode</code>
         <code>/plugin install context-mode@scottconverse-context-mode</code>
@@ -303,11 +304,11 @@ User prompt ──► PreToolUse hook ──► sandbox / block / nudge
       <h2>Architecture</h2>
       <div class="arch-diagram">
 System Context (always-on)
-  |-- adapters/catalog.js  --> 22 hosts (tool map + hook map + instruction file)
+  |-- adapters/catalog.js  --> catalog of 22 host *names* (experimental generator, not 22 plugins)
   |-- generated AGENTS.md / CLAUDE.md / GEMINI.md
-  |-- .claude/settings.json --> hook registrations + permissions (Claude adapter)
+  |-- .claude/settings.json --> hook registrations + permissions (Claude — production)
   |
-Any MCP host (Claude · Cursor · Grok · Codex · Copilot · Gemini · …)
+Claude Code / Cowork (production). Other hosts: experimental --adapter files only.
   |
   |-- start.js bootstrapper (ensure-deps, MCP server spawn)
   |-- CONTEXT_MODE_PLATFORM + CONTEXT_MODE_DATA
@@ -413,7 +414,7 @@ Any MCP host (Claude · Cursor · Grok · Codex · Copilot · Gemini · …)
           <tr><td>Throttling</td><td>Progressive: 2&rarr;1&rarr;blocked over 60s window</td></tr>
           <tr><td>Compression</td><td>3-stage pipeline: deterministic &rarr; pattern-based (10 matchers) &rarr; session-aware (learner weights)</td></tr>
           <tr><td>Learner</td><td>Retrieval-based feedback loop, retention weights (5min cache), 7-day decay, signal files</td></tr>
-          <tr><td>Adapters</td><td>22 hosts (Claude Code, Cursor, Grok, Codex, Copilot, Gemini, …). Hook-capable hosts intercept; others use a generated instruction file</td></tr>
+          <tr><td>Adapters</td><td>Claude Code / Cowork are production. A catalog of 22 host names plus a file generator shipped in 1.7.0 (Grok); that is not 22 native plugins. Corrected in 1.7.1.</td></tr>
           <tr><td>Hooks</td><td>6 events, 18 declarative routing rules. Dispatcher: <code>hooks/dispatch.js <platform> <event></code></td></tr>
           <tr><td>Platform</td><td>Windows, macOS, Linux (cross-platform .cmd wrapper). Data dir: <code>CONTEXT_MODE_DATA</code> or <code>~/.context-mode</code></td></tr>
           <tr><td>Tests</td><td>222 E2E (20 sections) + 58 adversarial + 76 compression + ~55 per-rule routing + adapter catalog tests</td></tr>
@@ -441,7 +442,9 @@ Any MCP host (Claude · Cursor · Grok · Codex · Copilot · Gemini · …)
 
   <footer>
     <div class="container">
-      context-mode v1.7.0 &middot; Elastic License 2.0 &middot; Any MCP host &middot; Claude Code is the default adapter
+      context-mode v1.7.1 &middot; Elastic License 2.0 &middot; Production: Claude Code / Cowork
+      <br>
+      v1.7.0 overclaimed 22 adapters (Grok / xAI Grok Build). v1.7.1 is the honesty pass.
       <br>
       Ported from <a href="https://github.com/mksglu/context-mode" style="color: var(--accent);">mksglu/context-mode</a> by <a href="https://github.com/mksglu" style="color: var(--accent);">@mksglu</a>
     </div>

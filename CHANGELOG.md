@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-09-17
+
+### Honesty
+
+**1.7.0 overclaimed.** That release was designed and shipped by **Grok** (xAI Grok Build) on 2026-09-17, at the repo owner's request to unbind the plugin from Claude Cowork. Grok tagged `v1.7.0`, rewrote the README / user manual / GitHub Pages landing, and published copy that said this project had **22 host adapters** and worked with **any AI agent**.
+
+That was not true. What 1.7.0 actually added:
+
+- A **catalog** of 22 host names (`adapters/catalog.js`)
+- A **file generator** (`--adapter` / `--out`) that writes instruction files, MCP snippets, and optional `hooks.json`
+- A **dispatcher** that maps foreign tool names onto the existing Claude routing table
+- Claude Code / Cowork installer **unchanged**
+
+What 1.7.0 did **not** add: native Cursor, Codex, Copilot, Gemini, OpenCode, or OpenClaw plugins. Nobody ran those hosts. Compliance percentages in the catalog are guesses, not measurements.
+
+Release hygiene on 1.7.0 was also wrong: the tag went out **before CI finished**, adapter unit tests were **not in CI**, Windows jobs failed, Linux self-hosted jobs sat queued.
+
+This project is a JavaScript Cowork plugin port of [mksglu/context-mode](https://github.com/mksglu/context-mode). Upstream already has native TypeScript adapters for those hosts. 1.7.0 did not import them.
+
+### Changed
+
+- Public copy (README, USER-MANUAL, GitHub Pages, plugin/marketplace descriptions, adapters README) now says: **Claude Code / Cowork is the production install.** The generator is an experimental preview. It is not 22 production adapters.
+- CI now runs `node --test test/adapters.test.js` on every job.
+- Catalog “compliance” column labeled as estimates.
+
+### Compatibility
+
+- Claude Code / Cowork install path is unchanged from 1.6.1 / 1.7.0.
+- `--adapter` / `--out` still generates files. It is documented as experimental.
+
+### Next (not in this release)
+
+Real JavaScript adapters in this repo's stack, host by host: **Codex → Copilot → Gemini CLI → Cursor last.** Instruction-only hosts stay labeled as MCP + a decision tree.
+
 ## [1.7.0] - 2026-09-17
 
 ### Added
@@ -25,6 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Compatibility
 - Claude Code and Cowork installs are unchanged: same marketplace flow, same `hooks/hooks.json`, same `CLAUDE.md`. v1.6.1 users can upgrade in place.
+- **Corrected in 1.7.1:** the “22 host adapters / any AI agent” claim was overstated. See [1.7.1](#171---2026-09-17).
 
 ## [1.6.1] - 2026-04-15
 
