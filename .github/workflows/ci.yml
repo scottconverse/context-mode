@@ -44,5 +44,8 @@ jobs:
       - name: Run E2E tests
         run: node test-e2e.js
 
+      - name: Run adapter unit tests
+        run: node --test test/adapters.test.js
+
       - name: Run adversarial tests
         run: node test-adversarial.js

@@ -4,7 +4,9 @@
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org)
 
-Context window optimization for any AI agent (Claude Code, Cursor, Grok, Codex, Copilot, Gemini, and 16 more). Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30–60% in typical developer sessions and more in research-heavy ones (run `ctx_stats` to see your actual savings in tokens and dollars). Current version: **1.7.0**.
+Context window optimization for **Claude Code / Cowork**. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30–60% in typical developer sessions and more in research-heavy ones (run `ctx_stats` to see your actual savings in tokens and dollars). Current version: **1.7.1**.
+
+> **Honest status (1.7.1).** The production product is a Claude Code / Cowork plugin. v1.7.0 (shipped by **Grok / xAI Grok Build** on 2026-09-17) published copy claiming **22 host adapters** and **any AI agent**. That was a catalog plus a file generator, not 22 native plugins. The tag went out before CI finished. This release corrects the public claim. Experimental `--adapter` generation still exists; it is not a supported multi-host product. Real JS adapters will land host-by-host (Codex, Copilot, Gemini CLI, then Cursor). Details: [CHANGELOG 1.7.1](CHANGELOG.md#171---2026-09-17).
 
 ## What It Does
 
@@ -37,15 +39,14 @@ The installer runs 7 steps automatically: copies the plugin to cache, creates a 
 
 Start a new session. Verify with `/context-mode:ctx-doctor`.
 
-**Any other agent — generate an adapter:**
+**Other agents — experimental file generator, not a native plugin:**
 
 ```bash
 npx --yes --package=github:scottconverse/context-mode context-mode --list
 npx --yes --package=github:scottconverse/context-mode context-mode --adapter grok --out ./out
-npx --yes --package=github:scottconverse/context-mode context-mode --adapter cursor --out ./out
 ```
 
-That writes the host instruction file, MCP config, optional hooks.json, and a version-stamped `adapter.json`. Copy the files into place for that host. 22 adapters ship in [`adapters/`](adapters/README.md).
+That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapter.json` for you to copy into place. It does **not** install a host plugin. 22 names live in [`adapters/`](adapters/README.md) as a catalog. None of those except Claude Code / Cowork are a production install. Planned native JS adapters (this repo's stack, not a TypeScript port of upstream): Codex → Copilot → Gemini CLI → Cursor last.
 
 **Manual install:**
 
@@ -92,7 +93,7 @@ Context-mode registers PreToolUse hooks that intercept 18 tool and command patte
 
 **Safe passthrough** — curl/wget calls that use silent mode + file output (no stdout alias) are allowed through. git log/diff calls with `--oneline`, `-n N`, `--stat`, a single named file, or a pipe to a reducing command pass through unchanged. Test runners and build tools with explicit pipes pass through.
 
-**Why this matters** — routing happens automatically on hook-capable hosts. You don't change how you work; the agent doesn't change how it calls tools. The hooks silently upgrade every eligible call to a context-saving equivalent. Instruction-only hosts (Grok, Zed, Continue, …) use the generated decision tree instead — generate an adapter and paste the instruction file.
+**Why this matters** — routing happens automatically on Claude Code / Cowork. You don't change how you work; the agent doesn't change how it calls tools. The hooks silently upgrade every eligible call to a context-saving equivalent. Other hosts do **not** get that unless they actually run our hooks — the `--adapter` generator only writes a decision tree and config snippets. Do not expect Grok, Zed, Continue, or similar to intercept tools.
 
 **Session injection** — a UserPromptSubmit hook (where the host supports it) fires at the start of each prompt turn and injects a routing block into context. This routing block lists the decision tree the agent should follow when choosing between tools, so the model always has current guidance even in long sessions.
 
@@ -133,7 +134,7 @@ JavaScript, TypeScript, Python, Shell (Bash), Ruby, Go, Rust, PHP, Perl, R, Elix
 
 ```
 context-mode/
-├── adapters/                     ← 22 host bindings + generator (v1.7.0)
+├── adapters/                     ← catalog + file generator (experimental; not 22 native plugins)
 │   ├── catalog.js                ← tool maps, hook maps, instruction filenames
 │   ├── generate.js               ← writes AGENTS.md / mcp.json / hooks.json
 │   └── cli.js                    ← --list / --adapter / --out
@@ -201,7 +202,7 @@ node test-e2e.js
 
 222 tests across 20 sections covering: utils, exit classification, runtime detection, sandbox executor, knowledge base, session DB, snapshot builder, event extraction, routing block, hook cmd wrapper, MCP protocol smoke test, plugin discoverability, spec compliance, OSS attribution, plugin manifest validation, PreToolUse routing, hooks.json validation, plugin CLAUDE.md/settings validation, schema migration, and version consistency.
 
-An additional per-rule and per-condition vitest suite (`test/routing-rules.test.js`) covers all 18 routing rules and every routing condition predicate independently. `test/adapters.test.js` covers the 22-adapter catalog, host tool canonicalization, payload normalization, and generator version stamping.
+An additional per-rule and per-condition vitest suite (`test/routing-rules.test.js`) covers all 18 routing rules and every routing condition predicate independently. `test/adapters.test.js` covers the catalog, host tool canonicalization, payload normalization, and generator version stamping (now also run in CI).
 
 ## Security Model
 
@@ -224,11 +225,12 @@ context-mode provides **process isolation**, not filesystem sandboxing. Understa
 ## Requirements
 
 - Node.js >= 18
-- An MCP-capable agent. Claude Code in Cowork is the highest-fidelity adapter (hooks + marketplace). 21 other hosts work via generated instruction / MCP / hook files — see [`adapters/README.md`](adapters/README.md).
+- **Production:** Claude Code in Cowork (hooks + marketplace). That is the supported install.
+- **Experimental:** `--adapter` generates instruction / MCP / hook files for other MCP clients. That is not a supported product. See [`adapters/README.md`](adapters/README.md).
 
 ## Attribution
 
-This project is a portable MCP port of [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu), licensed under the [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license). The core algorithms, database schemas, search pipeline (BM25 + trigram + RRF fusion), sandbox executor architecture, session event system, and compaction snapshot builder are ported from that project. v1.7.0 extracts those from the Cowork plugin binding so any MCP host can use them.
+This project is a JavaScript Cowork plugin port of [mksglu/context-mode](https://github.com/mksglu/context-mode) by [@mksglu](https://github.com/mksglu), licensed under the [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license). The core algorithms, database schemas, search pipeline (BM25 + trigram + RRF fusion), sandbox executor architecture, session event system, and compaction snapshot builder are ported from that project. Upstream ships native TypeScript adapters for many hosts. This repo did not import those. v1.7.1 documents that clearly.
 
 ## License
 

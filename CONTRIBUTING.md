@@ -22,7 +22,7 @@ node test-e2e.js
 
 ## Project Structure
 
-- `adapters/` — Host bindings (22 adapters). `catalog.js` is the source of truth for tool maps and hook maps. `cli.js` generates instruction / MCP / hook files. `hooks/dispatch.js` is the host-agnostic hook entry.
+- `adapters/` — Experimental catalog + file generator (22 host *names*, not 22 native plugins). `catalog.js` is the source of truth for tool maps. `cli.js` generates instruction / MCP / hook files. Production install is still Claude Code / Cowork. See `adapters/README.md` and CHANGELOG 1.7.1.
 - `server/` — MCP server and core modules (knowledge base, sandbox executor, session DB)
 - `hooks/` — Lifecycle hooks and routing logic
   - `hooks.json` — Hook event registrations (PreToolUse, PostToolUse, PreCompact, SessionStart, UserPromptSubmit, SubagentStop)
