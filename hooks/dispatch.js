@@ -74,9 +74,18 @@ try {
       normalized.tool_input,
       process.env.CONTEXT_MODE_PROJECT_DIR || process.env.CLAUDE_PROJECT_DIR,
     );
-    const response = formatDecision(decision);
+    const response = formatDecision(decision, platformId);
     if (response !== null) {
       process.stdout.write(JSON.stringify(response) + '\n');
+    } else {
+      // Only emit JSON for platforms that reject empty stdout (like Cursor)
+      // Claude Code/Cowork should preserve original behavior of no output on passthrough
+      const platform = getAdapter(platformId);
+      if (platform && platform.id === 'cursor') {
+        // For Cursor, always emit JSON to prevent rejection on empty stdout
+        process.stdout.write('{}\n');
+      }
+      // For other platforms like Claude Code/Cowork, let them pass through with no output
     }
   } else {
     const script = EVENT_SCRIPT[event];

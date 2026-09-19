@@ -2,7 +2,7 @@
 
 **Honest status (v1.8.0).** Claude Code / Cowork is the production install. v1.7.0 (Grok) overclaimed 22 adapters; v1.7.1 said so. This directory is still mostly a **catalog plus a file generator**.
 
-**Exception:** `adapters/codex/` is a real JavaScript installer. It writes `~/.codex/hooks.json`, `~/.codex/config.toml`, and an `AGENTS.md` sentinel in place. It is **not** production until the repo owner confirms intercept on their Codex. Copilot, Gemini CLI, and Cursor are not started.
+**Exception:** `adapters/codex/` and `adapters/cursor/` are real JavaScript installers. They write host files in place. Neither is **production** until the repo owner confirms intercept on their Codex or Cursor. Copilot and Gemini CLI are not started.
 
 v1.7.0 (designed and shipped by **Grok / xAI Grok Build**, 2026-09-17) published this table as if each row were a working adapter. What exists besides Claude and the Codex installer:
 
@@ -12,7 +12,7 @@ v1.7.0 (designed and shipped by **Grok / xAI Grok Build**, 2026-09-17) published
 
 `--adapter` without `--out` is an installer **only** for `codex`. Every other id still generates files for you to copy. Compliance % values below are **estimates**, not measured hit-rates.
 
-Planned next (this repo’s JS stack, not a TypeScript port): **Copilot → Gemini CLI → Cursor last.** Instruction-only hosts (Grok, Zed, Continue, Aider, …) stay MCP + a decision tree, labeled that way.
+Planned next (this repo's JS stack, not a TypeScript port): **Copilot → Gemini CLI.** Cursor is now an installer. Instruction-only hosts (Grok, Zed, Continue, Aider, …) stay MCP + a decision tree, labeled that way.
 
 Current version is stamped from `package.json` (generated `adapter.json` and instruction files carry it).
 
@@ -22,7 +22,7 @@ Current version is stamped from `package.json` (generated `adapter.json` and ins
 |---|---|---|---|---|
 | `claude-code` | Claude Code | 4 | 98% | **production** |
 | `claude-cowork` | Claude Cowork | 5 | 98% | **production** |
-| `cursor` | Cursor | 3 | 85% | catalog only; planned last |
+| `cursor` | Cursor | 3 | 85% | **installer** (1.8.0) |
 | `grok` | Grok / Grok Build | 0 | 60% | instruction-only (no host hooks) |
 | `codex` | Codex CLI | 5 | 0% (unverified) | **installer** (1.8.0); not production until owner smoke-test |
 | `copilot` | VS Code Copilot | 5 | 90% | catalog only; planned |

@@ -20,6 +20,10 @@ const EVENTS = [
   { event: 'Stop', canonical: 'stop', matcher: '*' },
 ];
 
+// Normalize Windows backslash paths to forward slashes so DISPATCH_MARK
+// detection works consistently across platforms.
+function normSlash(p) { return String(p).replace(/\\/g, '/'); }
+
 function posixQuote(s) {
   if (s === '') return "''";
   if (/^[A-Za-z0-9_./:=+-]+$/.test(s)) return s;
@@ -35,8 +39,8 @@ function unixCommand(nodePath, dispatchPath, dataDir, canonical) {
     'env',
     `CONTEXT_MODE_PLATFORM=codex`,
     `CONTEXT_MODE_DATA=${posixQuote(dataDir)}`,
-    posixQuote(nodePath),
-    posixQuote(dispatchPath),
+    posixQuote(normSlash(nodePath)),
+    posixQuote(normSlash(dispatchPath)),
     'codex',
     canonical,
   ].join(' ');
@@ -44,8 +48,8 @@ function unixCommand(nodePath, dispatchPath, dataDir, canonical) {
 
 function windowsCommand(nodePath, dispatchPath, dataDir, canonical) {
   return [
-    winQuote(nodePath),
-    winQuote(dispatchPath),
+    winQuote(normSlash(nodePath)),
+    winQuote(normSlash(dispatchPath)),
     'codex',
     canonical,
   ].join(' ');

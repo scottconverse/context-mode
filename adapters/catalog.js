@@ -1,5 +1,20 @@
 /** @typedef {'json-stdio'|'ts-plugin'|'mcp-only'|'skills'} HookParadigm */
-/** @typedef {{id:string,name:string,vendor:string,summary:string,instructionFile:string,mcpConfigPath:string,hookParadigm:HookParadigm,hooks:object,toolMap:Record<string,string>,install:string[],notes:string,compliance:number}} Adapter */
+
+/**
+ * Capabilities describe what decisions and events a host actually supports.
+ * These drive both formatting and safe routing behavior.
+ */
+export const DEFAULT_CAPABILITIES = Object.freeze({
+  preToolUse: true,
+  ask: true,
+  modify: true,
+  context: true,
+  preCompact: true,
+  sessionStart: true,
+  stop: true,
+});
+
+/** @typedef {{id:string,name:string,vendor:string,summary:string,instructionFile:string,mcpConfigPath:string,hookParadigm:HookParadigm,hooks:object,toolMap:Record<string,string>,install:string[],notes:string,compliance?:number,capabilities?:object}} Adapter */
 
 export const ADAPTERS = [
   {
@@ -32,6 +47,10 @@ export const ADAPTERS = [
     ],
     notes: "Keep the existing plugin install. The refactor only changes how the core is imported — CLAUDE.md becomes a generated instruction file, not the source of truth.",
     compliance: 98,
+    capabilities: {
+      ...DEFAULT_CAPABILITIES,
+      stop: false, // Claude Code uses SubagentStop in some setups
+    },
   },
   {
     id: "claude-cowork",
@@ -62,6 +81,7 @@ export const ADAPTERS = [
     ],
     notes: "This is v1.6. The adapter extracts Cowork env vars behind a data-dir resolver so the core never mentions CLAUDE_PLUGIN_*.",
     compliance: 98,
+    capabilities: { ...DEFAULT_CAPABILITIES },
   },
   {
     id: "cursor",
@@ -91,7 +111,15 @@ export const ADAPTERS = [
       "Optional: symlink the plugin into ~/.cursor/plugins/local/context-mode",
     ],
     notes: "Cursor manifests cannot reference ${PLUGIN_ROOT}. MCP must be npx -y context-mode or a pinned global install.",
-    compliance: 85,
+    capabilities: {
+      preToolUse: true,
+      ask: true,
+      modify: true,
+      context: true,
+      preCompact: false,
+      sessionStart: false,
+      stop: true,
+    },
   },
   {
     id: "grok",
@@ -597,4 +625,10 @@ export function reverseToolMap(a) {
     if (!out[canonical]) out[canonical] = provider;
   }
   return out;
+}
+
+export function getCapabilities(adapterOrId) {
+  const a = typeof adapterOrId === 'string' ? getAdapter(adapterOrId) : adapterOrId;
+  if (!a) return DEFAULT_CAPABILITIES;
+  return a.capabilities || DEFAULT_CAPABILITIES;
 }

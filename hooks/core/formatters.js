@@ -1,53 +1,113 @@
 /**
- * Cowork-specific response formatter for PreToolUse hooks.
- * Converts normalized routing decisions to hookSpecificOutput JSON.
+ * Platform-aware response formatters for PreToolUse hooks.
  *
- * Ported from mksglu/context-mode (https://github.com/mksglu/context-mode)
- * by @mksglu, licensed under Elastic License 2.0.
+ * Internal normalized decision shape (from routing.js):
+ *   { action: 'deny', reason?: string }
+ *   { action: 'ask' }
+ *   { action: 'modify', updatedInput: object }
+ *   { action: 'context', additionalContext: string }
+ *   null (passthrough)
+ *
+ * Each platform returns the exact wire shape its host expects.
  */
 
-const formatter = {
-  deny: (reason) => ({
-    hookSpecificOutput: {
-      hookEventName: "PreToolUse",
-      permissionDecision: "deny",
-      permissionDecisionReason: reason,
-    },
-  }),
-  ask: () => ({
-    hookSpecificOutput: {
-      hookEventName: "PreToolUse",
-      permissionDecision: "ask",
-    },
-  }),
-  modify: (updatedInput) => ({
-    hookSpecificOutput: {
-      hookEventName: "PreToolUse",
-      permissionDecision: "allow",
-      permissionDecisionReason: "Routed to context-mode sandbox",
-      updatedInput,
-    },
-  }),
-  context: (additionalContext) => ({
-    hookSpecificOutput: {
-      hookEventName: "PreToolUse",
-      additionalContext,
-    },
-  }),
-};
+import { getAdapter } from '../../adapters/catalog.js';
 
-/**
- * Apply formatter to a normalized routing decision.
- * Returns Cowork-specific JSON response, or null for passthrough.
- */
-export function formatDecision(decision) {
+// ── Claude / Cowork (original hookSpecificOutput shape) ────────────────────
+function formatClaude(decision) {
   if (!decision) return null;
 
   switch (decision.action) {
-    case "deny": return formatter.deny(decision.reason);
-    case "ask": return formatter.ask();
-    case "modify": return formatter.modify(decision.updatedInput);
-    case "context": return formatter.context(decision.additionalContext);
-    default: return null;
+    case "deny":
+      return {
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          permissionDecision: "deny",
+          permissionDecisionReason: decision.reason,
+        },
+      };
+    case "ask":
+      return {
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          permissionDecision: "ask",
+        },
+      };
+    case "modify":
+      return {
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          permissionDecision: "allow",
+          permissionDecisionReason: "Routed to context-mode sandbox",
+          updatedInput: decision.updatedInput,
+        },
+      };
+    case "context":
+      return {
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          additionalContext: decision.additionalContext,
+        },
+      };
+    default:
+      return null;
   }
 }
+
+// ── Cursor (flat shapes, per upstream contract) ────────────────────────────
+function formatCursor(decision) {
+  if (!decision) return null;
+
+  switch (decision.action) {
+    case "deny":
+      return {
+        permission: "deny",
+        user_message: decision.reason ?? "Blocked by context-mode",
+      };
+    case "ask":
+      return {
+        permission: "ask",
+      };
+    case "modify":
+      return {
+        updated_input: decision.updatedInput,
+      };
+    case "context":
+      return {
+        agent_message: decision.additionalContext ?? "",
+      };
+    default:
+      return null;
+  }
+}
+
+// ── Generic fallback formatter for unknown platforms ────────────────────────
+function formatGeneric(decision) {
+  // Default to Claude shape for unknown platforms
+  return formatClaude(decision);
+}
+
+// Registry of formatters by platform id (and aliases)
+const FORMATTERS = {
+  'claude-code': formatClaude,
+  'claude-cowork': formatClaude,
+  'cursor': formatCursor,
+  // Add more as real adapters are implemented
+};
+
+/**
+ * Apply the correct formatter for the given platform.
+ * Falls back to Claude shape if unknown platform.
+ *
+ * @param {object|null} decision - normalized decision from routePreToolUse
+ * @param {string} [platformId] - e.g. 'claude-code', 'cursor'
+ */
+export function formatDecision(decision, platformId = 'claude-code') {
+  if (!decision) return null;
+
+  const formatter = FORMATTERS[platformId] || formatGeneric;
+  return formatter(decision);
+}
+
+// For tests and introspection
+export const __formatters = { formatClaude, formatCursor };
