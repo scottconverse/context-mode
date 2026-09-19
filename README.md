@@ -6,7 +6,7 @@
 
 Context window optimization for **Claude Code / Cowork**. Sandboxes tool output, compresses what returns with a self-learning 3-stage pipeline, indexes content into a local knowledge base, and tracks session state to reduce context consumption by 30–60% in typical developer sessions and more in research-heavy ones (run `ctx_stats` to see your actual savings in tokens and dollars). Current version: **1.8.0**.
 
-> **Honest status (1.8.0).** Production is Claude Code / Cowork. v1.7.0 (Grok / xAI Grok Build, 2026-09-17) claimed 22 host adapters; that was a catalog + file generator. v1.7.1 said so. **1.8.0 adds a real Codex CLI installer** (`node install.js --adapter codex`) in this repo’s JavaScript stack. It is not production until the owner smoke-tests intercept on their Codex. Copilot, Gemini CLI, and Cursor are not started. Details: [CHANGELOG 1.8.0](CHANGELOG.md#180---2026-09-17).
+> **Honest status (1.8.0).** Production is Claude Code / Cowork. v1.7.0 (Grok / xAI Grok Build, 2026-09-17) claimed 22 host adapters; that was a catalog + file generator. v1.7.1 said so. **1.8.0 adds a real Codex CLI installer** (`node install.js --adapter codex`) in this repo’s JavaScript stack. It is not production until the owner smoke-tests intercept on their Codex. Copilot and Gemini CLI are next. Details: [CHANGELOG 1.8.0](CHANGELOG.md#180---2026-09-17).
 
 ## What It Does
 
@@ -54,7 +54,7 @@ npx --yes --package=github:scottconverse/context-mode context-mode --list
 npx --yes --package=github:scottconverse/context-mode context-mode --adapter grok --out ./out
 ```
 
-That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapter.json` for you to copy into place. It does **not** install a host plugin. 22 names live in [`adapters/`](adapters/README.md) as a catalog. Production is Claude Code / Cowork. Codex has an installer in 1.8.0; Copilot → Gemini CLI → Cursor last are next.
+That writes an instruction file, MCP snippet, optional `hooks.json`, and `adapter.json` for you to copy into place. It does **not** install a host plugin. 22 names live in [`adapters/`](adapters/README.md) as a catalog. Production is Claude Code / Cowork. Codex and Cursor have installers in 1.8.0; Copilot → Gemini CLI are next.
 
 **Manual install:**
 
@@ -244,3 +244,5 @@ This project is a JavaScript Cowork plugin port of [mksglu/context-mode](https:/
 ## License
 
 [Elastic License 2.0](LICENSE) — same license as the upstream project.
+
+**Cursor is now an installer** (`node install.js --adapter cursor`). PreCompact is not available on Cursor.

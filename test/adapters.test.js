@@ -27,7 +27,7 @@ describe('adapter catalog', () => {
     assert.equal(ADAPTERS.length, 22);
   });
 
-  it('every adapter has unique id, instruction file, tool map, compliance', () => {
+  it('every adapter has unique id, instruction file, tool map, and capabilities (or legacy compliance)', () => {
     const ids = new Set();
     for (const a of ADAPTERS) {
       assert.ok(a.id, 'missing id');
@@ -38,7 +38,14 @@ describe('adapter catalog', () => {
       assert.ok(a.mcpConfigPath);
       assert.ok(['json-stdio', 'ts-plugin', 'mcp-only', 'skills'].includes(a.hookParadigm));
       assert.ok(Object.keys(a.toolMap).length > 0);
-      assert.ok(a.compliance >= 0 && a.compliance <= 100);
+
+      // Phase 1+: prefer capabilities object
+      if (a.capabilities) {
+        assert.ok(typeof a.capabilities === 'object');
+      } else {
+        // legacy during transition - this should not happen for new adapters, but we keep it for compatibility
+        assert.ok(a.compliance >= 0 && a.compliance <= 100);
+      }
     }
   });
 

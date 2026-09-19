@@ -1,0 +1,7 @@
+{
+  "tool_name": "Shell",
+  "tool_input": {
+    "command": "echo hello world"
+  },
+  "session_id": "test-session-123"
+}

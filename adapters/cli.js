@@ -25,6 +25,10 @@ const REAL_INSTALLERS = {
     const { installCodex } = await import('./codex/install.js');
     return installCodex(opts);
   },
+  async cursor(opts) {
+    const { installCursor } = await import('./cursor/install.js');
+    return installCursor(opts);
+  },
 };
 
 function printList() {
@@ -36,7 +40,7 @@ function printList() {
   for (const a of ADAPTERS) {
     const mark = REAL_INSTALLERS[a.id] ? 'installer' : (hookCount(a) ? 'catalog' : 'instr');
     console.log(
-      `${a.id.padEnd(width)}  ${String(hookCount(a)).padStart(5)}  ${String(a.compliance).padStart(3)}%  ${a.name} (${a.vendor})  [${mark}]`,
+      `${a.id.padEnd(width)}  ${String(hookCount(a)).padStart(5)}  ${String(a.capabilities ? '??' : a.compliance).padStart(3)}%  ${a.name} (${a.vendor})  [${mark}]`,
     );
   }
   console.log('\nReal installer (writes host files in place):');
